@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Tuple
 from clients.markitdown_client import get_markitdown_client, MarkItDownClient
 from clients.unstructured_client import get_unstructured_client, UnstructuredClient
+from clients.image_analysis_client import get_image_analysis_client
+from clients.groq_whisper_client import get_groq_whisper_client
 from app.logger import logger
 
 
@@ -89,11 +91,11 @@ def extract_raw_data(file_content: bytes, file_name: str) -> str:
     # Get file extension
     extension = get_file_extension(file_name)
 
-    # Check if image file - skip for now
+    # Check if image file - use image analysis
     if is_image_file(extension):
-        logger.warning(f"⚠️ Image files not supported yet: {file_name}")
-        pass
-        return f"[Image file skipped: {file_name}]"
+        logger.info(f"🖼️ Processing image file with vision model: {file_name}")
+        image_client = get_image_analysis_client()
+        return image_client.analyze_image(file_content, file_name)
 
     # Check if video file - skip for now
     if is_video_file(extension):
@@ -101,11 +103,11 @@ def extract_raw_data(file_content: bytes, file_name: str) -> str:
         pass
         return f"[Video file skipped: {file_name}]"
 
-    # Check if audio file - skip for now
+    # Check if audio file - use Groq Whisper for transcription
     if is_audio_file(extension):
-        logger.warning(f"⚠️ Audio files not supported yet: {file_name}")
-        pass
-        return f"[Audio file skipped: {file_name}]"
+        logger.info(f"🎵 Transcribing audio file with Groq Whisper: {file_name}")
+        whisper_client = get_groq_whisper_client()
+        return whisper_client.transcribe_audio(file_content, file_name)
 
     # Get clients
     markitdown_client = get_markitdown_client()

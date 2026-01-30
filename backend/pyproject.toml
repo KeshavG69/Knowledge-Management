@@ -47,5 +47,7 @@ dependencies = [
     # Utilities
     "pytz>=2025.2",
     "chonkie>=1.5.4",
+    "agno>=2.4.7",
+    "groq>=1.0.0",
 ]
 
