@@ -120,6 +120,22 @@
         "documentation": {}
     },
     {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "APIRouter",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -352,6 +368,38 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -369,6 +417,14 @@
         "documentation": {}
     },
     {
+        "label": "StreamingResponse",
+        "importPath": "fastapi.responses",
+        "description": "fastapi.responses",
+        "isExtraImport": true,
+        "detail": "fastapi.responses",
+        "documentation": {}
+    },
+    {
         "label": "CORSMiddleware",
         "importPath": "fastapi.middleware.cors",
         "description": "fastapi.middleware.cors",
@@ -378,6 +434,14 @@
     },
     {
         "label": "asynccontextmanager",
+        "importPath": "contextlib",
+        "description": "contextlib",
+        "isExtraImport": true,
+        "detail": "contextlib",
+        "documentation": {}
+    },
+    {
+        "label": "suppress",
         "importPath": "contextlib",
         "description": "contextlib",
         "isExtraImport": true,
@@ -506,6 +570,14 @@
     },
     {
         "label": "upload",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
+        "label": "chat",
         "importPath": "routers",
         "description": "routers",
         "isExtraImport": true,
@@ -810,6 +882,14 @@
         "documentation": {}
     },
     {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
@@ -842,6 +922,46 @@
         "documentation": {}
     },
     {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "AsyncGenerator",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
@@ -866,7 +986,63 @@
         "documentation": {}
     },
     {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "AsyncIterator",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1015,6 +1191,14 @@
     },
     {
         "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm_agno",
         "importPath": "clients.ultimate_llm",
         "description": "clients.ultimate_llm",
         "isExtraImport": true,
@@ -1338,6 +1522,47 @@
         "documentation": {}
     },
     {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "create_chat_agent",
+        "importPath": "services.chat",
+        "description": "services.chat",
+        "isExtraImport": true,
+        "detail": "services.chat",
+        "documentation": {}
+    },
+    {
+        "label": "stream_agent_response",
+        "importPath": "services.agent_streaming",
+        "description": "services.agent_streaming",
+        "isExtraImport": true,
+        "detail": "services.agent_streaming",
+        "documentation": {}
+    },
+    {
+        "label": "create_sse_event_stream",
+        "importPath": "utils.streaming",
+        "description": "utils.streaming",
+        "isExtraImport": true,
+        "detail": "utils.streaming",
+        "documentation": {}
+    },
+    {
+        "label": "uuid",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "uuid",
+        "description": "uuid",
+        "detail": "uuid",
+        "documentation": {}
+    },
+    {
         "label": "HealthCheckResponse",
         "importPath": "models.health",
         "description": "models.health",
@@ -1375,6 +1600,70 @@
         "description": "clients.mongodb_client",
         "isExtraImport": true,
         "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "Agent",
+        "importPath": "agno.agent",
+        "description": "agno.agent",
+        "isExtraImport": true,
+        "detail": "agno.agent",
+        "documentation": {}
+    },
+    {
+        "label": "Agent",
+        "importPath": "agno.agent",
+        "description": "agno.agent",
+        "isExtraImport": true,
+        "detail": "agno.agent",
+        "documentation": {}
+    },
+    {
+        "label": "Agent",
+        "importPath": "agno.agent",
+        "description": "agno.agent",
+        "isExtraImport": true,
+        "detail": "agno.agent",
+        "documentation": {}
+    },
+    {
+        "label": "RunEvent",
+        "importPath": "agno.run.agent",
+        "description": "agno.run.agent",
+        "isExtraImport": true,
+        "detail": "agno.run.agent",
+        "documentation": {}
+    },
+    {
+        "label": "RunOutput",
+        "importPath": "agno.run.agent",
+        "description": "agno.run.agent",
+        "isExtraImport": true,
+        "detail": "agno.run.agent",
+        "documentation": {}
+    },
+    {
+        "label": "RunOutputEvent",
+        "importPath": "agno.run.agent",
+        "description": "agno.run.agent",
+        "isExtraImport": true,
+        "detail": "agno.run.agent",
+        "documentation": {}
+    },
+    {
+        "label": "create_knowledge_retriever",
+        "importPath": "utils.agno_tools",
+        "description": "utils.agno_tools",
+        "isExtraImport": true,
+        "detail": "utils.agno_tools",
+        "documentation": {}
+    },
+    {
+        "label": "get_pinecone_client",
+        "importPath": "clients.pinecone_client",
+        "description": "clients.pinecone_client",
+        "isExtraImport": true,
+        "detail": "clients.pinecone_client",
         "documentation": {}
     },
     {
@@ -2155,6 +2444,24 @@
         "documentation": {}
     },
     {
+        "label": "ChatRequest",
+        "kind": 6,
+        "importPath": "backend.routers.chat",
+        "description": "backend.routers.chat",
+        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"gpt-4o\"\n    provider: Optional[str] = \"openai\"\n@router.post(\"/chat\")",
+        "detail": "backend.routers.chat",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
+        "importPath": "backend.routers.chat",
+        "description": "backend.routers.chat",
+        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"gpt-4o\"\n    provider: Optional[str] = \"openai\"",
+        "detail": "backend.routers.chat",
+        "documentation": {}
+    },
+    {
         "label": "router",
         "kind": 5,
         "importPath": "backend.routers.health",
@@ -2200,6 +2507,24 @@
         "documentation": {}
     },
     {
+        "label": "extract_text",
+        "kind": 2,
+        "importPath": "backend.services.agent_streaming",
+        "description": "backend.services.agent_streaming",
+        "peekOfCode": "def extract_text(content: Any) -> Optional[str]:\n    \"\"\"Extract text content from various payload formats\"\"\"\n    if content is None:\n        return None\n    if isinstance(content, str):\n        return content\n    if isinstance(content, dict):\n        if \"text\" in content and isinstance(content[\"text\"], str):\n            return content[\"text\"]\n        if \"content\" in content and isinstance(content[\"content\"], str):",
+        "detail": "backend.services.agent_streaming",
+        "documentation": {}
+    },
+    {
+        "label": "sanitize_payload",
+        "kind": 2,
+        "importPath": "backend.services.agent_streaming",
+        "description": "backend.services.agent_streaming",
+        "peekOfCode": "def sanitize_payload(data: Dict[str, Any]) -> Dict[str, Any]:\n    \"\"\"Ensure payload is JSON-serializable\"\"\"\n    import json\n    try:\n        json.dumps(data)\n        return data\n    except TypeError:\n        def _coerce(value: Any) -> Any:\n            if isinstance(value, dict):\n                return {k: _coerce(v) for k, v in value.items()}",
+        "detail": "backend.services.agent_streaming",
+        "documentation": {}
+    },
+    {
         "label": "IngestionService",
         "kind": 6,
         "importPath": "backend.services.ingestion_service",
@@ -2224,6 +2549,15 @@
         "description": "backend.services.ingestion_service",
         "peekOfCode": "_ingestion_service = None\ndef get_ingestion_service() -> IngestionService:\n    \"\"\"\n    Get or create IngestionService singleton instance\n    Returns:\n        IngestionService instance\n    \"\"\"\n    global _ingestion_service\n    if _ingestion_service is None:\n        _ingestion_service = IngestionService()",
         "detail": "backend.services.ingestion_service",
+        "documentation": {}
+    },
+    {
+        "label": "create_knowledge_retriever",
+        "kind": 2,
+        "importPath": "backend.utils.agno_tools",
+        "description": "backend.utils.agno_tools",
+        "peekOfCode": "def create_knowledge_retriever(\n    organization_id: Optional[str] = None,\n    user_id: Optional[str] = None,\n    document_ids: Optional[list[str]] = None,\n    num_documents: int = 10\n) :\n    \"\"\"\n    Create a knowledge retriever tool for searching the knowledge base\n    Args:\n        organization_id: Optional organization ID for namespace filtering",
+        "detail": "backend.utils.agno_tools",
         "documentation": {}
     },
     {
@@ -2296,6 +2630,15 @@
         "description": "backend.utils.file_utils",
         "peekOfCode": "def get_file_size_mb(file_content: bytes) -> float:\n    \"\"\"\n    Get file size in megabytes\n    Args:\n        file_content: File content bytes\n    Returns:\n        File size in MB\n    \"\"\"\n    return len(file_content) / (1024 * 1024)",
         "detail": "backend.utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "create_sse_event_stream",
+        "kind": 2,
+        "importPath": "backend.utils.streaming",
+        "description": "backend.utils.streaming",
+        "peekOfCode": "def create_sse_event_stream(\n    events: AsyncIterator[Dict[str, Any]],\n) -> AsyncIterator[str]:\n    \"\"\"\n    Convert structured events into SSE frames with keepalive heartbeats\n    Args:\n        events: Async iterator of event dictionaries\n    Yields:\n        str: SSE formatted strings\n    \"\"\"",
+        "detail": "backend.utils.streaming",
         "documentation": {}
     },
     {

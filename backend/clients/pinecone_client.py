@@ -199,6 +199,13 @@ class PineconeClient:
             Exception: If search fails
         """
         try:
+            # Ensure k is a valid integer
+            if k is None or k < 1:
+                k = 5
+                logger.warning(f"Invalid k value, using default: {k}")
+
+            logger.debug(f"Similarity search: query='{query[:50]}...', k={k}, filter={filter}, namespace={namespace}")
+
             # Create vector store with namespace if provided
             if namespace:
                 vector_store = PineconeVectorStore(
@@ -223,6 +230,8 @@ class PineconeClient:
 
         except Exception as e:
             logger.error(f"❌ Similarity search with score failed: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise Exception(f"Similarity search failed: {str(e)}")
 
     def delete_documents(
