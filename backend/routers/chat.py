@@ -23,8 +23,7 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = None
     organization_id: Optional[str] = None
     document_ids: Optional[list[str]] = None
-    model: Optional[str] = "gpt-4o"
-    provider: Optional[str] = "openai"
+    model: Optional[str] = "google/gemini-2.5-pro"
 
 
 @router.post("/chat")
@@ -61,7 +60,7 @@ async def chat(request: ChatRequest):
             organization_id=request.organization_id,
             document_ids=request.document_ids,
             model=request.model,
-            provider=request.provider,
+            
         )
 
         # SSE headers

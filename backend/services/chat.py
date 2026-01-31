@@ -16,8 +16,7 @@ async def create_chat_agent(
     user_id: Optional[str] = None,
     organization_id: Optional[str] = None,
     document_ids: Optional[list[str]] = None,
-    model: str = "gpt-4o",
-    provider: str = "openai",
+    model: str = "google/gemini-2.5-pro",
 ) -> Agent:
     """
     Create a chat agent with knowledge base access
@@ -27,8 +26,7 @@ async def create_chat_agent(
         user_id: Optional user ID for filtering
         organization_id: Optional organization ID for namespace
         document_ids: Optional list of document IDs to filter search results
-        model: LLM model name (default: gpt-4o)
-        provider: LLM provider (default: openai)
+        model: LLM model name (default: google/gemini-2.5-pro via OpenRouter)
 
     Returns:
         Agent: Configured chat agent with knowledge retrieval
@@ -37,7 +35,7 @@ async def create_chat_agent(
         logger.info(f"Creating chat agent for session: {session_id}")
 
         # Get LLM (Agno-compatible)
-        llm = get_llm_agno(model=model, provider=provider)
+        llm = get_llm_agno(model=model)
 
         # Get database and memory manager
         db_instance = get_agent_db()

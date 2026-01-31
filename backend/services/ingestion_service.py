@@ -82,9 +82,12 @@ class IngestionService:
 
         start_time = datetime.utcnow()
 
-        for file in files:
+        # Process all files in parallel for faster uploads
+        logger.info(f"🚀 Processing {len(files)} files in parallel")
+
+        async def process_file_with_error_handling(file):
+            """Wrapper to handle errors for each file independently"""
             try:
-                # Process single document
                 result = await self._process_single_document(
                     file=file,
                     folder_name=folder_name,
@@ -92,22 +95,28 @@ class IngestionService:
                     organization_id=organization_id,
                     additional_metadata=additional_metadata
                 )
-
-                results["successful_files"] += 1
-                results["documents"].append(result)
-                results["statistics"]["total_chunks"] += result.get("total_chunks", 0)
-                results["statistics"]["total_size_mb"] += result.get("file_size_mb", 0)
-
                 logger.info(f"✅ Successfully processed: {file.filename}")
-
+                return {"success": True, "result": result, "filename": file.filename}
             except Exception as e:
-                results["failed_files"] += 1
-                error_info = {
-                    "file_name": file.filename,
-                    "error": str(e)
-                }
-                results["errors"].append(error_info)
                 logger.error(f"❌ Failed to process {file.filename}: {str(e)}")
+                return {"success": False, "error": str(e), "filename": file.filename}
+
+        # Process all files concurrently
+        file_results = await asyncio.gather(*[process_file_with_error_handling(file) for file in files])
+
+        # Aggregate results
+        for file_result in file_results:
+            if file_result["success"]:
+                results["successful_files"] += 1
+                results["documents"].append(file_result["result"])
+                results["statistics"]["total_chunks"] += file_result["result"].get("total_chunks", 0)
+                results["statistics"]["total_size_mb"] += file_result["result"].get("file_size_mb", 0)
+            else:
+                results["failed_files"] += 1
+                results["errors"].append({
+                    "file_name": file_result["filename"],
+                    "error": file_result["error"]
+                })
 
         # Calculate processing time
         end_time = datetime.utcnow()
@@ -149,21 +158,25 @@ class IngestionService:
         file_content = await file.read()
         file_size_mb = get_file_size_mb(file_content)
 
-        # Step 1: Upload to iDrive E2
-        logger.info(f"⬆️ Uploading to iDrive E2: {file.filename}")
+        # Prepare for parallel operations
         safe_filename = sanitize_filename(file.filename)
         file_key = f"{folder_name}/{safe_filename}"
 
-        # Upload file (async operation)
-        await self.idrivee2_client.upload_file(
+        # Step 1 & 2: Run in parallel - Upload to iDrive E2 + Extract content
+        logger.info(f"🚀 Starting parallel processing: Upload to E2 + Content extraction for {file.filename}")
+
+        upload_task = self.idrivee2_client.upload_file(
             file_obj=io.BytesIO(file_content),
             object_name=file_key,
             content_type=file.content_type
         )
 
-        # Step 2: Extract raw content (run in thread pool to avoid blocking)
-        logger.info(f"🔍 Extracting content from: {file.filename}")
-        raw_content = await asyncio.to_thread(extract_raw_data, file_content, file.filename, folder_name)
+        extraction_task = asyncio.to_thread(extract_raw_data, file_content, file.filename, folder_name)
+
+        # Wait for both to complete
+        _, raw_content = await asyncio.gather(upload_task, extraction_task)
+
+        logger.info(f"✅ Parallel processing complete for {file.filename}")
 
         # Check if this is a video file (special handling)
         is_video = isinstance(raw_content, dict) and raw_content.get('type') == 'video'
@@ -193,7 +206,7 @@ class IngestionService:
 
             content_for_mongodb = raw_content
 
-        # Step 3: Store in MongoDB
+        # Step 3: Store in MongoDB (must complete before Pinecone as we need document_id)
         logger.info(f"💾 Storing document in MongoDB: {file.filename}")
         document_id = await self._store_document_in_mongodb(
             file_name=file.filename,
@@ -530,7 +543,12 @@ class IngestionService:
             collection="documents",
             query=filter_query,
             limit=limit,
-            skip=skip
+            skip=skip,
+            projection={
+                "raw_content": 0,
+                "file_size_mb": 0,
+                "file_extension": 0
+            }
         )
 
         # Convert ObjectIds to strings and file_key to presigned URL for each document (async)
@@ -547,6 +565,211 @@ class IngestionService:
             documents_with_urls.append(doc)
 
         return documents_with_urls
+
+    async def list_folders(
+        self,
+        user_id: str = None,
+        organization_id: str = None
+    ) -> List[str]:
+        """
+        Get list of unique folder names from documents collection
+
+        Args:
+            user_id: Optional user ID filter
+            organization_id: Optional organization ID filter
+
+        Returns:
+            List of unique folder names
+        """
+        filter_query = {}
+
+        if user_id:
+            filter_query["user_id"] = ObjectId(user_id)
+
+        if organization_id:
+            filter_query["organization_id"] = ObjectId(organization_id)
+
+        # Get distinct folder names from MongoDB
+        folders = await self.mongodb_client.async_distinct(
+            collection="documents",
+            field="folder_name",
+            query=filter_query
+        )
+
+        # Filter out None/empty values and sort
+        folders = [f for f in folders if f]
+        folders.sort()
+
+        logger.info(f"📁 Found {len(folders)} folders")
+        return folders
+
+    async def delete_folder(
+        self,
+        folder_name: str,
+        user_id: str = None,
+        organization_id: str = None,
+        delete_from_storage: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Delete all documents in a folder from ALL systems:
+        - MongoDB (document metadata)
+        - Pinecone (vector chunks)
+        - iDrive E2 (file storage)
+
+        Args:
+            folder_name: Folder name to delete
+            user_id: Optional user ID filter (only delete user's docs)
+            organization_id: Optional organization ID filter
+            delete_from_storage: Whether to delete from iDrive E2
+
+        Returns:
+            Dict with deletion results
+        """
+        logger.info(f"🗑️ Deleting folder '{folder_name}' from ALL systems (MongoDB + Pinecone + iDrive E2)")
+
+        # Build query for documents in this folder
+        filter_query = {"folder_name": folder_name}
+
+        if user_id:
+            filter_query["user_id"] = ObjectId(user_id)
+
+        if organization_id:
+            filter_query["organization_id"] = ObjectId(organization_id)
+
+        # Get all documents in folder
+        documents = await self.mongodb_client.async_find_documents(
+            collection="documents",
+            query=filter_query
+        )
+
+        if not documents:
+            logger.warning(f"No documents found in folder: {folder_name}")
+            return {
+                "folder_name": folder_name,
+                "deleted_count": 0,
+                "deleted_documents": []
+            }
+
+        deleted_count = 0
+        deleted_docs = []
+        errors = []
+
+        # Delete each document (this handles MongoDB, Pinecone, and iDrive E2)
+        for doc in documents:
+            try:
+                doc_id = str(doc["_id"])
+                await self.delete_document(
+                    document_id=doc_id,
+                    delete_from_storage=delete_from_storage
+                )
+                deleted_count += 1
+                deleted_docs.append(doc_id)
+            except Exception as e:
+                logger.error(f"❌ Failed to delete document {doc.get('_id')}: {str(e)}")
+                errors.append({
+                    "document_id": str(doc.get("_id")),
+                    "error": str(e)
+                })
+
+        logger.info(f"✅ Folder '{folder_name}' deleted: {deleted_count} documents removed from all systems")
+
+        return {
+            "folder_name": folder_name,
+            "deleted_count": deleted_count,
+            "deleted_documents": deleted_docs,
+            "errors": errors if errors else None
+        }
+
+    async def rename_folder(
+        self,
+        old_folder_name: str,
+        new_folder_name: str,
+        user_id: str = None,
+        organization_id: str = None
+    ) -> Dict[str, Any]:
+        """
+        Rename a folder across ALL systems:
+        - MongoDB (document metadata)
+        - Pinecone (chunk metadata - folder_name field)
+        - iDrive E2 (no change needed - uses file_key, not folder_name)
+
+        Args:
+            old_folder_name: Current folder name
+            new_folder_name: New folder name
+            user_id: Optional user ID filter (only rename user's docs)
+            organization_id: Optional organization ID filter
+
+        Returns:
+            Dict with rename results
+        """
+        logger.info(f"📝 Renaming folder '{old_folder_name}' → '{new_folder_name}' across ALL systems")
+
+        # Build query for documents in old folder
+        filter_query = {"folder_name": old_folder_name}
+
+        if user_id:
+            filter_query["user_id"] = ObjectId(user_id)
+
+        if organization_id:
+            filter_query["organization_id"] = ObjectId(organization_id)
+
+        # Get document count to verify
+        documents = await self.mongodb_client.async_find_documents(
+            collection="documents",
+            query=filter_query,
+            projection={"_id": 1}
+        )
+
+        if not documents:
+            logger.warning(f"No documents found in folder: {old_folder_name}")
+            return {
+                "old_folder_name": old_folder_name,
+                "new_folder_name": new_folder_name,
+                "updated_count": 0
+            }
+
+        # 1. Update MongoDB documents
+        mongo_result = await self.mongodb_client.async_update_documents(
+            collection="documents",
+            query=filter_query,
+            update={"$set": {"folder_name": new_folder_name}}
+        )
+        mongo_updated = mongo_result.get("modified_count", 0)
+        logger.info(f"  ✅ MongoDB: Updated {mongo_updated} documents")
+
+        # 2. Update Pinecone chunks metadata
+        # Filter by folder_name and update all matching vectors
+        pinecone_filter = {"folder_name": old_folder_name}
+
+        if user_id:
+            pinecone_filter["user_id"] = user_id
+
+        org_namespace = str(organization_id) if organization_id else None
+
+        try:
+            pinecone_updated = await asyncio.to_thread(
+                self.pinecone_client.update_metadata_by_filter,
+                filter=pinecone_filter,
+                new_metadata={"folder_name": new_folder_name},
+                namespace=org_namespace
+            )
+            logger.info(f"  ✅ Pinecone: Updated {pinecone_updated} vector chunks")
+        except Exception as e:
+            logger.error(f"  ❌ Pinecone update failed: {str(e)}")
+            pinecone_updated = 0
+
+        # 3. iDrive E2 - No action needed (uses file_key, not folder_name)
+        logger.info(f"  ✅ iDrive E2: No action needed (uses file_key)")
+
+        logger.info(f"✅ Folder renamed successfully across all systems")
+
+        return {
+            "old_folder_name": old_folder_name,
+            "new_folder_name": new_folder_name,
+            "mongodb_updated": mongo_updated,
+            "pinecone_updated": pinecone_updated,
+            "idrive_updated": "N/A (uses file_key)"
+        }
 
 
 # Singleton instance

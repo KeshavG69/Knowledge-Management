@@ -53,5 +53,7 @@ dependencies = [
     "moviepy>=2.2.1",
     "scikit-image>=0.26.0",
     "numpy>=2.4.1",
+    "yt-dlp>=2026.1.29",
+    "pydub>=0.25.1",
 ]
 

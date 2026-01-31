@@ -70,9 +70,14 @@ def create_knowledge_retriever(
                 filter_dict["user_id"] = user_id
 
             # Add document_ids filter if provided
-            if document_ids and len(document_ids) > 0:
-                filter_dict["document_id"] = {"$in": document_ids}
-                logger.debug(f"Filtering by document_ids: {document_ids}")
+            # If document_ids is explicitly provided but empty, return no results
+            if document_ids is not None:
+                if len(document_ids) == 0:
+                    logger.info("No documents selected - returning empty results")
+                    return None
+                else:
+                    filter_dict["document_id"] = {"$in": document_ids}
+                    logger.debug(f"Filtering by document_ids: {document_ids}")
 
             # Query Pinecone with scores
             results = pinecone_client.similarity_search_with_score(

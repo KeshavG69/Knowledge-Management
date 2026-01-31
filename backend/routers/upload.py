@@ -375,3 +375,141 @@ async def delete_document(
     except Exception as e:
         logger.error(f"❌ Delete document failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")
+
+
+@router.get("/folders")
+async def list_folders(
+    user_id: Optional[str] = None,
+    organization_id: Optional[str] = None
+):
+    """
+    List all unique folder names (knowledge bases)
+
+    Args:
+        user_id: Optional user ID filter
+        organization_id: Optional organization ID filter
+
+    Returns:
+        List of folder names
+    """
+    try:
+        # Validate ObjectIds
+        if user_id and not ObjectId.is_valid(user_id):
+            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
+
+        if organization_id and not ObjectId.is_valid(organization_id):
+            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
+
+        ingestion_service = get_ingestion_service()
+        folders = await ingestion_service.list_folders(
+            user_id=user_id,
+            organization_id=organization_id
+        )
+
+        return {
+            "success": True,
+            "data": folders,
+            "count": len(folders)
+        }
+
+    except Exception as e:
+        logger.error(f"❌ List folders failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list folders: {str(e)}")
+
+
+@router.delete("/folders/{folder_name}")
+async def delete_folder(
+    folder_name: str,
+    user_id: Optional[str] = None,
+    organization_id: Optional[str] = None,
+    delete_from_storage: bool = True
+):
+    """
+    Delete entire folder and all its documents from all systems
+    (MongoDB + Pinecone + iDrive E2)
+
+    Args:
+        folder_name: Folder name to delete
+        user_id: Optional user ID filter
+        organization_id: Optional organization ID filter
+        delete_from_storage: Whether to delete from iDrive E2 (default: True)
+
+    Returns:
+        Deletion result with count
+    """
+    try:
+        # Validate ObjectIds
+        if user_id and not ObjectId.is_valid(user_id):
+            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
+
+        if organization_id and not ObjectId.is_valid(organization_id):
+            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
+
+        ingestion_service = get_ingestion_service()
+        result = await ingestion_service.delete_folder(
+            folder_name=folder_name,
+            user_id=user_id,
+            organization_id=organization_id,
+            delete_from_storage=delete_from_storage
+        )
+
+        return {
+            "success": True,
+            "message": f"Folder '{folder_name}' deleted successfully",
+            "data": result
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Delete folder failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete folder: {str(e)}")
+
+
+@router.put("/folders/{folder_name}")
+async def rename_folder(
+    folder_name: str,
+    new_folder_name: str = Form(..., description="New folder name"),
+    user_id: Optional[str] = Form(None, description="Optional user ID"),
+    organization_id: Optional[str] = Form(None, description="Optional organization ID")
+):
+    """
+    Rename folder across all systems
+    (MongoDB + Pinecone metadata)
+
+    Args:
+        folder_name: Current folder name
+        new_folder_name: New folder name
+        user_id: Optional user ID filter
+        organization_id: Optional organization ID filter
+
+    Returns:
+        Rename result with counts
+    """
+    try:
+        # Validate input
+        if not new_folder_name or not new_folder_name.strip():
+            raise HTTPException(status_code=400, detail="New folder name is required")
+
+        # Validate ObjectIds
+        if user_id and not ObjectId.is_valid(user_id):
+            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
+
+        if organization_id and not ObjectId.is_valid(organization_id):
+            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
+
+        ingestion_service = get_ingestion_service()
+        result = await ingestion_service.rename_folder(
+            old_folder_name=folder_name,
+            new_folder_name=new_folder_name.strip(),
+            user_id=user_id,
+            organization_id=organization_id
+        )
+
+        return {
+            "success": True,
+            "message": f"Folder renamed from '{folder_name}' to '{new_folder_name}' successfully",
+            "data": result
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Rename folder failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to rename folder: {str(e)}")

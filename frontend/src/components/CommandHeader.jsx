@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Moon, Sun, Settings, Share2, BarChart3, Grid3X3, User, Shield,
+  Moon, Sun, BarChart3, User, Shield,
   MessageSquare, Sparkles, ChevronDown, LogOut, HelpCircle, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -107,55 +107,55 @@ export default function CommandHeader({
 
   return (
     <>
-      <header className="w-full h-16 bg-card border-b border-border flex items-center justify-between px-6 shadow-sm">
+      <header className="w-full h-20 bg-card border-b border-border flex items-center justify-between px-8 shadow-sm">
         {/* Left Section - Title and Mission Context */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-lg font-bold text-primary tracking-wide">SOLDIER IQ</h1>
-              <p className="text-xs text-muted-foreground tracking-wider">TACTICAL INTEL SYSTEM</p>
+              <h1 className="text-xl font-bold text-primary tracking-wide">SOLDIER IQ</h1>
+              <p className="text-sm text-muted-foreground tracking-wider">TACTICAL INTEL SYSTEM</p>
             </div>
           </div>
         </div>
 
         {/* Center Section - Mode Toggle */}
         <div className="flex items-center">
-          <div className="flex bg-muted rounded-lg p-1">
+          <div className="flex bg-muted rounded-lg p-1.5">
             <button
               onClick={() => onModeChange('chat')}
               className={cn(
-                "px-6 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2",
+                "px-8 py-3 rounded-md font-medium text-base transition-all flex items-center gap-2",
                 activeMode === 'chat'
                   ? "bg-background text-primary shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-5 w-5" />
               CHAT
             </button>
             <button
               onClick={() => onModeChange('studio')}
               className={cn(
-                "px-6 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2",
+                "px-8 py-3 rounded-md font-medium text-base transition-all flex items-center gap-2",
                 activeMode === 'studio'
                   ? "bg-background text-primary shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-5 w-5" />
               STUDIO
             </button>
           </div>
         </div>
 
         {/* Right Section - Controls and User */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* Model Selector */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase">Model</span>
+            <span className="text-sm font-medium text-muted-foreground uppercase">Model</span>
             <Select value={selectedModel} onValueChange={onModelChange}>
-              <SelectTrigger className="w-[240px] h-9 text-xs">
+              <SelectTrigger className="w-[260px] h-11 text-sm">
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
@@ -164,7 +164,7 @@ export default function CommandHeader({
                     <SelectItem key={model.id} value={model.id}>
                       {model.name}
                       {model.provider_label && (
-                        <span className="ml-2 text-xs text-muted-foreground">
+                        <span className="ml-2 text-sm text-muted-foreground">
                           [{model.provider_label}]
                         </span>
                       )}
@@ -181,8 +181,8 @@ export default function CommandHeader({
 
           {/* Connect to INOC Service Desk Button */}
           <Button
-            size="sm"
-            className="whitespace-nowrap"
+            size="default"
+            className="whitespace-nowrap text-sm"
             onClick={onConnectInoc}
           >
             Connect to INOC Service Desk
@@ -191,31 +191,11 @@ export default function CommandHeader({
           {/* Analytics */}
           <Button
             variant="ghost"
-            size="sm"
+            size="default"
             className="text-muted-foreground hover:text-foreground"
           >
-            <BarChart3 className="h-4 w-4 mr-2" />
-            <span className="text-xs font-medium tracking-wider">ANALYTICS</span>
-          </Button>
-
-          {/* Share */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            <span className="text-xs font-medium tracking-wider">SHARE</span>
-          </Button>
-
-          {/* Settings */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            <span className="text-xs font-medium tracking-wider">SETTINGS</span>
+            <BarChart3 className="h-5 w-5 mr-2" />
+            <span className="text-sm font-medium tracking-wider">ANALYTICS</span>
           </Button>
 
           {/* Help Button with Rainbow Border */}
@@ -227,7 +207,7 @@ export default function CommandHeader({
               backgroundSize: '300% 300%',
               animation: 'gradient 3s linear infinite',
               padding: '2px',
-              borderRadius: '6px',
+              borderRadius: '8px',
             }}
           >
             <style>{`
@@ -238,42 +218,25 @@ export default function CommandHeader({
             `}</style>
             <button
               onClick={() => setHelpModalOpen(true)}
-              className="bg-card text-foreground hover:bg-muted px-2 py-1.5 rounded-md transition-colors flex items-center justify-center"
+              className="bg-card text-foreground hover:bg-muted px-3 py-2 rounded-md transition-colors flex items-center justify-center"
               title="Watch SoldierIQ at a glance"
             >
-              <HelpCircle className="h-4 w-4" />
+              <HelpCircle className="h-5 w-5" />
             </button>
           </div>
 
           {/* Theme Toggle */}
           <Button
             variant="ghost"
-            size="sm"
+            size="default"
             onClick={toggleTheme}
             className="text-muted-foreground hover:text-foreground"
           >
             {theme === 'dark' ? (
-              <Sun className="h-4 w-4" />
+              <Sun className="h-5 w-5" />
             ) : (
-              <Moon className="h-4 w-4" />
+              <Moon className="h-5 w-5" />
             )}
-          </Button>
-
-          {/* Divider */}
-          <div className="h-8 w-px bg-border" />
-
-          {/* PRO Badge */}
-          <div className="px-3 py-1 bg-accent text-accent-foreground rounded-md">
-            <span className="text-xs font-bold tracking-wider">PRO</span>
-          </div>
-
-          {/* App Grid */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground p-2"
-          >
-            <Grid3X3 className="h-4 w-4" />
           </Button>
 
           {/* User Menu */}
@@ -281,33 +244,33 @@ export default function CommandHeader({
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted transition-colors"
+                className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-muted transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-base">
                   {getAvatarInitials()}
                 </div>
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </button>
 
               {/* Dropdown Menu */}
               {dropdownOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-50">
-                  <div className="p-2">
-                    <div className="px-3 py-2 border-b border-border">
-                      <p className="text-sm font-medium text-foreground">
+                <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-lg z-50">
+                  <div className="p-3">
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="text-base font-medium text-foreground">
                         {parsedName || user.name || 'User'}
                       </p>
                       {(user.email || user.signInDetails?.loginId) && (
-                        <p className="text-xs text-muted-foreground">
-                          
+                        <p className="text-sm text-muted-foreground">
+
                         </p>
                       )}
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors mt-1"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-base text-foreground hover:bg-muted rounded-md transition-colors mt-2"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-5 w-5" />
                       <span>Logout</span>
                     </button>
                   </div>
@@ -317,10 +280,10 @@ export default function CommandHeader({
           ) : (
             <Button
               variant="ghost"
-              size="sm"
+              size="default"
               className="text-muted-foreground hover:text-foreground"
             >
-              <User className="h-4 w-4" />
+              <User className="h-5 w-5" />
             </Button>
           )}
         </div>

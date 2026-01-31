@@ -30,9 +30,6 @@ import SourcePanel from './components/SourcePanel';
 import MissionPanel from './components/MissionPanel';
 import ToolPanel from './components/ToolPanel';
 
-// Import Zustand stores
-import { useDocumentStore, useChatStore, useUIStore, useSettingsStore } from './stores';
-
 const API_URL = API_ENDPOINTS.query();
 
 function MainApp() {
@@ -41,105 +38,84 @@ function MainApp() {
   const USER_ID = getUserId();
   const ORGANIZATION_ID = getOrganizationId();
 
-  // Document store
-  const {
-    allDocuments,
-    selectedDocs,
-    knowledgeBases,
-    selectedKB,
-    selectedKBs,
-    multiKBMode,
-    showCreateKBModal,
-    showKBModal,
-    fetchAllDocuments,
-    addSelectedDoc,
-    removeSelectedDoc,
-    selectAllDocs,
-    deselectAllDocs,
-    setShowKBModal,
-    setShowCreateKBModal,
-    createKnowledgeBase,
-    deleteKnowledgeBase: deleteKB,
-    renameKnowledgeBase: renameKB,
-    deleteDocument: deleteDoc,
-    setSelectedDocs,
-    setSelectedKBs,
-    setMultiKBMode,
-    setSelectedKB
-  } = useDocumentStore();
+  // State management
+  const [allDocuments, setAllDocuments] = useState([]);
+  const [documentsByKB, setDocumentsByKB] = useState({});
+  const [selectedDocs, setSelectedDocs] = useState(new Set());
+  const [activeDocumentId, setActiveDocumentId] = useState(null);
+  const [selectedDocumentDetails, setSelectedDocumentDetails] = useState({ summary: '', tags: [] });
+  const [removeMode, setRemoveMode] = useState(false);
+  const [kbError, setKbError] = useState(null);
+  const [isKnowledgeExpanded, setIsKnowledgeExpanded] = useState(true);
 
-  // Chat store
-  const {
-    conversation,
-    query,
-    isLoading,
-    thinkingMessage,
-    error,
-    lastParsedSources,
-    generatedDocuments,
-    isGeneratingOutput,
-    editingMessageId,
-    editText,
-    sessionId,
-    setQuery,
-    setIsLoading,
-    setThinkingMessage,
-    setError,
-    setLastParsedSources,
-    addMessage,
-    updateMessage,
-    setIsGeneratingOutput,
-    setEditingMessageId,
-    setEditText,
-    approveDocument,
-    editDocument,
-    cancelEdit,
-    appendAgentMessage,
-    addGeneratedDocument,
-    setConversation,
-    startNewSession
-  } = useChatStore();
+  // Multi-KB state
+  const [knowledgeBases, setKnowledgeBases] = useState([]);
+  const [selectedKB, setSelectedKB] = useState(null);
+  const [selectedKBs, setSelectedKBs] = useState(new Set());
+  const [isKBExpanded, setIsKBExpanded] = useState(false);
+  const [multiKBMode, setMultiKBMode] = useState(false);
+  const [showCreateKBModal, setShowCreateKBModal] = useState(false);
+  const [showKBModal, setShowKBModal] = useState(false);
 
-  // UI store
-  const {
-    theme,
-    isUploadModalOpen,
-    isDiscoverSourcesModalOpen,
-    documentToView,
-    isRightSidebarVisible,
-    activeMode,
-    processingStatus,
-    setTheme,
-    setIsUploadModalOpen,
-    setIsDiscoverSourcesModalOpen,
-    setDocumentToView,
-    setIsRightSidebarVisible,
-    setActiveMode
-  } = useUIStore();
+  // Query & conversation state
+  const [query, setQuery] = useState('');
+  const [conversation, setConversation] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [thinkingMessage, setThinkingMessage] = useState(null);
+  const [error, setError] = useState(null);
+  const [lastParsedSources, setLastParsedSources] = useState([]);
 
-  // Settings store
-  const {
-    selectedModel,
-    availableModels,
-    modelJustChanged,
-    selectedVoiceId,
-    availableVoices,
-    isAudioAgentMode,
-    isRecording,
-    mediaRecorder,
-    setSelectedModel,
-    fetchAvailableModels,
-    setModelJustChanged,
-    setSelectedVoiceId,
-    setIsAudioAgentMode,
-    setIsRecording,
-    setMediaRecorder,
-    setAudioChunks,
-    setIsTranscribing
-  } = useSettingsStore();
+  // UI state
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isDiscoverSourcesModalOpen, setIsDiscoverSourcesModalOpen] = useState(false);
+  const [documentToView, setDocumentToView] = useState(null);
+  const [isRightSidebarVisible, setIsRightSidebarVisible] = useState(false);
+  const [activeMode, setActiveMode] = useState('chat');
 
-  // Legacy refs
+  // Audio & voice state
+  const [isAudioAgentMode, setIsAudioAgentMode] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioChunks, setAudioChunks] = useState([]);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const ttsTriggeredRef = useRef(false);
+
+  // Generated output state
+  const [generatedDocuments, setGeneratedDocuments] = useState([]);
+  const [isGeneratingOutput, setIsGeneratingOutput] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editText, setEditText] = useState('');
+
+  // Theme & voice state
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+  const [selectedVoiceId, setSelectedVoiceId] = useState(() => {
+    return localStorage.getItem('selectedVoiceId') || 'en-US-Chirp3-HD-Charon';
+  });
+
+  // Model state
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-pro-preview-05-06');
+  const [availableModels, setAvailableModels] = useState([]);
+  const [previousModel, setPreviousModel] = useState('gemini-2.5-pro-preview-05-06');
+  const [modelJustChanged, setModelJustChanged] = useState(false);
+
+  // Processing status
+  const [processingStatus, setProcessingStatus] = useState({
+    is_processing: false,
+    task_type: null,
+    task_name: null,
+    progress: null
+  });
+
+  // Available voices
+  const availableVoices = [
+    { id: 'en-US-Chirp3-HD-Charon', name: 'Charon', description: 'Deep, Authoritative Male (Commands & Briefings)' },
+    { id: 'en-US-Chirp3-HD-Zephyr', name: 'Zephyr', description: 'Professional Female (Training & Education)' },
+    { id: 'en-US-Chirp3-HD-Fenrir', name: 'Fenrir', description: 'Strong, Commanding Male (Operations)' },
+    { id: 'en-US-Chirp3-HD-Aoede', name: 'Aoede', description: 'Articulate Female (Explanations & Q&A)' },
+    { id: 'en-US-Neural2-A', name: 'Neural2-A', description: 'Standard Male (Fallback)' }
+  ];
 
   // Effects
   useEffect(() => {
@@ -153,6 +129,14 @@ function MainApp() {
   useEffect(() => {
     console.log('[chat] conversation state updated', conversation);
   }, [conversation]);
+
+  useEffect(() => {
+    if (selectedModel !== previousModel) {
+      console.log(`[Model Switch] Detected model change from ${previousModel} to ${selectedModel}`);
+      setModelJustChanged(true);
+      setPreviousModel(selectedModel);
+    }
+  }, [selectedModel, previousModel]);
 
   // Helper functions
   const buildQueryTargets = useCallback(() => {
@@ -170,30 +154,242 @@ function MainApp() {
     };
   }, [selectedDocs]);
 
-  // Document handlers (using store functions)
+  const determineKBName = useCallback((doc) => {
+    if (!doc) return null;
+    // Backend returns folder_name field
+    if (doc.folder_name) return doc.folder_name;
+    return null;
+  }, []);
+
+  // Fetch functions
+  const fetchAllDocuments = useCallback(async () => {
+    const authToken = await getAccessToken();
+    const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+
+    try {
+      const response = await fetch(API_ENDPOINTS.listDocuments('All Knowledge Bases'), { headers });
+      const result = await response.json();
+
+      // Backend returns: { success, data: [...], count }
+      const docs = result.data || [];
+
+      setAllDocuments(docs);
+
+      const grouped = {};
+      docs.forEach((doc) => {
+        const kbName = determineKBName(doc);
+        if (!grouped[kbName]) {
+          grouped[kbName] = [];
+        }
+        grouped[kbName].push(doc);
+      });
+
+      setDocumentsByKB(grouped);
+      setKbError(null);
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+      setKbError(err.message);
+      toast({
+        title: "Error",
+        description: "Failed to fetch documents",
+        variant: "destructive",
+      });
+    }
+  }, [determineKBName, getAccessToken, toast]);
+
+  const fetchKnowledgeBases = useCallback(async () => {
+    try {
+      const authToken = await getAccessToken();
+      const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+      const response = await fetch(API_ENDPOINTS.listKnowledgeBases(), { headers });
+      const result = await response.json();
+
+      // Backend returns: { success, data: ["folder1", "folder2"], count }
+      const folderNames = result.data || [];
+
+      // Transform folder names into KB objects
+      const kbs = folderNames.map((folderName) => ({
+        name: folderName,
+        display_name: folderName,
+        description: `Knowledge base: ${folderName}`,
+      }));
+
+      setKnowledgeBases(kbs);
+    } catch (err) {
+      console.error('Error fetching knowledge bases:', err);
+      setKbError('Failed to load knowledge bases');
+    }
+  }, [getAccessToken]);
+
+  const fetchAvailableModels = useCallback(async () => {
+    try {
+      const authToken = await getAccessToken();
+      const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+      const response = await fetch(API_ENDPOINTS.models(), { headers });
+      const data = await response.json();
+
+      if (data.models) {
+        setAvailableModels(data.models);
+        console.log('[fetchAvailableModels] Loaded models:', data.models);
+      }
+    } catch (err) {
+      console.error('Error fetching available models:', err);
+      setAvailableModels([
+        {
+          id: 'gemini-2.5-pro-preview-05-06',
+          name: 'Gemini 2.5 Pro (Preview)',
+          provider: 'cloud',
+          provider_label: 'Cloud'
+        }
+      ]);
+    }
+  }, [getAccessToken]);
+
+  // KB management functions
+  const createKnowledgeBase = async (name, displayName, description) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.knowledgeBases(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name,
+          display_name: displayName,
+          description
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to create knowledge base');
+      }
+
+      await fetchKnowledgeBases();
+      await fetchAllDocuments();
+      toast({
+        title: 'Success',
+        description: `Knowledge base "${displayName}" created successfully`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const deleteKnowledgeBase = async (kbName, displayName) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the knowledge base "${displayName}"? This will permanently delete all documents in this knowledge base.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.knowledgeBase(kbName), {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to delete knowledge base');
+      }
+
+      await fetchKnowledgeBases();
+      await fetchAllDocuments();
+      if (selectedKB === kbName) {
+        setSelectedKB('default');
+      }
+      toast({
+        title: 'Success',
+        description: `Knowledge base "${displayName}" deleted successfully`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const renameKnowledgeBase = async (kbName, newDisplayName) => {
+    const trimmedName = newDisplayName?.trim();
+    if (!trimmedName) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.knowledgeBase(kbName), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          display_name: trimmedName,
+          description: `Updated knowledge base: ${trimmedName}`
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to rename knowledge base');
+      }
+
+      await fetchKnowledgeBases();
+      await fetchAllDocuments();
+      toast({
+        title: 'Success',
+        description: `Knowledge base renamed to "${trimmedName}"`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to rename knowledge base',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Document handlers
   const handleDocumentSelect = (docId) => {
-    addSelectedDoc(docId);
+    setSelectedDocs(prev => new Set(prev).add(docId));
   };
 
   const handleDocumentDeselect = (docId) => {
-    removeSelectedDoc(docId);
+    setSelectedDocs(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(docId);
+      return newSet;
+    });
   };
 
   const handleSelectAll = () => {
-    selectAllDocs();
+    const documents = documentsByKB[selectedKB] || [];
+    setSelectedDocs(new Set(documents.map(d => d.document_id)));
   };
 
   const handleDeselectAll = () => {
-    deselectAllDocs();
+    setSelectedDocs(new Set());
   };
 
   const handleDeleteDocument = async (docId) => {
     try {
-      await deleteDoc(docId, selectedKB, getAccessToken, getUserId, getOrganizationId);
-      toast({
-        title: "Success",
-        description: "Document deleted successfully",
+      const authToken = await getAccessToken();
+      const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+
+      const response = await fetch(API_ENDPOINTS.deleteDocument(docId, selectedKB), {
+        method: 'DELETE',
+        headers,
       });
+
+      if (response.ok) {
+        fetchAllDocuments();
+        toast({
+          title: "Success",
+          description: "Document deleted successfully",
+        });
+      }
     } catch (err) {
       console.error('Error deleting document:', err);
       toast({
@@ -215,7 +411,7 @@ function MainApp() {
       id: `user-${Date.now()}`
     };
 
-    addMessage(userMessage);
+    setConversation(prev => [...prev, userMessage]);
     setIsLoading(true);
     setThinkingMessage("Analyzing your query...");
     setError(null);
@@ -228,10 +424,15 @@ function MainApp() {
         ...(authToken && { 'Authorization': `Bearer ${authToken}` })
       };
 
-      const { documents: targetDocs } = buildQueryTargets();
+      const { knowledgeBases: targetKBs, documents: targetDocs } = buildQueryTargets();
 
-      if (modelJustChanged) {
-        console.log(`[Model Switch] Model changed to ${selectedModel}`);
+      let conversationHistory = null;
+      if (modelJustChanged && conversation.length > 0) {
+        console.log(`[Model Switch] Sending ${conversation.length} messages as conversation history`);
+        conversationHistory = conversation.map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        }));
         setModelJustChanged(false);
       }
 
@@ -244,7 +445,7 @@ function MainApp() {
           organization_id: ORGANIZATION_ID,
           document_ids: targetDocs,
           model: selectedModel,
-          session_id: sessionId,
+          session_id: `session_${USER_ID}_${Date.now()}`,
         }),
       });
 
@@ -258,24 +459,39 @@ function MainApp() {
       let agentMessageAdded = false;
       let bufferedPayload = '';
       let latestSources = [];
-      let currentToolCall = null;
-      let pendingEventType = null; // Store event type between calls
+
+      const appendAgentMessage = (finalMessage, sources = []) => {
+        if (!finalMessage) return;
+
+        console.log('[chat] appending agent message', finalMessage.slice(0, 120));
+        setConversation(prev => {
+          const updated = [...prev, {
+            sender: 'agent',
+            text: finalMessage,
+            id: `agent-${Date.now()}`,
+            ...(sources.length ? { sources } : {}),
+          }];
+          console.log('[chat] appended agent message', updated);
+          return updated;
+        });
+
+        if (sources.length) {
+          setLastParsedSources(sources);
+          setIsRightSidebarVisible(true);
+        }
+      };
 
       const handleStreamPayload = (rawPayload) => {
         const trimmedPayload = rawPayload.trim();
         if (!trimmedPayload || trimmedPayload.startsWith(':')) return;
 
-        // Skip SSE id lines
-        if (trimmedPayload.startsWith('id:')) {
-          return;
-        }
-
         // Extract SSE event type if present
+        let eventType = null;
         let dataPayload = trimmedPayload;
 
         if (trimmedPayload.startsWith('event:')) {
           // SSE format with event line - store event type for next data line
-          pendingEventType = trimmedPayload.replace(/^event:\s*/, '').trim();
+          eventType = trimmedPayload.replace(/^event:\s*/, '').trim();
           return; // Wait for data line
         }
 
@@ -295,16 +511,10 @@ function MainApp() {
 
         try {
           const parsed = JSON.parse(dataPayload);
+          console.log('[query-stream] event', parsed.event || parsed.type, parsed);
 
           // Map Agno SSE events to frontend expectations
-          const event = parsed.event || parsed.type || pendingEventType;
-
-          console.log('[query-stream] event', event, parsed);
-
-          // Clear pending event type after using it
-          if (pendingEventType) {
-            pendingEventType = null;
-          }
+          const event = parsed.event || parsed.type || eventType;
 
           if (parsed.sources?.length) {
             latestSources = parsed.sources;
@@ -312,125 +522,24 @@ function MainApp() {
 
           // Handle different event types
           if (event === 'run.started') {
-            setThinkingMessage('Analyzing your query...');
+            setThinkingMessage('Starting...');
           } else if (event === 'message.delta') {
-            // Accumulate message content and show streaming
+            // Accumulate message content
             const chunkText = parsed.data?.content || parsed.content || '';
             if (chunkText) {
               accumulatedAgentMessage += chunkText;
-
-              // Update conversation with streaming text in real-time
-              if (!agentMessageAdded) {
-                setConversation(prev => {
-                  const prevArray = Array.isArray(prev) ? prev : [];
-                  const lastMsg = prevArray[prevArray.length - 1];
-                  if (lastMsg?.sender === 'agent' && lastMsg?.isStreaming) {
-                    // Update existing streaming message
-                    return [
-                      ...prevArray.slice(0, -1),
-                      { ...lastMsg, text: accumulatedAgentMessage }
-                    ];
-                  } else {
-                    // Create new streaming message
-                    return [
-                      ...prevArray,
-                      {
-                        sender: 'agent',
-                        text: accumulatedAgentMessage,
-                        id: `agent-streaming-${Date.now()}`,
-                        isStreaming: true,
-                        toolCalls: currentToolCall ? [currentToolCall] : []
-                      }
-                    ];
-                  }
-                });
-              }
             }
           } else if (event === 'tool.started') {
             const toolName = parsed.data?.tool_name?.replace(/_/g, ' ') || 'tool';
-            const toolArgs = parsed.data?.tool_args || {};
-
-            currentToolCall = {
-              name: toolName,
-              args: toolArgs,
-              status: 'running',
-              startTime: Date.now()
-            };
-
-            // Show tool execution in thinking message
-            const argsStr = Object.keys(toolArgs).length > 0
-              ? ` with query: "${toolArgs.query || JSON.stringify(toolArgs).slice(0, 50)}"`
-              : '';
-            setThinkingMessage(`🔧 Searching knowledge base${argsStr}...`);
-
-            // Add tool call to conversation
-            setConversation(prev => {
-              const prevArray = Array.isArray(prev) ? prev : [];
-              const lastMsg = prevArray[prevArray.length - 1];
-              if (lastMsg?.sender === 'agent' && lastMsg?.isStreaming) {
-                return [
-                  ...prevArray.slice(0, -1),
-                  {
-                    ...lastMsg,
-                    toolCalls: [...(lastMsg.toolCalls || []), currentToolCall]
-                  }
-                ];
-              }
-              return prevArray;
-            });
+            setThinkingMessage(`Running ${toolName}...`);
           } else if (event === 'tool.completed') {
-            if (currentToolCall) {
-              currentToolCall.status = 'completed';
-              currentToolCall.endTime = Date.now();
-              currentToolCall.duration = currentToolCall.endTime - currentToolCall.startTime;
-
-              // Parse result if it's a JSON string
-              const result = parsed.data?.result;
-              if (result && typeof result === 'string') {
-                try {
-                  const parsedResult = JSON.parse(result);
-                  if (Array.isArray(parsedResult)) {
-                    currentToolCall.resultCount = parsedResult.length;
-                  }
-                } catch (e) {
-                  // Not JSON, that's okay
-                }
-              }
-            }
-            setThinkingMessage(null);
-          } else if (event === 'run.completed' || event === 'message.completed') {
+            setThinkingMessage('Processing results...');
+          } else if (event === 'run.completed') {
             setThinkingMessage(null);
             const finalMessage = parsed.data?.content || accumulatedAgentMessage;
             if (!agentMessageAdded && finalMessage) {
-              // Mark streaming as complete
-              setConversation(prev => {
-                const prevArray = Array.isArray(prev) ? prev : [];
-                const lastMsg = prevArray[prevArray.length - 1];
-                if (lastMsg?.sender === 'agent' && lastMsg?.isStreaming) {
-                  return [
-                    ...prevArray.slice(0, -1),
-                    {
-                      ...lastMsg,
-                      text: finalMessage,
-                      isStreaming: false,
-                      sources: parsed.data?.sources || latestSources
-                    }
-                  ];
-                } else {
-                  return [
-                    ...prevArray,
-                    {
-                      sender: 'agent',
-                      text: finalMessage,
-                      id: `agent-${Date.now()}`,
-                      sources: parsed.data?.sources || latestSources,
-                      toolCalls: currentToolCall ? [currentToolCall] : []
-                    }
-                  ];
-                }
-              });
+              appendAgentMessage(finalMessage, parsed.data?.sources || latestSources);
               agentMessageAdded = true;
-              currentToolCall = null;
             }
           } else if (event === 'error') {
             const message = parsed.data?.message || parsed.message || 'Stream error encountered.';
@@ -555,11 +664,6 @@ function MainApp() {
         appendAgentMessage(accumulatedAgentMessage, latestSources);
         agentMessageAdded = true;
       }
-
-      // Show sidebar if there are sources
-      if (latestSources.length) {
-        setIsRightSidebarVisible(true);
-      }
     } catch (err) {
       console.error('API call failed:', err);
       setError(err.message);
@@ -588,7 +692,7 @@ function MainApp() {
           content: `Generated ${toolId} content...`,
           timestamp: new Date().toISOString()
         };
-        addGeneratedDocument(newDoc);
+        setGeneratedDocuments(prev => [...prev, newDoc]);
         setIsGeneratingOutput(false);
 
         toast({
@@ -790,7 +894,7 @@ function MainApp() {
         documentTitle: mode === 'stepGuide' ? 'Step-by-Step Guide' : 'PMCS Checklist',
         ...(sources.length ? { sources } : {}),
       };
-      addMessage(agentMessage);
+      setConversation(prev => [...prev, agentMessage]);
 
       if (sources.length) {
         setLastParsedSources(sources);
@@ -812,29 +916,57 @@ function MainApp() {
   };
 
   const handleApproveDocument = (messageId) => {
-    const message = conversation.find(msg => msg.id === messageId);
-    if (message) {
-      approveDocument(messageId);
-      toast({
-        title: "Success",
-        description: `${message.documentTitle} approved and saved`,
-      });
-    }
+    setConversation(prev => prev.map(msg => {
+      if (msg.id === messageId) {
+        const newDoc = {
+          id: Date.now(),
+          type: msg.documentType,
+          title: msg.documentTitle,
+          content: msg.text,
+          createdAt: new Date().toISOString(),
+          sources: msg.sources || [],
+        };
+        setGeneratedDocuments(prevDocs => [...prevDocs, newDoc]);
+
+        toast({
+          title: "Success",
+          description: `${msg.documentTitle} approved and saved`,
+        });
+
+        return { ...msg, pendingApproval: false, approved: true };
+      }
+      return msg;
+    }));
   };
 
   const handleEditDocument = (messageId) => {
-    editDocument(messageId);
+    setConversation(prev => prev.map(msg => {
+      if (msg.id === messageId) {
+        return { ...msg, pendingApproval: false, editMode: true };
+      }
+      return msg;
+    }));
   };
 
   const handleCancelEdit = (messageId) => {
-    cancelEdit(messageId);
+    setConversation(prev => prev.map(msg => {
+      if (msg.id === messageId) {
+        return { ...msg, editMode: false, pendingApproval: true, editText: '' };
+      }
+      return msg;
+    }));
   };
 
   const handleSubmitEdit = async (messageId, editInstructions) => {
     const message = conversation.find(msg => msg.id === messageId);
     if (!message) return;
 
-    updateMessage(messageId, { editMode: false, isEditing: true });
+    setConversation(prev => prev.map(msg => {
+      if (msg.id === messageId) {
+        return { ...msg, editMode: false, isEditing: true };
+      }
+      return msg;
+    }));
 
     setThinkingMessage("Applying your edits...");
 
@@ -935,12 +1067,18 @@ function MainApp() {
 
       setThinkingMessage(null);
 
-      updateMessage(messageId, {
-        text: revisedContent,
-        sources: sources,
-        isEditing: false,
-        pendingApproval: true,
-      });
+      setConversation(prev => prev.map(msg => {
+        if (msg.id === messageId) {
+          return {
+            ...msg,
+            text: revisedContent,
+            sources: sources,
+            isEditing: false,
+            pendingApproval: true,
+          };
+        }
+        return msg;
+      }));
 
       toast({
         title: "Edits Applied",
@@ -951,7 +1089,12 @@ function MainApp() {
       console.error('Error editing document:', error);
       setThinkingMessage(null);
 
-      updateMessage(messageId, { isEditing: false, editMode: true });
+      setConversation(prev => prev.map(msg => {
+        if (msg.id === messageId) {
+          return { ...msg, isEditing: false, editMode: true };
+        }
+        return msg;
+      }));
 
       toast({
         title: "Error",
@@ -1080,67 +1223,6 @@ function MainApp() {
     }
   };
 
-  // KB management handlers
-  const handleCreateKB = async (name, displayName, description) => {
-    try {
-      await createKnowledgeBase(name, displayName, description);
-      await fetchAllDocuments(getAccessToken, getUserId, getOrganizationId);
-      toast({
-        title: 'Success',
-        description: `Knowledge base "${displayName}" created successfully`,
-      });
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: err.message,
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDeleteKB = async (kbName, displayName) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete the knowledge base "${displayName}"? This will permanently delete all documents in this knowledge base.`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      await deleteKB(kbName);
-      await fetchAllDocuments(getAccessToken, getUserId, getOrganizationId);
-      toast({
-        title: 'Success',
-        description: `Knowledge base "${displayName}" deleted successfully`,
-      });
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: err.message,
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleRenameKB = async (kbName, newDisplayName) => {
-    const trimmedName = newDisplayName?.trim();
-    if (!trimmedName) return;
-
-    try {
-      await renameKB(kbName, trimmedName);
-      await fetchAllDocuments(getAccessToken, getUserId, getOrganizationId);
-      toast({
-        title: 'Success',
-        description: `Knowledge base renamed to "${trimmedName}"`,
-      });
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to rename knowledge base',
-        variant: 'destructive',
-      });
-    }
-  };
-
   // KB modal handlers
   const handleKBModalDocSelection = (newSelectedDocs) => {
     const next = new Set(newSelectedDocs);
@@ -1161,9 +1243,10 @@ function MainApp() {
 
   // Initial load and sync effects
   useEffect(() => {
-    fetchAllDocuments(getAccessToken, getUserId, getOrganizationId);
-    fetchAvailableModels(getAccessToken);
-  }, [fetchAllDocuments, fetchAvailableModels, getAccessToken, getUserId, getOrganizationId]);
+    fetchKnowledgeBases();
+    fetchAllDocuments();
+    fetchAvailableModels();
+  }, [fetchKnowledgeBases, fetchAllDocuments, fetchAvailableModels]);
 
   useEffect(() => {
     if (!knowledgeBases.length) {
@@ -1196,6 +1279,8 @@ function MainApp() {
     }
   }, [multiKBMode, selectedKB]);
 
+  const documents = documentsByKB[selectedKB] || [];
+
   const handleConnectInoc = () => {
     toast({
       title: 'Connect to INOC Service Desk',
@@ -1221,7 +1306,7 @@ function MainApp() {
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <div className="w-96 border-r border-border">
+        <div className="w-80 border-r border-border">
           <SourcePanel
             documents={allDocuments}
             selectedDocs={selectedDocs}
@@ -1234,20 +1319,15 @@ function MainApp() {
             onKBChange={setSelectedKB}
             onUpload={() => setIsUploadModalOpen(true)}
             onDelete={handleDeleteDocument}
-            onRefresh={() => fetchAllDocuments(getAccessToken, getUserId, getOrganizationId)}
+            onRefresh={() => fetchAllDocuments()}
             onDiscover={() => setIsDiscoverSourcesModalOpen(true)}
             onManageKnowledgeBases={() => {
-              fetchAllDocuments(getAccessToken, getUserId, getOrganizationId);
+              fetchAllDocuments();
               setShowKBModal(true);
             }}
             multiKBMode={multiKBMode}
             selectedKBs={selectedKBs}
             isLoading={processingStatus.is_processing}
-            onDeleteKB={handleDeleteKB}
-            onUploadToKB={(kbName) => {
-              setSelectedKB(kbName);
-              setIsUploadModalOpen(true);
-            }}
           />
         </div>
 
@@ -1280,7 +1360,6 @@ function MainApp() {
             editingMessageId={editingMessageId}
             editText={editText}
             setEditText={setEditText}
-            onClearSession={startNewSession}
           />
         </div>
 
@@ -1292,7 +1371,7 @@ function MainApp() {
               isGeneratingOutput={isGeneratingOutput}
               onGenerateTool={handleGenerateTool}
               onOpenDocument={(doc) => setDocumentToView(doc)}
-              onSaveOutput={() => {
+              onSaveOutput={(doc) => {
                 toast({
                   title: "Success",
                   description: "Output saved successfully",
@@ -1311,36 +1390,36 @@ function MainApp() {
         )}
 
         {activeMode === 'chat' && isRightSidebarVisible && lastParsedSources.length > 0 && (
-          <div className="w-[28rem] border-l border-border bg-card flex flex-col h-full overflow-hidden">
-            <div className="p-5 border-b flex-shrink-0">
+          <div className="w-96 border-l border-border bg-card flex flex-col h-full overflow-hidden">
+            <div className="p-4 border-b flex-shrink-0">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Sources</h3>
+                <h3 className="font-semibold">Sources</h3>
                 <Button
                   variant="ghost"
-                  size="default"
+                  size="sm"
                   onClick={() => setIsRightSidebarVisible(false)}
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             <ScrollArea className="flex-1 overflow-y-auto">
-              <div className="p-5 space-y-4">
+              <div className="p-4 space-y-3">
                 {lastParsedSources.map((source, idx) => (
                   <Card
                     key={idx}
-                    className="p-4 cursor-pointer hover:bg-muted/50"
+                    className="p-3 cursor-pointer hover:bg-muted/50"
                     onClick={() => setDocumentToView(source)}
                   >
-                    <div className="flex items-start gap-3">
-                      <FileText className="h-5 w-5 mt-0.5 text-muted-foreground" />
+                    <div className="flex items-start gap-2">
+                      <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
                       <div className="flex-1">
-                        <p className="text-base font-medium">{source.document_name}</p>
+                        <p className="text-sm font-medium">{source.document_name}</p>
                         {source.page_number && (
-                          <p className="text-sm text-muted-foreground">Page {source.page_number}</p>
+                          <p className="text-xs text-muted-foreground">Page {source.page_number}</p>
                         )}
                         {source.snippet && (
-                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                             {source.snippet}
                           </p>
                         )}
@@ -1358,7 +1437,7 @@ function MainApp() {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUploadSuccess={() => {
-          fetchAllDocuments(getAccessToken, getUserId, getOrganizationId);
+          fetchAllDocuments();
           setIsUploadModalOpen(false);
         }}
         selectedKB={selectedKB}
@@ -1391,7 +1470,7 @@ function MainApp() {
           isOpen={showKBModal}
           onClose={() => {
             setShowKBModal(false);
-            fetchAllDocuments(getAccessToken, getUserId, getOrganizationId);
+            fetchAllDocuments();
           }}
           knowledgeBases={knowledgeBases}
           selectedKBs={selectedKBs}
@@ -1401,8 +1480,8 @@ function MainApp() {
           selectedDocs={selectedDocs}
           onDocSelectionChange={handleKBModalDocSelection}
           onCreateKB={() => setShowCreateKBModal(true)}
-          onDeleteKB={handleDeleteKB}
-          onRenameKB={handleRenameKB}
+          onDeleteKB={deleteKnowledgeBase}
+          onRenameKB={renameKnowledgeBase}
         />
       )}
 
@@ -1410,7 +1489,7 @@ function MainApp() {
         <CreateKnowledgeBaseModal
           isOpen={showCreateKBModal}
           onClose={() => setShowCreateKBModal(false)}
-          onSubmit={handleCreateKB}
+          onSubmit={createKnowledgeBase}
         />
       )}
     </div>

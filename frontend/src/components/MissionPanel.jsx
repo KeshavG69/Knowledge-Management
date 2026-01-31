@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Send, Shield, StickyNote, Volume2, Brain, Map, FileText,
   Mic, MicOff, Edit, Check, X, ChevronRight, AlertCircle,
-  Target, Info, CheckCircle2
+  Target, Info, CheckCircle2, Wrench, Loader2, Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,7 +33,8 @@ export default function MissionPanel({
   onApproveEdit,
   editingMessageId,
   editText,
-  setEditText
+  setEditText,
+  onClearSession
 }) {
   const messagesEndRef = useRef(null);
   const [activeTools, setActiveTools] = useState([]);
@@ -91,114 +92,148 @@ export default function MissionPanel({
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Mission Status Bar */}
-      <div className="px-6 py-3 bg-card border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-primary" />
-            <span className="text-xs font-medium tracking-wider text-primary">MISSION READY</span>
+      <div className="px-8 py-4 bg-card border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium tracking-wider text-primary">MISSION READY</span>
           </div>
-          <div className="h-4 w-px bg-border" />
-          <span className="text-xs text-muted-foreground">
+          <div className="h-5 w-px bg-border" />
+          <span className="text-sm text-muted-foreground">
             {selectedDocsCount} SOURCES LOADED
           </span>
         </div>
         <div className="flex items-center gap-2">
           {isAudioAgentMode && (
-            <div className="px-3 py-1 bg-accent/20 rounded-md flex items-center gap-2">
-              <Volume2 className="h-3 w-3 text-accent" />
-              <span className="text-xs font-medium text-accent">AUDIO MODE ACTIVE</span>
+            <div className="px-4 py-2 bg-accent/20 rounded-md flex items-center gap-2">
+              <Volume2 className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-accent">AUDIO MODE ACTIVE</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Conversation Area */}
-      <ScrollArea className="flex-1 px-6 py-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <ScrollArea className="flex-1 px-8 py-6">
+        <div className="max-w-4xl mx-auto space-y-5">
           {conversation.length === 0 && !isLoading && (
             <Card className="card-mission">
-              <CardHeader className="text-center pb-6">
-                <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h2 className="text-lg font-bold tracking-wider text-primary">
+              <CardHeader className="text-center pb-8">
+                <Shield className="h-16 w-16 text-primary mx-auto mb-6" />
+                <h2 className="text-2xl font-bold tracking-wider text-primary">
                   SOLDIER IQ TACTICAL ASSISTANT
                 </h2>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-base text-muted-foreground mt-3">
                   Ready to provide mission-critical intelligence and support
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-6">
                   <button
                     onClick={() => toggleTool('note')}
                     className={cn(
-                      "p-4 rounded-lg border-2 transition-all hover:shadow-md",
+                      "p-6 rounded-lg border-2 transition-all hover:shadow-md",
                       activeTools.includes('note')
                         ? "border-accent bg-accent/10"
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <StickyNote className="h-6 w-6 text-primary mb-2" />
-                    <p className="text-xs font-medium tracking-wider">ADD NOTE</p>
+                    <StickyNote className="h-8 w-8 text-primary mb-3" />
+                    <p className="text-sm font-medium tracking-wider">ADD NOTE</p>
                   </button>
                   <button
                     onClick={() => toggleTool('audio')}
                     className={cn(
-                      "p-4 rounded-lg border-2 transition-all hover:shadow-md",
+                      "p-6 rounded-lg border-2 transition-all hover:shadow-md",
                       activeTools.includes('audio')
                         ? "border-accent bg-accent/10"
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <Volume2 className="h-6 w-6 text-primary mb-2" />
-                    <p className="text-xs font-medium tracking-wider">AUDIO OVERVIEW</p>
+                    <Volume2 className="h-8 w-8 text-primary mb-3" />
+                    <p className="text-sm font-medium tracking-wider">AUDIO OVERVIEW</p>
                   </button>
                   <button
                     onClick={() => toggleTool('mindmap')}
                     className={cn(
-                      "p-4 rounded-lg border-2 transition-all hover:shadow-md",
+                      "p-6 rounded-lg border-2 transition-all hover:shadow-md",
                       activeTools.includes('mindmap')
                         ? "border-accent bg-accent/10"
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <Brain className="h-6 w-6 text-primary mb-2" />
-                    <p className="text-xs font-medium tracking-wider">MIND MAP</p>
+                    <Brain className="h-8 w-8 text-primary mb-3" />
+                    <p className="text-sm font-medium tracking-wider">MIND MAP</p>
                   </button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {conversation.map((message, index) => (
+          {Array.isArray(conversation) && conversation.map((message, index) => (
             <div
               key={message.id || index}
               className={cn(
-                "rounded-lg border p-4 transition-all",
+                "rounded-lg border p-5 transition-all",
                 getMessageClass(message.sender)
               )}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <div className="mt-1">
                   {getMessageIcon(message.sender)}
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium tracking-wider uppercase text-muted-foreground">
+                  <div className="mb-3">
+                    <span className="text-sm font-medium tracking-wider uppercase text-muted-foreground">
                       {message.sender === 'user' ? 'OPERATOR' :
                        message.sender === 'agent' ? 'SOLDIER IQ' :
                        'SYSTEM'}
                     </span>
-                    {message.sender === 'agent' && !editingMessageId && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onEditMessage(message.id, message.text)}
-                        className="h-6 px-2"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                    )}
                   </div>
+
+                  {/* Tool Calls Display - Show only before text starts streaming */}
+                  {message.isStreaming && !message.text && message.toolCalls && message.toolCalls.length > 0 && (
+                    <div className="mb-5 space-y-3">
+                      {message.toolCalls.map((toolCall, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-4 p-4 rounded-md bg-muted/50 border border-border"
+                        >
+                          <div className="mt-0.5">
+                            {toolCall.status === 'running' ? (
+                              <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                            ) : (
+                              <Wrench className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 text-sm">
+                            <div className="font-medium text-foreground mb-1">
+                              {toolCall.name}
+                              {toolCall.status === 'completed' && toolCall.duration && (
+                                <span className="ml-2 text-muted-foreground font-normal">
+                                  ({(toolCall.duration / 1000).toFixed(2)}s)
+                                </span>
+                              )}
+                            </div>
+                            {toolCall.args && Object.keys(toolCall.args).length > 0 && (
+                              <div className="text-muted-foreground">
+                                {toolCall.args.query ? (
+                                  <span>Query: "{toolCall.args.query}"</span>
+                                ) : (
+                                  <span>{JSON.stringify(toolCall.args, null, 2)}</span>
+                                )}
+                              </div>
+                            )}
+                            {toolCall.resultCount !== undefined && (
+                              <div className="mt-1 text-muted-foreground">
+                                Retrieved {toolCall.resultCount} result{toolCall.resultCount !== 1 ? 's' : ''}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {editingMessageId === message.id ? (
                     <div className="space-y-2">
@@ -379,23 +414,23 @@ export default function MissionPanel({
       </ScrollArea>
 
       {/* Query Input Area */}
-      <div className="border-t border-border bg-card p-4">
+      <div className="border-t border-border bg-card p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="flex-1 relative">
               <textarea
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Enter mission query..."
-                className="w-full px-4 py-3 pr-12 rounded-lg border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-5 py-4 pr-14 rounded-lg border border-border bg-background text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                 rows={2}
                 disabled={isLoading}
               />
               <button
                 onClick={isRecording ? onStopRecording : onStartRecording}
                 className={cn(
-                  "absolute right-2 bottom-2 p-2 rounded-md transition-all",
+                  "absolute right-3 bottom-3 p-2 rounded-md transition-all",
                   isRecording
                     ? "bg-destructive text-destructive-foreground animate-pulse"
                     : "hover:bg-muted"
@@ -403,26 +438,37 @@ export default function MissionPanel({
                 disabled={isLoading}
               >
                 {isRecording ? (
-                  <MicOff className="h-4 w-4" />
+                  <MicOff className="h-5 w-5" />
                 ) : (
-                  <Mic className="h-4 w-4" />
+                  <Mic className="h-5 w-5" />
                 )}
               </button>
             </div>
+            {conversation.length > 0 && (
+              <Button
+                onClick={onClearSession}
+                disabled={isLoading}
+                size="lg"
+                variant="ghost"
+                className="px-5 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            )}
             <Button
               onClick={onSendQuery}
               disabled={isLoading || !query.trim()}
               size="lg"
-              className="px-6"
+              className="px-8 text-base"
             >
-              <Send className="h-4 w-4 mr-2" />
+              <Send className="h-5 w-5 mr-2" />
               SEND
             </Button>
           </div>
 
           {selectedDocsCount > 0 && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Info className="h-3 w-3" />
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Info className="h-4 w-4" />
               <span>Querying {selectedDocsCount} source{selectedDocsCount !== 1 ? 's' : ''}</span>
             </div>
           )}

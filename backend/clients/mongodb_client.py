@@ -164,7 +164,8 @@ class MongoDBClient:
         collection: str,
         query: Dict[str, Any],
         limit: Optional[int] = None,
-        skip: Optional[int] = None
+        skip: Optional[int] = None,
+        projection: Optional[Dict[str, int]] = None
     ) -> List[Dict[str, Any]]:
         """
         Async find multiple documents in MongoDB collection
@@ -174,11 +175,12 @@ class MongoDBClient:
             query: Query filter
             limit: Maximum number of documents to return
             skip: Number of documents to skip
+            projection: Optional projection to include/exclude fields (e.g., {"raw_content": 0})
 
         Returns:
             List[Dict[str, Any]]: List of documents
         """
-        cursor = self.async_db[collection].find(query)
+        cursor = self.async_db[collection].find(query, projection)
 
         if skip:
             cursor = cursor.skip(skip)
@@ -288,6 +290,63 @@ class MongoDBClient:
         """
         count = await self.async_db[collection].count_documents(query)
         return count
+
+    def distinct(self, collection: str, field: str, query: Optional[Dict[str, Any]] = None) -> List[Any]:
+        """
+        Get distinct values for a field in MongoDB collection
+
+        Args:
+            collection: Collection name
+            field: Field name to get distinct values for
+            query: Optional query filter
+
+        Returns:
+            List[Any]: List of distinct values
+        """
+        if query is None:
+            query = {}
+        distinct_values = self.sync_db[collection].distinct(field, query)
+        logger.info(f"✅ Found {len(distinct_values)} distinct values for {field} in {collection}")
+        return distinct_values
+
+    async def async_distinct(self, collection: str, field: str, query: Optional[Dict[str, Any]] = None) -> List[Any]:
+        """
+        Async get distinct values for a field in MongoDB collection
+
+        Args:
+            collection: Collection name
+            field: Field name to get distinct values for
+            query: Optional query filter
+
+        Returns:
+            List[Any]: List of distinct values
+        """
+        if query is None:
+            query = {}
+        distinct_values = await self.async_db[collection].distinct(field, query)
+        logger.info(f"✅ Found {len(distinct_values)} distinct values for {field} in {collection}")
+        return distinct_values
+
+    async def async_update_documents(
+        self,
+        collection: str,
+        query: Dict[str, Any],
+        update: Dict[str, Any]
+    ) -> int:
+        """
+        Async update multiple documents in MongoDB collection
+
+        Args:
+            collection: Collection name
+            query: Query filter
+            update: Update operations (should include operators like $set, $push, etc.)
+
+        Returns:
+            int: Number of documents modified
+        """
+        result = await self.async_db[collection].update_many(query, update)
+        logger.info(f"✅ Updated {result.modified_count} document(s) in {collection}")
+        return result.modified_count
 
     def close(self):
         """Close MongoDB connections"""

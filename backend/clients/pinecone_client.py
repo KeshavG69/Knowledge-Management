@@ -332,6 +332,74 @@ class PineconeClient:
         logger.info(f"✅ Created retriever with k={k}")
         return retriever
 
+    def update_metadata_by_filter(
+        self,
+        filter: Dict[str, Any],
+        new_metadata: Dict[str, Any],
+        namespace: Optional[str] = None
+    ) -> int:
+        """
+        Update metadata for all vectors matching a filter
+
+        Args:
+            filter: Metadata filter to find vectors (e.g., {"folder_name": "old_name"})
+            new_metadata: New metadata to set (e.g., {"folder_name": "new_name"})
+            namespace: Optional namespace
+
+        Returns:
+            int: Number of vectors updated
+        """
+        try:
+            index = self.pc.Index(self.index_name)
+
+            # Query to get all matching vector IDs
+            # We need to do a dummy query with high top_k to get IDs
+            # Pinecone doesn't have a direct "list by filter" API, so we query with a zero vector
+
+            logger.info(f"Querying Pinecone with filter: {filter}")
+
+            # Create a dummy zero vector for querying
+            dummy_vector = [0.0] * 1536  # text-embedding-3-small dimension
+
+            # Query with filter to get matching IDs
+            # Use very high top_k to get all matches
+            query_response = index.query(
+                vector=dummy_vector,
+                filter=filter,
+                top_k=10000,  # Pinecone max
+                namespace=namespace,
+                include_metadata=False  # We only need IDs
+            )
+
+            matches = query_response.get('matches', [])
+            vector_ids = [match['id'] for match in matches]
+
+            if not vector_ids:
+                logger.warning(f"No vectors found matching filter: {filter}")
+                return 0
+
+            logger.info(f"Found {len(vector_ids)} vectors to update")
+
+            # Update each vector's metadata
+            updated_count = 0
+            for vec_id in vector_ids:
+                try:
+                    index.update(
+                        id=vec_id,
+                        set_metadata=new_metadata,
+                        namespace=namespace
+                    )
+                    updated_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to update vector {vec_id}: {str(e)}")
+
+            logger.info(f"✅ Updated metadata for {updated_count} vectors in Pinecone")
+            return updated_count
+
+        except Exception as e:
+            logger.error(f"❌ Failed to update metadata by filter: {str(e)}")
+            raise Exception(f"Failed to update metadata: {str(e)}")
+
 
 # Singleton instance
 _pinecone_client: Optional[PineconeClient] = None

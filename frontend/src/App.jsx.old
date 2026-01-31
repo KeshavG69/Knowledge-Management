@@ -1,0 +1,1097 @@
+import React, { useEffect, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/hooks/use-toast';
+import {
+  FileText, Video, X, Plus, Edit, Trash2, Shield
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import DocumentViewerModal from './DocumentViewerModal';
+import VideoViewerModal from './VideoViewerModal';
+import UploadModal from './UploadModal';
+import DiscoverSourcesModal from './DiscoverSourcesModal';
+import { API_ENDPOINTS } from './config';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import AuthPage from './components/auth/AuthPage';
+
+// Import Zustand stores
+import { useDocumentStore, useChatStore, useUIStore, useSettingsStore } from './stores';
+
+// Import military-themed components
+import CommandHeader from './components/CommandHeader';
+import SourcePanel from './components/SourcePanel';
+import MissionPanel from './components/MissionPanel';
+import ToolPanel from './components/ToolPanel';
+
+const API_URL = API_ENDPOINTS.query();
+
+function MainApp() {
+  const { user, logout, getAccessToken, getUserId, getOrganizationId } = useAuth();
+  const { toast } = useToast();
+  const USER_ID = getUserId();
+  const ORGANIZATION_ID = getOrganizationId();
+
+  // Document store
+  const {
+    allDocuments,
+    documentsByKB,
+    selectedDocs,
+    knowledgeBases,
+    selectedKB,
+    selectedKBs,
+    multiKBMode,
+    showCreateKBModal,
+    showKBModal,
+    fetchAllDocuments,
+    fetchKnowledgeBases,
+    addSelectedDoc,
+    removeSelectedDoc,
+    selectAllDocs,
+    deselectAllDocs,
+    setShowKBModal,
+    setShowCreateKBModal,
+    createKnowledgeBase,
+    deleteKnowledgeBase: deleteKB,
+    renameKnowledgeBase: renameKB,
+    deleteDocument: deleteDoc,
+    setSelectedDocs,
+    setSelectedKBs,
+    setMultiKBMode,
+    setSelectedKB
+  } = useDocumentStore();
+
+  // Chat store
+  const {
+    conversation,
+    query,
+    isLoading,
+    thinkingMessage,
+    error,
+    lastParsedSources,
+    generatedDocuments,
+    isGeneratingOutput,
+    editingMessageId,
+    editText,
+    setQuery,
+    setIsLoading,
+    setThinkingMessage,
+    setError,
+    setLastParsedSources,
+    addMessage,
+    setConversation,
+    setIsGeneratingOutput,
+    setEditingMessageId,
+    setEditText,
+    approveDocument,
+    editDocument,
+    cancelEdit,
+    appendAgentMessage
+  } = useChatStore();
+
+  // UI store
+  const {
+    theme,
+    isUploadModalOpen,
+    isDiscoverSourcesModalOpen,
+    documentToView,
+    isRightSidebarVisible,
+    activeMode,
+    processingStatus,
+    setTheme,
+    setIsUploadModalOpen,
+    setIsDiscoverSourcesModalOpen,
+    setDocumentToView,
+    setIsRightSidebarVisible,
+    setActiveMode
+  } = useUIStore();
+
+  // Settings store
+  const {
+    selectedModel,
+    availableModels,
+    modelJustChanged,
+    selectedVoiceId,
+    availableVoices,
+    isAudioAgentMode,
+    isRecording,
+    mediaRecorder,
+    isTranscribing,
+    setSelectedModel,
+    fetchAvailableModels,
+    setModelJustChanged,
+    setSelectedVoiceId,
+    setIsAudioAgentMode,
+    setIsRecording,
+    setMediaRecorder,
+    setIsTranscribing
+  } = useSettingsStore();
+
+  // Initial load
+  useEffect(() => {
+    fetchKnowledgeBases(getAccessToken);
+    fetchAllDocuments(getAccessToken);
+    fetchAvailableModels(getAccessToken);
+  }, [fetchKnowledgeBases, fetchAllDocuments, fetchAvailableModels, getAccessToken]);
+
+  // Build query targets for chat
+  const buildQueryTargets = useCallback(() => {
+    const filteredDocs = [];
+    selectedDocs.forEach((docId) => {
+      if (!docId) return;
+      filteredDocs.push(String(docId));
+    });
+    return { documents: filteredDocs };
+  }, [selectedDocs]);
+
+  // Document handlers
+  const handleDocumentSelect = useCallback((docId) => {
+    addSelectedDoc(docId);
+  }, [addSelectedDoc]);
+
+  const handleDocumentDeselect = useCallback((docId) => {
+    removeSelectedDoc(docId);
+  }, [removeSelectedDoc]);
+
+  const handleDeleteDocument = useCallback(async (docId) => {
+    try {
+      await deleteDoc(docId, selectedKB, getAccessToken);
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+      });
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive",
+      });
+    }
+  }, [deleteDoc, selectedKB, getAccessToken, toast]);
+
+  // KB management handlers
+  const handleCreateKB = useCallback(async (name, displayName, description) => {
+    try {
+      await createKnowledgeBase(name, displayName, description);
+      await fetchKnowledgeBases(getAccessToken);
+      await fetchAllDocuments(getAccessToken);
+      toast({
+        title: 'Success',
+        description: `Knowledge base "${displayName}" created successfully`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  }, [createKnowledgeBase, fetchKnowledgeBases, fetchAllDocuments, getAccessToken, toast]);
+
+  const handleDeleteKB = useCallback(async (kbName, displayName) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the knowledge base "${displayName}"? This will permanently delete all documents in this knowledge base.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteKB(kbName);
+      await fetchKnowledgeBases(getAccessToken);
+      await fetchAllDocuments(getAccessToken);
+      toast({
+        title: 'Success',
+        description: `Knowledge base "${displayName}" deleted successfully`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  }, [deleteKB, fetchKnowledgeBases, fetchAllDocuments, getAccessToken, toast]);
+
+  const handleRenameKB = useCallback(async (kbName, newDisplayName) => {
+    const trimmedName = newDisplayName?.trim();
+    if (!trimmedName) return;
+
+    try {
+      await renameKB(kbName, trimmedName);
+      await fetchKnowledgeBases(getAccessToken);
+      await fetchAllDocuments(getAccessToken);
+      toast({
+        title: 'Success',
+        description: `Knowledge base renamed to "${trimmedName}"`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to rename knowledge base',
+        variant: 'destructive',
+      });
+    }
+  }, [renameKB, fetchKnowledgeBases, fetchAllDocuments, getAccessToken, toast]);
+
+  // Chat handler with streaming
+  const handleSendQuery = useCallback(async (overrideQuery = null) => {
+    const queryToSend = overrideQuery || query;
+    if (!queryToSend.trim() || isLoading) return;
+
+    const userMessage = {
+      sender: 'user',
+      text: queryToSend,
+      id: `user-${Date.now()}`
+    };
+
+    addMessage(userMessage);
+    setIsLoading(true);
+    setThinkingMessage("Analyzing your query...");
+    setError(null);
+
+    try {
+      const authToken = await getAccessToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+      };
+
+      const { documents: targetDocs } = buildQueryTargets();
+
+      let conversationHistory = null;
+      if (modelJustChanged && conversation.length > 0) {
+        console.log(`[Model Switch] Sending ${conversation.length} messages as conversation history`);
+        conversationHistory = conversation.map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        }));
+        setModelJustChanged(false);
+      }
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          message: queryToSend,
+          user_id: USER_ID,
+          organization_id: ORGANIZATION_ID,
+          document_ids: targetDocs,
+          model: selectedModel,
+          session_id: `session_${USER_ID}_${Date.now()}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedAgentMessage = '';
+      let agentMessageAdded = false;
+      let bufferedPayload = '';
+      let latestSources = [];
+
+      const handleStreamPayload = (rawPayload) => {
+        const trimmedPayload = rawPayload.trim();
+        if (!trimmedPayload || trimmedPayload.startsWith(':')) return;
+
+        let eventType = null;
+        let dataPayload = trimmedPayload;
+
+        if (trimmedPayload.startsWith('event:')) {
+          eventType = trimmedPayload.replace(/^event:\s*/, '').trim();
+          return;
+        }
+
+        if (trimmedPayload.startsWith('data:')) {
+          dataPayload = trimmedPayload.replace(/^data:\s*/, '').trim();
+        }
+
+        if (dataPayload === '[DONE]') {
+          setThinkingMessage(null);
+          if (!agentMessageAdded && accumulatedAgentMessage) {
+            appendAgentMessage(accumulatedAgentMessage, latestSources);
+            agentMessageAdded = true;
+          }
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(dataPayload);
+          console.log('[query-stream] event', parsed.event || parsed.type, parsed);
+
+          const event = parsed.event || parsed.type || eventType;
+
+          if (parsed.sources?.length) {
+            latestSources = parsed.sources;
+          }
+
+          if (event === 'run.started') {
+            setThinkingMessage('Starting...');
+          } else if (event === 'message.delta') {
+            const chunkText = parsed.data?.content || parsed.content || '';
+            if (chunkText) {
+              accumulatedAgentMessage += chunkText;
+            }
+          } else if (event === 'tool.started') {
+            const toolName = parsed.data?.tool_name?.replace(/_/g, ' ') || 'tool';
+            setThinkingMessage(`Running ${toolName}...`);
+          } else if (event === 'tool.completed') {
+            setThinkingMessage('Processing results...');
+          } else if (event === 'run.completed') {
+            setThinkingMessage(null);
+            const finalMessage = parsed.data?.content || accumulatedAgentMessage;
+            if (!agentMessageAdded && finalMessage) {
+              appendAgentMessage(finalMessage, parsed.data?.sources || latestSources);
+              agentMessageAdded = true;
+            }
+          } else if (event === 'error') {
+            const message = parsed.data?.message || parsed.message || 'Stream error encountered.';
+            setThinkingMessage(null);
+            setError(message);
+            toast({
+              title: 'Stream Error',
+              description: message,
+              variant: 'destructive',
+            });
+            if (!agentMessageAdded && accumulatedAgentMessage) {
+              appendAgentMessage(accumulatedAgentMessage, latestSources);
+              agentMessageAdded = true;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing streamed JSON:', e, dataPayload);
+        }
+      };
+
+      const extractNextPayload = (buffer) => {
+        if (!buffer) return null;
+
+        let idx = 0;
+        while (idx < buffer.length && /\s/.test(buffer[idx])) {
+          idx += 1;
+        }
+
+        if (idx > 0) {
+          return { payload: null, length: idx };
+        }
+
+        if (buffer.startsWith('data:', idx)) {
+          const newlineIndex = buffer.indexOf('\n', idx);
+          if (newlineIndex === -1) return null;
+          return {
+            payload: buffer.slice(idx, newlineIndex),
+            length: newlineIndex + 1,
+          };
+        }
+
+        const startChar = buffer[idx];
+
+        if (startChar === '{' || startChar === '[') {
+          let depth = 0;
+          let inString = false;
+          let escapeNext = false;
+
+          for (let i = idx; i < buffer.length; i += 1) {
+            const char = buffer[i];
+
+            if (escapeNext) {
+              escapeNext = false;
+              continue;
+            }
+
+            if (char === '\\') {
+              escapeNext = true;
+              continue;
+            }
+
+            if (char === '"') {
+              inString = !inString;
+              continue;
+            }
+
+            if (inString) continue;
+
+            if (char === '{' || char === '[') {
+              depth += 1;
+            } else if (char === '}' || char === ']') {
+              depth -= 1;
+              if (depth === 0) {
+                const jsonSegment = buffer.slice(idx, i + 1);
+                return {
+                  payload: jsonSegment,
+                  length: i + 1,
+                };
+              }
+            }
+          }
+
+          return null;
+        }
+
+        const newlineIndex = buffer.indexOf('\n', idx);
+        if (newlineIndex === -1) return null;
+
+        return {
+          payload: buffer.slice(idx, newlineIndex),
+          length: newlineIndex + 1,
+        };
+      };
+
+      const flushBufferedPayload = () => {
+        while (bufferedPayload.length) {
+          const next = extractNextPayload(bufferedPayload);
+          if (!next) break;
+
+          const { payload, length } = next;
+          if (payload) {
+            handleStreamPayload(payload);
+          }
+
+          bufferedPayload = bufferedPayload.slice(length);
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        console.log('[query-stream] raw chunk', chunk);
+        bufferedPayload += chunk;
+        flushBufferedPayload();
+      }
+
+      flushBufferedPayload();
+
+      if (!agentMessageAdded && accumulatedAgentMessage) {
+        appendAgentMessage(accumulatedAgentMessage, latestSources);
+        agentMessageAdded = true;
+      }
+
+      if (latestSources.length) {
+        setLastParsedSources(latestSources);
+        setIsRightSidebarVisible(true);
+      }
+    } catch (err) {
+      console.error('API call failed:', err);
+      setError(err.message);
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setQuery('');
+    }
+  }, [query, isLoading, conversation, modelJustChanged, selectedModel, buildQueryTargets, getAccessToken, USER_ID, ORGANIZATION_ID, toast, addMessage, setIsLoading, setThinkingMessage, setError, appendAgentMessage, setModelJustChanged, setQuery, setLastParsedSources, setIsRightSidebarVisible]);
+
+  // Tool generation
+  const handleGenerateTool = useCallback(async (toolId) => {
+    if (toolId === 'stepGuide' || toolId === 'pmcsChecklist') {
+      // Implement handleGenerateOutput logic here
+      console.log('Generate tool:', toolId);
+    } else {
+      setIsGeneratingOutput(true);
+      setTimeout(() => {
+        const newDoc = {
+          id: Date.now(),
+          title: `${toolId.toUpperCase()} Output`,
+          type: toolId,
+          content: `Generated ${toolId} content...`,
+          timestamp: new Date().toISOString()
+        };
+        toast({
+          title: "Success",
+          description: `${toolId} generated successfully`,
+        });
+        setIsGeneratingOutput(false);
+      }, 2000);
+    }
+  }, [setIsGeneratingOutput, toast]);
+
+  // Audio handlers
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        // Implement transcribeAudio here
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      toast({
+        title: "Error",
+        description: "Failed to start recording",
+        variant: "destructive",
+      });
+    }
+  }, [setMediaRecorder, setIsRecording, toast]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+  }, [mediaRecorder, isRecording, setIsRecording]);
+
+  // KB modal handlers
+  const handleKBModalDocSelection = useCallback((newSelectedDocs) => {
+    setSelectedDocs(new Set(newSelectedDocs));
+  }, [setSelectedDocs]);
+
+  const handleKBSelectionChange = useCallback((kbs, mode) => {
+    setSelectedKBs(new Set(kbs));
+    setMultiKBMode(mode);
+    if (!mode && kbs.length === 1) {
+      setSelectedKB(kbs[0]);
+    }
+  }, [setSelectedKBs, setMultiKBMode, setSelectedKB]);
+
+  const handleConnectInoc = () => {
+    toast({
+      title: 'Connect to INOC Service Desk',
+      description: 'Launching INOC Service Desk connection…',
+    });
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      <Toaster />
+
+      <CommandHeader
+        theme={theme}
+        setTheme={setTheme}
+        user={user}
+        onLogout={logout}
+        activeMode={activeMode}
+        onModeChange={setActiveMode}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+        availableModels={availableModels}
+        onConnectInoc={handleConnectInoc}
+      />
+
+      <div className="flex-1 flex overflow-hidden">
+        <div className="w-80 border-r border-border">
+          <SourcePanel
+            documents={allDocuments}
+            selectedDocs={selectedDocs}
+            onDocumentSelect={handleDocumentSelect}
+            onDocumentDeselect={handleDocumentDeselect}
+            onSelectAll={selectAllDocs}
+            onDeselectAll={deselectAllDocs}
+            knowledgeBases={knowledgeBases}
+            selectedKB={selectedKB}
+            onKBChange={setSelectedKB}
+            onUpload={() => setIsUploadModalOpen(true)}
+            onDelete={handleDeleteDocument}
+            onRefresh={() => fetchAllDocuments(getAccessToken)}
+            onDiscover={() => setIsDiscoverSourcesModalOpen(true)}
+            onManageKnowledgeBases={() => {
+              fetchAllDocuments(getAccessToken);
+              setShowKBModal(true);
+            }}
+            multiKBMode={multiKBMode}
+            selectedKBs={selectedKBs}
+            isLoading={processingStatus.is_processing}
+          />
+        </div>
+
+        <div className="flex-1">
+          <MissionPanel
+            conversation={conversation}
+            isLoading={isLoading}
+            thinkingMessage={thinkingMessage}
+            query={query}
+            setQuery={setQuery}
+            onSendQuery={handleSendQuery}
+            isRecording={isRecording}
+            onStartRecording={startRecording}
+            onStopRecording={stopRecording}
+            isAudioAgentMode={isAudioAgentMode}
+            selectedDocsCount={selectedDocs.size}
+            onGenerateOutput={handleGenerateTool}
+            onApproveDocument={approveDocument}
+            onEditDocument={editDocument}
+            onCancelEdit={cancelEdit}
+            onSubmitEdit={() => {}}
+            onEditMessage={(id, text) => {
+              setEditingMessageId(id);
+              setEditText(text);
+            }}
+            onApproveEdit={() => {
+              setEditingMessageId(null);
+              setEditText('');
+            }}
+            editingMessageId={editingMessageId}
+            editText={editText}
+            setEditText={setEditText}
+          />
+        </div>
+
+        {activeMode === 'studio' && (
+          <div className="w-96 border-l border-border">
+            <ToolPanel
+              sources={lastParsedSources}
+              generatedDocuments={generatedDocuments}
+              isGeneratingOutput={isGeneratingOutput}
+              onGenerateTool={handleGenerateTool}
+              onOpenDocument={(doc) => setDocumentToView(doc)}
+              onSaveOutput={(doc) => {
+                toast({
+                  title: "Success",
+                  description: "Output saved successfully",
+                });
+              }}
+              activeMode={activeMode}
+              selectedDocsCount={selectedDocs.size}
+              isAudioAgentMode={isAudioAgentMode}
+              onToggleAudioAgent={() => setIsAudioAgentMode(!isAudioAgentMode)}
+              selectedVoiceId={selectedVoiceId}
+              onVoiceChange={setSelectedVoiceId}
+              availableVoices={availableVoices}
+              onTestVoice={() => {}}
+            />
+          </div>
+        )}
+
+        {activeMode === 'chat' && isRightSidebarVisible && lastParsedSources.length > 0 && (
+          <div className="w-96 border-l border-border bg-card flex flex-col h-full overflow-hidden">
+            <div className="p-4 border-b flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Sources</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsRightSidebarVisible(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <ScrollArea className="flex-1 overflow-y-auto">
+              <div className="p-4 space-y-3">
+                {lastParsedSources.map((source, idx) => (
+                  <Card
+                    key={idx}
+                    className="p-3 cursor-pointer hover:bg-muted/50"
+                    onClick={() => setDocumentToView(source)}
+                  >
+                    <div className="flex items-start gap-2">
+                      <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{source.document_name}</p>
+                        {source.page_number && (
+                          <p className="text-xs text-muted-foreground">Page {source.page_number}</p>
+                        )}
+                        {source.snippet && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {source.snippet}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
+
+      <UploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUploadSuccess={() => {
+          fetchAllDocuments(getAccessToken);
+          setIsUploadModalOpen(false);
+        }}
+        selectedKB={selectedKB}
+        knowledgeBases={knowledgeBases}
+      />
+
+      <DiscoverSourcesModal
+        isOpen={isDiscoverSourcesModalOpen}
+        onClose={() => setIsDiscoverSourcesModalOpen(false)}
+      />
+
+      {documentToView && (
+        documentToView.document_name?.includes('.mp4') || documentToView.document_name?.includes('.mov') ? (
+          <VideoViewerModal
+            isOpen={!!documentToView}
+            onClose={() => setDocumentToView(null)}
+            document={documentToView}
+          />
+        ) : (
+          <DocumentViewerModal
+            isOpen={!!documentToView}
+            onClose={() => setDocumentToView(null)}
+            document={documentToView}
+          />
+        )
+      )}
+
+      {showKBModal && (
+        <KnowledgeBaseModal
+          isOpen={showKBModal}
+          onClose={() => {
+            setShowKBModal(false);
+            fetchAllDocuments(getAccessToken);
+          }}
+          knowledgeBases={knowledgeBases}
+          selectedKBs={selectedKBs}
+          multiKBMode={multiKBMode}
+          onSelectionChange={handleKBSelectionChange}
+          documents={allDocuments}
+          selectedDocs={selectedDocs}
+          onDocSelectionChange={handleKBModalDocSelection}
+          onCreateKB={() => setShowCreateKBModal(true)}
+          onDeleteKB={handleDeleteKB}
+          onRenameKB={handleRenameKB}
+        />
+      )}
+
+      {showCreateKBModal && (
+        <CreateKnowledgeBaseModal
+          isOpen={showCreateKBModal}
+          onClose={() => setShowCreateKBModal(false)}
+          onSubmit={handleCreateKB}
+        />
+      )}
+    </div>
+  );
+}
+
+// Loading component
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        <Shield className="h-16 w-16 text-primary animate-pulse mx-auto mb-4" />
+        <h2 className="text-xl font-semibold">Loading SoldierIQ...</h2>
+      </div>
+    </div>
+  );
+}
+
+// Root App with auth wrapper
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+// App content with auth check
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
+  return <MainApp />;
+}
+
+// Knowledge Base Modal (keep from original App.jsx - lines 1563-1772)
+function KnowledgeBaseModal({ isOpen, onClose, knowledgeBases, selectedKBs, multiKBMode, onSelectionChange, documents, selectedDocs, onDocSelectionChange, onCreateKB, onDeleteKB, onRenameKB }) {
+  const [renamingKB, setRenamingKB] = React.useState(null);
+  const [renameValue, setRenameValue] = React.useState('');
+
+  const docsByKB = React.useMemo(() => {
+    const map = new Map();
+    knowledgeBases.forEach((kb) => map.set(kb.name, []));
+    documents.forEach((doc) => {
+      const kbName = doc.folder_name || null;
+      if (kbName && !map.has(kbName)) {
+        map.set(kbName, []);
+      }
+      if (kbName) {
+        map.get(kbName).push(doc);
+      }
+    });
+    return map;
+  }, [documents, knowledgeBases]);
+
+  const getSelectionState = (kbName) => {
+    const kbDocs = docsByKB.get(kbName) || [];
+    if (!kbDocs.length) return 'none';
+    const selectedCount = kbDocs.filter((doc) => selectedDocs.has(doc._id || doc.document_id)).length;
+    if (selectedCount === 0) return 'none';
+    if (selectedCount === kbDocs.length) return 'all';
+    return 'some';
+  };
+
+  const handleKBToggle = (kbName) => {
+    const kbDocs = docsByKB.get(kbName) || [];
+    const state = getSelectionState(kbName);
+    const next = new Set(selectedDocs);
+    if (state === 'all') {
+      kbDocs.forEach((doc) => next.delete(doc._id || doc.document_id));
+    } else {
+      kbDocs.forEach((doc) => next.add(doc._id || doc.document_id));
+    }
+    onDocSelectionChange(next);
+  };
+
+  const handleKBIncludeToggle = (kbName) => {
+    const next = new Set(selectedKBs);
+    if (next.has(kbName)) {
+      next.delete(kbName);
+    } else {
+      next.add(kbName);
+    }
+    onSelectionChange(next, next.size > 1);
+  };
+
+  const handleDocToggle = (docId) => {
+    const next = new Set(selectedDocs);
+    if (next.has(docId)) {
+      next.delete(docId);
+    } else {
+      next.add(docId);
+    }
+    onDocSelectionChange(next);
+  };
+
+  const startRename = (kbName, currentDisplayName) => {
+    setRenamingKB(kbName);
+    setRenameValue(currentDisplayName || kbName);
+  };
+
+  const submitRename = (kbName, e) => {
+    e.preventDefault();
+    if (renameValue.trim()) {
+      onRenameKB(kbName, renameValue.trim());
+    }
+    setRenamingKB(null);
+    setRenameValue('');
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-background border rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col">
+        <div className="p-6 border-b flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Knowledge Base Selection</h2>
+            <p className="text-sm text-muted-foreground">Select knowledge bases and documents to include in queries.</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {knowledgeBases.length === 0 && (
+            <div className="text-sm text-muted-foreground">No knowledge bases available.</div>
+          )}
+
+          {knowledgeBases.map((kb) => {
+            const kbDocs = docsByKB.get(kb.name) || [];
+            const selectionState = getSelectionState(kb.name);
+            const includeKB = selectedKBs.has(kb.name);
+
+            return (
+              <div key={kb.name} className="border rounded-lg">
+                <div className="flex flex-wrap items-center gap-3 justify-between p-4 bg-muted/40">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectionState === 'all'}
+                      ref={(el) => {
+                        if (el) el.indeterminate = selectionState === 'some';
+                      }}
+                      onChange={() => handleKBToggle(kb.name)}
+                      className="h-4 w-4"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{kb.display_name || kb.name}</span>
+                        <span className="text-xs text-muted-foreground">({kbDocs.length} docs)</span>
+                      </div>
+                      {kb.description && (
+                        <p className="text-xs text-muted-foreground">{kb.description}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={includeKB}
+                        onChange={() => handleKBIncludeToggle(kb.name)}
+                        className="h-4 w-4"
+                      />
+                      Include KB
+                    </label>
+                    <Button size="icon" variant="ghost" onClick={() => startRename(kb.name, kb.display_name)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => onDeleteKB(kb.name, kb.display_name || kb.name)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+
+                {renamingKB === kb.name && (
+                  <form onSubmit={(e) => submitRename(kb.name, e)} className="p-4 border-t flex items-center gap-2 bg-muted/20">
+                    <Input
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      className="flex-1"
+                      placeholder="New display name"
+                    />
+                    <Button type="submit" size="sm">Save</Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setRenamingKB(null);
+                        setRenameValue('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </form>
+                )}
+
+                {kbDocs.length > 0 && (
+                  <div className="p-4 border-t space-y-2 bg-background max-h-48 overflow-y-auto">
+                    {kbDocs.map((doc) => {
+                      const isSelected = selectedDocs.has(doc._id || doc.document_id);
+                      const isVideo = doc.document_name?.match(/\.(mp4|mov)$/i);
+                      return (
+                        <label key={doc._id || doc.document_id} className="flex items-center gap-3 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleDocToggle(doc._id || doc.document_id)}
+                            className="h-4 w-4"
+                          />
+                          {isVideo ? (
+                            <Video className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="truncate" title={doc.document_name}>{doc.document_name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="p-6 border-t bg-muted/30 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            {selectedDocs.size} document{selectedDocs.size === 1 ? '' : 's'} selected
+            {multiKBMode && ' • Multi-KB mode active'}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onCreateKB}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create KB
+            </Button>
+            <Button onClick={onClose}>Close</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Create Knowledge Base Modal
+function CreateKnowledgeBaseModal({ isOpen, onClose, onSubmit }) {
+  const [displayName, setDisplayName] = React.useState('');
+  const [description, setDescription] = React.useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmedName = displayName.trim();
+    if (!trimmedName) return;
+    const kbName = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    onSubmit(kbName || trimmedName, trimmedName, description.trim());
+    setDisplayName('');
+    setDescription('');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-background border rounded-lg shadow-lg w-full max-w-md mx-4">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Create Knowledge Base</h2>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Display Name</label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g., Maintenance Procedures"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description (optional)</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                rows={3}
+                placeholder="Brief description of this knowledge base"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!displayName.trim()}>Create</Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;

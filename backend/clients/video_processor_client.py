@@ -17,6 +17,7 @@ from clients.video_scene_detector import get_video_scene_detector
 from clients.video_aligner import get_video_aligner
 from clients.idrivee2_client import get_idrivee2_client
 from app.logger import logger
+from app.settings import settings
 
 
 class VideoProcessorClient:
@@ -99,8 +100,16 @@ class VideoProcessorClient:
                 frame_extractor = get_video_frame_extractor()
                 scene_detector = get_video_scene_detector()
 
+                # Calculate optimal FPS based on video duration (prevent processing bottleneck)
+                target_fps = self._calculate_optimal_fps(file_content, filename)
+                logger.info(f"⚙️ Using target FPS: {target_fps} (optimized for video length)")
+
                 # Stream frames for scene detection (memory: ~10MB)
-                frame_generator_1 = frame_extractor.extract_frames_streaming(file_content, filename)
+                frame_generator_1 = frame_extractor.extract_frames_streaming(
+                    file_content,
+                    filename,
+                    target_fps=target_fps
+                )
                 scenes = scene_detector.detect_scenes_streaming(frame_generator_1)
 
                 if not scenes:
@@ -112,7 +121,11 @@ class VideoProcessorClient:
                 logger.info("🔑 Stage 3/7: Key frame selection (streaming - pass 2)")
 
                 # Stream frames again for entropy calculation (memory: ~10MB)
-                frame_generator_2 = frame_extractor.extract_frames_streaming(file_content, filename)
+                frame_generator_2 = frame_extractor.extract_frames_streaming(
+                    file_content,
+                    filename,
+                    target_fps=target_fps
+                )
                 key_frames_data = scene_detector.select_key_frames_streaming(frame_generator_2, scenes)
 
                 logger.info(f"✅ Selected {len(key_frames_data)} key frames (memory-efficient streaming)")
@@ -253,8 +266,7 @@ class VideoProcessorClient:
             # Extract audio
             video_clip.audio.write_audiofile(
                 audio_path,
-                logger=None,  # Suppress MoviePy logs
-                verbose=False
+                logger=None  # Suppress MoviePy logs
             )
             video_clip.close()
 
@@ -371,6 +383,68 @@ class VideoProcessorClient:
             logger.error(f"❌ Failed to upload keyframes: {str(e)}")
             # Return None for all frames as fallback
             return [None] * len(color_frames)
+
+    def _calculate_optimal_fps(self, file_content: bytes, filename: str) -> int:
+        """
+        Calculate optimal FPS based on video duration to prevent processing bottleneck
+
+        Strategy:
+        - Short videos (<10 min): 4 FPS (default)
+        - Medium videos (10-30 min): 2 FPS
+        - Long videos (>30 min): 1 FPS
+
+        This dramatically reduces frame processing for long videos:
+        - 1 hour at 4 FPS = 14,400 frames (2 passes = 28,800 ops)
+        - 1 hour at 1 FPS = 3,600 frames (2 passes = 7,200 ops) ✅ 4x faster
+
+        Args:
+            file_content: Video file bytes
+            filename: Video filename
+
+        Returns:
+            Optimal target FPS
+        """
+        import tempfile
+        extension = Path(filename).suffix.lower()
+
+        try:
+            # Write to temp file to get duration
+            with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+                tmp_file.write(file_content)
+                tmp_file_path = tmp_file.name
+
+            try:
+                # Get video duration using OpenCV
+                cap = cv2.VideoCapture(tmp_file_path)
+                if not cap.isOpened():
+                    logger.warning("Could not open video to check duration, using default FPS")
+                    return settings.VIDEO_TARGET_FPS
+
+                fps = cap.get(cv2.CAP_PROP_FPS)
+                frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                duration_seconds = frame_count / fps if fps > 0 else 0
+                cap.release()
+
+                logger.info(f"📹 Video duration: {duration_seconds / 60:.1f} minutes")
+
+                # Dynamic FPS based on duration
+                if duration_seconds < 600:  # < 10 minutes
+                    target_fps = 4
+                elif duration_seconds < 1800:  # < 30 minutes
+                    target_fps = 2
+                else:  # >= 30 minutes
+                    target_fps = 1
+
+                return target_fps
+
+            finally:
+                import os
+                if os.path.exists(tmp_file_path):
+                    os.unlink(tmp_file_path)
+
+        except Exception as e:
+            logger.warning(f"Could not calculate optimal FPS: {str(e)}, using default")
+            return settings.VIDEO_TARGET_FPS
 
     def _sanitize_video_id(self, filename: str) -> str:
         """

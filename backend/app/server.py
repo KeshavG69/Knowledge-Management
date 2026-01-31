@@ -4,9 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.settings import settings
-from app.middleware import LoggingMiddleware, SecurityHeadersMiddleware
+from app.middleware import  SecurityHeadersMiddleware
 from app.logger import logger
-from routers import health, upload, chat
+from routers import health, upload, chat, models
 
 
 @asynccontextmanager
@@ -50,7 +50,6 @@ app.add_middleware(
 )
 
 # Add custom middleware
-app.add_middleware(LoggingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
 
@@ -68,10 +67,11 @@ async def root():
     )
 
 
-# Register routers
-app.include_router(health.router)
-app.include_router(upload.router)
-app.include_router(chat.router)
+# Register routers with /api prefix
+app.include_router(health.router, prefix="/api")
+app.include_router(upload.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(models.router, prefix="/api")
 
 
 if __name__ == "__main__":
