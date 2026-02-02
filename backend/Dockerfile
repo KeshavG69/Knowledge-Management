@@ -16,7 +16,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Copy dependency files
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml  ./
 
 # Install Python dependencies using uv
 RUN uv sync --frozen
