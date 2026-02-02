@@ -10,17 +10,8 @@ export default defineConfig({
     alias: { '@': path.resolve(__dirname, './src') },
   },
   server: {
-    host: true,                  // bind 0.0.0.0 in the pod
+    host: true,
     port: 5173,
-    allowedHosts: [
-      'soldieriq.io',
-      'www.soldieriq.io',
-      '.us-gov-west-1.elb.amazonaws.com', // allow your ALB hostname
-    ],
-    // If HMR websockets fail behind the ALB, uncomment:
-    // hmr: { protocol: 'wss', host: 'www.soldieriq.io', clientPort: 443 },
-
-    // Dev-only proxy; harmless in prod because Ingress routes /api
     proxy: {
       '/api': {
         target: IN_K8S
@@ -34,6 +25,6 @@ export default defineConfig({
   preview: {
     host: true,
     port: 4173,
-    allowedHosts: 'all', // Allow all hosts for preview server
+    strictPort: false,
   },
 })
