@@ -12,14 +12,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for faster dependency installation
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    export PATH="/root/.cargo/bin:${PATH}"
+
+# Add uv to PATH
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Copy dependency files
-COPY pyproject.toml  ./
+COPY pyproject.toml uv.lock* ./
 
 # Install Python dependencies using uv
-RUN uv sync --frozen
+RUN /root/.cargo/bin/uv sync --frozen
 
 # Copy application code
 COPY . .
