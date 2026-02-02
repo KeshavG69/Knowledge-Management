@@ -2,20 +2,11 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-import multiprocessing
 
 from app.settings import settings
 from app.middleware import  SecurityHeadersMiddleware
 from app.logger import logger
-from routers import health, upload, chat, models, auth
-
-# Fix multiprocessing context for macOS/async compatibility
-# This prevents "DummyProcess has no attribute 'terminate'" errors
-try:
-    multiprocessing.set_start_method('fork', force=True)
-except RuntimeError:
-    # Already set, ignore
-    pass
+from routers import health, upload, chat, models, auth, mindmap
 
 
 @asynccontextmanager
@@ -82,6 +73,7 @@ app.include_router(health.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(models.router, prefix="/api")
+app.include_router(mindmap.router, prefix="/api")
 
 
 if __name__ == "__main__":

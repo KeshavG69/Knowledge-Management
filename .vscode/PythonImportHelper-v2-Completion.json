@@ -200,6 +200,22 @@
         "documentation": {}
     },
     {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "APIRouter",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -480,6 +496,22 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -529,12 +561,11 @@
         "documentation": {}
     },
     {
-        "label": "multiprocessing",
-        "kind": 6,
+        "label": "settings",
+        "importPath": "app.settings",
+        "description": "app.settings",
         "isExtraImport": true,
-        "importPath": "multiprocessing",
-        "description": "multiprocessing",
-        "detail": "multiprocessing",
+        "detail": "app.settings",
         "documentation": {}
     },
     {
@@ -699,6 +730,14 @@
     },
     {
         "label": "auth",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
+        "label": "mindmap",
         "importPath": "routers",
         "description": "routers",
         "isExtraImport": true,
@@ -1034,7 +1073,31 @@
         "documentation": {}
     },
     {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1099,6 +1162,38 @@
     },
     {
         "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1290,6 +1385,30 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
         "label": "ObjectId",
         "importPath": "bson",
         "description": "bson",
@@ -1476,6 +1595,30 @@
     },
     {
         "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "model_validator",
         "importPath": "pydantic",
         "description": "pydantic",
         "isExtraImport": true,
@@ -1704,6 +1847,14 @@
         "documentation": {}
     },
     {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
         "label": "MarkItDown",
         "importPath": "markitdown",
         "description": "markitdown",
@@ -1729,6 +1880,14 @@
     },
     {
         "label": "OpenAIEmbeddings",
+        "importPath": "langchain_openai",
+        "description": "langchain_openai",
+        "isExtraImport": true,
+        "detail": "langchain_openai",
+        "documentation": {}
+    },
+    {
+        "label": "ChatOpenAI",
         "importPath": "langchain_openai",
         "description": "langchain_openai",
         "isExtraImport": true,
@@ -1827,6 +1986,14 @@
         "documentation": {}
     },
     {
+        "label": "ChatPromptTemplate",
+        "importPath": "langchain_core.prompts",
+        "description": "langchain_core.prompts",
+        "isExtraImport": true,
+        "detail": "langchain_core.prompts",
+        "documentation": {}
+    },
+    {
         "label": "io",
         "kind": 6,
         "isExtraImport": true,
@@ -1905,6 +2072,14 @@
         "description": "skimage.metrics",
         "isExtraImport": true,
         "detail": "skimage.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "Self",
+        "importPath": "typing_extensions",
+        "description": "typing_extensions",
+        "isExtraImport": true,
+        "detail": "typing_extensions",
         "documentation": {}
     },
     {
@@ -2013,11 +2188,59 @@
         "documentation": {}
     },
     {
+        "label": "MindMapRequest",
+        "importPath": "models.mindmap",
+        "description": "models.mindmap",
+        "isExtraImport": true,
+        "detail": "models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "MindMapResponse",
+        "importPath": "models.mindmap",
+        "description": "models.mindmap",
+        "isExtraImport": true,
+        "detail": "models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "MindMap",
+        "importPath": "models.mindmap",
+        "description": "models.mindmap",
+        "isExtraImport": true,
+        "detail": "models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "DocumentSummary",
+        "importPath": "models.mindmap",
+        "description": "models.mindmap",
+        "isExtraImport": true,
+        "detail": "models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "get_mindmap_service",
+        "importPath": "services.mindmap_service",
+        "description": "services.mindmap_service",
+        "isExtraImport": true,
+        "detail": "services.mindmap_service",
+        "documentation": {}
+    },
+    {
         "label": "get_ingestion_service",
         "importPath": "services.ingestion_service",
         "description": "services.ingestion_service",
         "isExtraImport": true,
         "detail": "services.ingestion_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
         "documentation": {}
     },
     {
@@ -3162,6 +3385,60 @@
         "documentation": {}
     },
     {
+        "label": "Node",
+        "kind": 6,
+        "importPath": "backend.models.mindmap",
+        "description": "backend.models.mindmap",
+        "peekOfCode": "class Node(BaseModel):\n    \"\"\"Represents a single node in the mind map\"\"\"\n    id: str = Field(description=\"Unique identifier for the node\")\n    content: str = Field(\n        description=\"Concise content of the node (max 5 words)\",\n        max_length=100\n    )\nclass Edge(BaseModel):\n    \"\"\"Represents a connection between two nodes\"\"\"\n    from_id: str = Field(description=\"Source node ID\")",
+        "detail": "backend.models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "Edge",
+        "kind": 6,
+        "importPath": "backend.models.mindmap",
+        "description": "backend.models.mindmap",
+        "peekOfCode": "class Edge(BaseModel):\n    \"\"\"Represents a connection between two nodes\"\"\"\n    from_id: str = Field(description=\"Source node ID\")\n    to_id: str = Field(description=\"Target node ID\")\nclass MindMap(BaseModel):\n    \"\"\"Complete mind map structure\"\"\"\n    nodes: List[Node] = Field(\n        description=\"List of nodes in the mind map\",\n        min_length=1\n    )",
+        "detail": "backend.models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "MindMap",
+        "kind": 6,
+        "importPath": "backend.models.mindmap",
+        "description": "backend.models.mindmap",
+        "peekOfCode": "class MindMap(BaseModel):\n    \"\"\"Complete mind map structure\"\"\"\n    nodes: List[Node] = Field(\n        description=\"List of nodes in the mind map\",\n        min_length=1\n    )\n    edges: List[Edge] = Field(\n        description=\"Connections between nodes\"\n    )\n    @model_validator(mode=\"after\")",
+        "detail": "backend.models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "DocumentSummary",
+        "kind": 6,
+        "importPath": "backend.models.mindmap",
+        "description": "backend.models.mindmap",
+        "peekOfCode": "class DocumentSummary(BaseModel):\n    \"\"\"Summary data extracted from a document\"\"\"\n    summary: str = Field(description=\"Overall summary of the document\")\n    key_points: List[str] = Field(\n        description=\"3-10 key points from the document\",\n        min_length=3,\n        max_length=10\n    )\nclass MindMapRequest(BaseModel):\n    \"\"\"Request model for mind map generation\"\"\"",
+        "detail": "backend.models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "MindMapRequest",
+        "kind": 6,
+        "importPath": "backend.models.mindmap",
+        "description": "backend.models.mindmap",
+        "peekOfCode": "class MindMapRequest(BaseModel):\n    \"\"\"Request model for mind map generation\"\"\"\n    document_ids: List[str] = Field(\n        description=\"List of MongoDB document IDs to generate mind map from\",\n        min_length=1\n    )\nclass MindMapResponse(BaseModel):\n    \"\"\"Response model for mind map generation\"\"\"\n    success: bool\n    mind_map_id: Optional[str] = Field(default=None, description=\"ID of saved mind map\")",
+        "detail": "backend.models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "MindMapResponse",
+        "kind": 6,
+        "importPath": "backend.models.mindmap",
+        "description": "backend.models.mindmap",
+        "peekOfCode": "class MindMapResponse(BaseModel):\n    \"\"\"Response model for mind map generation\"\"\"\n    success: bool\n    mind_map_id: Optional[str] = Field(default=None, description=\"ID of saved mind map\")\n    html_url: Optional[str] = Field(default=None, description=\"URL to view the mind map\")\n    summary: Optional[str] = Field(default=None, description=\"Document summary\")\n    key_points: Optional[List[str]] = Field(default=None, description=\"Key points\")\n    node_count: Optional[int] = Field(default=None, description=\"Number of nodes\")\n    edge_count: Optional[int] = Field(default=None, description=\"Number of edges\")\n    error: Optional[str] = Field(default=None, description=\"Error message if generation failed\")",
+        "detail": "backend.models.mindmap",
+        "documentation": {}
+    },
+    {
         "label": "router",
         "kind": 5,
         "importPath": "backend.routers.auth",
@@ -3195,6 +3472,15 @@
         "description": "backend.routers.health",
         "peekOfCode": "router = APIRouter(tags=[\"health\"])\n@router.get(\"/health\", response_model=HealthCheckResponse)\n@router.get(\"/healthz\", response_model=HealthCheckResponse)\nasync def health_check() -> HealthCheckResponse:\n    \"\"\"\n    Health check endpoint\n    Returns the current status of the application\n    \"\"\"\n    logger.info(\"Health check requested\")\n    return HealthCheckResponse(",
         "detail": "backend.routers.health",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
+        "importPath": "backend.routers.mindmap",
+        "description": "backend.routers.mindmap",
+        "peekOfCode": "router = APIRouter(prefix=\"/mindmap\", tags=[\"mindmap\"])\n@router.post(\"/generate\")\nasync def generate_mindmap(request: MindMapRequest):\n    \"\"\"\n    Generate mind map from multiple documents (like NotebookLM)\n    Returns JSON data structure for frontend rendering\n    Args:\n        request: MindMapRequest with list of document_ids\n    Returns:\n        Mind map data with nodes and edges JSON",
+        "detail": "backend.routers.mindmap",
         "documentation": {}
     },
     {
@@ -3285,6 +3571,33 @@
         "description": "backend.services.ingestion_service",
         "peekOfCode": "_ingestion_service = None\ndef get_ingestion_service() -> IngestionService:\n    \"\"\"\n    Get or create IngestionService singleton instance\n    Returns:\n        IngestionService instance\n    \"\"\"\n    global _ingestion_service\n    if _ingestion_service is None:\n        _ingestion_service = IngestionService()",
         "detail": "backend.services.ingestion_service",
+        "documentation": {}
+    },
+    {
+        "label": "MindMapService",
+        "kind": 6,
+        "importPath": "backend.services.mindmap_service",
+        "description": "backend.services.mindmap_service",
+        "peekOfCode": "class MindMapService:\n    \"\"\"Service for generating mind maps from multiple documents\"\"\"\n    def __init__(self):\n        \"\"\"Initialize the mind map service\"\"\"\n        self.llm = get_llm(model=\"openai/gpt-4.1\",provider=\"openrouter\")\n        # Structured output - forces LLM to return valid objects\n        self.structured_llm = self.llm.with_structured_output(MindMap)\n        self.summary_llm = self.llm.with_structured_output(DocumentSummary)\n        self.mongodb_client = get_mongodb_client()\n    async def generate_from_documents(",
+        "detail": "backend.services.mindmap_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_mindmap_service",
+        "kind": 2,
+        "importPath": "backend.services.mindmap_service",
+        "description": "backend.services.mindmap_service",
+        "peekOfCode": "def get_mindmap_service() -> MindMapService:\n    \"\"\"Get or create MindMapService singleton\"\"\"\n    global _mindmap_service\n    if _mindmap_service is None:\n        _mindmap_service = MindMapService()\n    return _mindmap_service",
+        "detail": "backend.services.mindmap_service",
+        "documentation": {}
+    },
+    {
+        "label": "_mindmap_service",
+        "kind": 5,
+        "importPath": "backend.services.mindmap_service",
+        "description": "backend.services.mindmap_service",
+        "peekOfCode": "_mindmap_service = None\ndef get_mindmap_service() -> MindMapService:\n    \"\"\"Get or create MindMapService singleton\"\"\"\n    global _mindmap_service\n    if _mindmap_service is None:\n        _mindmap_service = MindMapService()\n    return _mindmap_service",
+        "detail": "backend.services.mindmap_service",
         "documentation": {}
     },
     {
