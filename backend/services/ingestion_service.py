@@ -283,11 +283,19 @@ class IngestionService:
             )
 
             # Apply semantic chunking to each prepared document and store in Pinecone
-            logger.info(f"✂️ Semantic chunking and storing in Pinecone: {file.filename}")
+            logger.info(
+                f"✂️ Semantic chunking and storing in Pinecone: {file.filename} "
+                f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
+            )
 
-            for pre_chunk_doc in prepared_documents:
+            for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
                 pre_chunk_content = pre_chunk_doc["content"]
                 pre_chunk_metadata = pre_chunk_doc["metadata"]
+
+                logger.info(
+                    f"📝 Processing pre-chunk {idx}/{len(prepared_documents)} "
+                    f"for {file.filename}..."
+                )
 
                 # Apply semantic chunking to this pre-chunk (run in thread pool)
                 chunks = await asyncio.to_thread(
@@ -318,6 +326,10 @@ class IngestionService:
                 )
 
                 total_chunks += len(chunks)
+                logger.info(
+                    f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
+                    f"{len(chunks)} chunks stored in Pinecone"
+                )
 
             logger.info(f"✅ Stored {total_chunks} chunks in Pinecone for: {file.filename}")
 
