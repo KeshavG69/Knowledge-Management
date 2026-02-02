@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: soldieriq-backend
     ports:
-      - "8001:8001"
+      - "8000:8000"
     environment:
       # Application
       - APP_NAME=SoldierIQ Backend
@@ -50,7 +50,7 @@ services:
       - soldieriq-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
