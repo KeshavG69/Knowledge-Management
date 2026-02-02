@@ -423,31 +423,39 @@ class VideoSceneDetector:
                                 best_entropy = entropy
                                 best_frame_num = frame_num
 
-                    if best_frame_num is not None:
-                        # Calculate timestamp from frame number
-                        # (We need FPS info, so we'll estimate from scene times)
-                        scene_duration = scene['end_time'] - scene['start_time']
-                        scene_frames = scene['end_frame'] - scene['start_frame']
-                        frame_offset = best_frame_num - scene['start_frame']
-
-                        if scene_frames > 0:
-                            timestamp = scene['start_time'] + (frame_offset / scene_frames) * scene_duration
-                        else:
-                            timestamp = scene['start_time']
-
-                        key_frames.append({
-                            'frame_number': best_frame_num,
-                            'timestamp': timestamp,
-                            'scene_id': scene['scene_id'],
-                            'scene_start': scene['start_time'],
-                            'scene_end': scene['end_time'],
-                            'entropy': best_entropy
-                        })
-
-                        logger.debug(
-                            f"Key frame for scene {scene['scene_id']}: "
-                            f"frame {best_frame_num} (entropy: {best_entropy:.2f})"
+                    # Fallback: if no frame found with entropy, use middle frame of scene
+                    if best_frame_num is None:
+                        logger.warning(
+                            f"⚠️ No entropy data for scene {scene['scene_id']}, "
+                            f"using middle frame as fallback"
                         )
+                        best_frame_num = (scene['start_frame'] + scene['end_frame']) // 2
+                        best_entropy = 0.0  # Unknown entropy
+
+                    # Calculate timestamp from frame number
+                    # (We need FPS info, so we'll estimate from scene times)
+                    scene_duration = scene['end_time'] - scene['start_time']
+                    scene_frames = scene['end_frame'] - scene['start_frame']
+                    frame_offset = best_frame_num - scene['start_frame']
+
+                    if scene_frames > 0:
+                        timestamp = scene['start_time'] + (frame_offset / scene_frames) * scene_duration
+                    else:
+                        timestamp = scene['start_time']
+
+                    key_frames.append({
+                        'frame_number': best_frame_num,
+                        'timestamp': timestamp,
+                        'scene_id': scene['scene_id'],
+                        'scene_start': scene['start_time'],
+                        'scene_end': scene['end_time'],
+                        'entropy': best_entropy
+                    })
+
+                    logger.debug(
+                        f"Key frame for scene {scene['scene_id']}: "
+                        f"frame {best_frame_num} (entropy: {best_entropy:.2f})"
+                    )
 
                 logger.info(f"✅ Selected {len(key_frames)} key frames from cache (instant!)")
 

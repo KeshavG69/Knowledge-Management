@@ -72,6 +72,21 @@ class VideoAligner:
                     f"with {len(scenes)} scenes (parallel with max 5 concurrent)"
                 )
 
+                # Validate that all lists have matching lengths
+                if len(scenes) != len(key_frames_data) or len(scenes) != len(color_frames):
+                    logger.error(
+                        f"❌ Mismatch in data lengths: {len(scenes)} scenes, "
+                        f"{len(key_frames_data)} key_frames, {len(color_frames)} color_frames"
+                    )
+                    raise ValueError(
+                        f"Data length mismatch: scenes={len(scenes)}, "
+                        f"key_frames={len(key_frames_data)}, frames={len(color_frames)}"
+                    )
+
+                if len(scenes) == 0:
+                    logger.warning("⚠️ No scenes detected in video")
+                    return []
+
                 # Process all scenes in parallel with semaphore limit of 5
                 aligned_chunks = self._process_scenes_parallel(
                     scenes,
@@ -86,6 +101,8 @@ class VideoAligner:
 
             except Exception as e:
                 logger.error(f"❌ Alignment and blending failed: {str(e)}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
                 raise Exception(f"Alignment and blending failed: {str(e)}")
 
     def _process_scenes_parallel(
