@@ -16,6 +16,8 @@ COPY . .
 # Build-time environment variables for Vite
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max_old_space_size=4096
 
 # Build the application
 RUN npm run build
