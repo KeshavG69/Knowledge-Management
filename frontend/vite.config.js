@@ -31,4 +31,9 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: true,
+    port: 4173,
+    allowedHosts: 'all', // Allow all hosts for preview server
+  },
 })
