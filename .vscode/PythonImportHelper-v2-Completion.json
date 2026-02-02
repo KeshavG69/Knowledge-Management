@@ -529,6 +529,15 @@
         "documentation": {}
     },
     {
+        "label": "multiprocessing",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "multiprocessing",
+        "description": "multiprocessing",
+        "detail": "multiprocessing",
+        "documentation": {}
+    },
+    {
         "label": "settings",
         "importPath": "app.settings",
         "description": "app.settings",
