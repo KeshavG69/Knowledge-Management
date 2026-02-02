@@ -65,27 +65,28 @@ export default function CommandHeader({
   };
 
   const parsedName = useMemo(() => {
-    if (user && user.signInDetails?.loginId) {
-      const { firstName, lastName } = parseEmailToName(user.signInDetails.loginId);
-      return `${firstName} ${lastName}`.trim();
+    if (user) {
+      // Use firstName and lastName from authenticated user
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`.trim();
+      }
+      // Fallback: parse from email if name not available
+      if (user.email) {
+        const { firstName, lastName } = parseEmailToName(user.email);
+        return `${firstName} ${lastName}`.trim();
+      }
     }
     return '';
   }, [user]);
 
   const getAvatarInitials = () => {
-    if (user?.signInDetails?.loginId) {
-      const nameParts = user.signInDetails.loginId.split(' ');
-      if (nameParts.length >= 2) {
-        return (nameParts[0].charAt(0) + nameParts[1].charAt(0)).toUpperCase();
-      }
-      return user.signInDetails.loginId.charAt(0).toUpperCase();
+    // Use firstName and lastName from authenticated user
+    if (user?.firstName && user?.lastName) {
+      return (user.firstName.charAt(0) + user.lastName.charAt(0)).toUpperCase();
     }
-    if (user?.name) {
-      const nameParts = user.name.split(' ');
-      if (nameParts.length >= 2) {
-        return (nameParts[0].charAt(0) + nameParts[1].charAt(0)).toUpperCase();
-      }
-      return user.name.charAt(0).toUpperCase();
+    // Fallback to email
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
     }
     return 'U';
   };
@@ -171,8 +172,8 @@ export default function CommandHeader({
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="gemini-2.5-pro-preview-05-06">
-                    Gemini 2.5 Pro (Preview)
+                  <SelectItem value="anthropic/claude-sonnet-4.5">
+                    Claude Sonnet 4.5 [Anthropic]
                   </SelectItem>
                 )}
               </SelectContent>
@@ -260,9 +261,9 @@ export default function CommandHeader({
                       <p className="text-base font-medium text-foreground">
                         {parsedName || user.name || 'User'}
                       </p>
-                      {(user.email || user.signInDetails?.loginId) && (
+                      {user.email && (
                         <p className="text-sm text-muted-foreground">
-
+                          {user.email}
                         </p>
                       )}
                     </div>

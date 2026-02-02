@@ -112,6 +112,62 @@
         "documentation": {}
     },
     {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "status",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "status",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "APIRouter",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -585,6 +641,14 @@
         "documentation": {}
     },
     {
+        "label": "settings",
+        "importPath": "app.settings",
+        "description": "app.settings",
+        "isExtraImport": true,
+        "detail": "app.settings",
+        "documentation": {}
+    },
+    {
         "label": "SecurityHeadersMiddleware",
         "importPath": "app.middleware",
         "description": "app.middleware",
@@ -625,6 +689,14 @@
         "documentation": {}
     },
     {
+        "label": "auth",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
         "label": "BaseSettings",
         "importPath": "pydantic_settings",
         "description": "pydantic_settings",
@@ -641,60 +713,43 @@
         "documentation": {}
     },
     {
-        "label": "threading",
-        "kind": 6,
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
         "isExtraImport": true,
-        "importPath": "threading",
-        "description": "threading",
-        "detail": "threading",
+        "detail": "dotenv",
         "documentation": {}
     },
     {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "datetime",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "datetime",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "datetime",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
+        "detail": "typing",
         "documentation": {}
     },
     {
@@ -1138,6 +1193,304 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "MongoClient",
+        "importPath": "pymongo",
+        "description": "pymongo",
+        "isExtraImport": true,
+        "detail": "pymongo",
+        "documentation": {}
+    },
+    {
+        "label": "MongoClient",
+        "importPath": "pymongo",
+        "description": "pymongo",
+        "isExtraImport": true,
+        "detail": "pymongo",
+        "documentation": {}
+    },
+    {
+        "label": "ASCENDING",
+        "importPath": "pymongo",
+        "description": "pymongo",
+        "isExtraImport": true,
+        "detail": "pymongo",
+        "documentation": {}
+    },
+    {
+        "label": "DESCENDING",
+        "importPath": "pymongo",
+        "description": "pymongo",
+        "isExtraImport": true,
+        "detail": "pymongo",
+        "documentation": {}
+    },
+    {
+        "label": "ASCENDING",
+        "importPath": "pymongo",
+        "description": "pymongo",
+        "isExtraImport": true,
+        "detail": "pymongo",
+        "documentation": {}
+    },
+    {
+        "label": "DESCENDING",
+        "importPath": "pymongo",
+        "description": "pymongo",
+        "isExtraImport": true,
+        "detail": "pymongo",
+        "documentation": {}
+    },
+    {
+        "label": "threading",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "threading",
+        "description": "threading",
+        "detail": "threading",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPBearer",
+        "importPath": "fastapi.security",
+        "description": "fastapi.security",
+        "isExtraImport": true,
+        "detail": "fastapi.security",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPAuthorizationCredentials",
+        "importPath": "fastapi.security",
+        "description": "fastapi.security",
+        "isExtraImport": true,
+        "detail": "fastapi.security",
+        "documentation": {}
+    },
+    {
+        "label": "jwt",
+        "importPath": "jose",
+        "description": "jose",
+        "isExtraImport": true,
+        "detail": "jose",
+        "documentation": {}
+    },
+    {
+        "label": "JWTError",
+        "importPath": "jose",
+        "description": "jose",
+        "isExtraImport": true,
+        "detail": "jose",
+        "documentation": {}
+    },
+    {
+        "label": "JWTError",
+        "importPath": "jose",
+        "description": "jose",
+        "isExtraImport": true,
+        "detail": "jose",
+        "documentation": {}
+    },
+    {
+        "label": "jwt",
+        "importPath": "jose",
+        "description": "jose",
+        "isExtraImport": true,
+        "detail": "jose",
+        "documentation": {}
+    },
+    {
+        "label": "config",
+        "importPath": "auth",
+        "description": "auth",
+        "isExtraImport": true,
+        "detail": "auth",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "auth.database",
+        "description": "auth.database",
+        "isExtraImport": true,
+        "detail": "auth.database",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "EmailStr",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "bcrypt",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "bcrypt",
+        "description": "bcrypt",
+        "detail": "bcrypt",
+        "documentation": {}
+    },
+    {
         "label": "MongoDb",
         "importPath": "agno.db.mongo",
         "description": "agno.db.mongo",
@@ -1350,83 +1703,11 @@
         "documentation": {}
     },
     {
-        "label": "MongoClient",
-        "importPath": "pymongo",
-        "description": "pymongo",
-        "isExtraImport": true,
-        "detail": "pymongo",
-        "documentation": {}
-    },
-    {
-        "label": "ASCENDING",
-        "importPath": "pymongo",
-        "description": "pymongo",
-        "isExtraImport": true,
-        "detail": "pymongo",
-        "documentation": {}
-    },
-    {
-        "label": "DESCENDING",
-        "importPath": "pymongo",
-        "description": "pymongo",
-        "isExtraImport": true,
-        "detail": "pymongo",
-        "documentation": {}
-    },
-    {
-        "label": "ASCENDING",
-        "importPath": "pymongo",
-        "description": "pymongo",
-        "isExtraImport": true,
-        "detail": "pymongo",
-        "documentation": {}
-    },
-    {
-        "label": "DESCENDING",
-        "importPath": "pymongo",
-        "description": "pymongo",
-        "isExtraImport": true,
-        "detail": "pymongo",
-        "documentation": {}
-    },
-    {
         "label": "AsyncIOMotorClient",
         "importPath": "motor.motor_asyncio",
         "description": "motor.motor_asyncio",
         "isExtraImport": true,
         "detail": "motor.motor_asyncio",
-        "documentation": {}
-    },
-    {
-        "label": "ObjectId",
-        "importPath": "bson",
-        "description": "bson",
-        "isExtraImport": true,
-        "detail": "bson",
-        "documentation": {}
-    },
-    {
-        "label": "ObjectId",
-        "importPath": "bson",
-        "description": "bson",
-        "isExtraImport": true,
-        "detail": "bson",
-        "documentation": {}
-    },
-    {
-        "label": "ObjectId",
-        "importPath": "bson",
-        "description": "bson",
-        "isExtraImport": true,
-        "detail": "bson",
-        "documentation": {}
-    },
-    {
-        "label": "ObjectId",
-        "importPath": "bson",
-        "description": "bson",
-        "isExtraImport": true,
-        "detail": "bson",
         "documentation": {}
     },
     {
@@ -1618,19 +1899,67 @@
         "documentation": {}
     },
     {
-        "label": "BaseModel",
-        "importPath": "pydantic",
-        "description": "pydantic",
+        "label": "UserSignup",
+        "importPath": "auth.models",
+        "description": "auth.models",
         "isExtraImport": true,
-        "detail": "pydantic",
+        "detail": "auth.models",
         "documentation": {}
     },
     {
-        "label": "BaseModel",
-        "importPath": "pydantic",
-        "description": "pydantic",
+        "label": "UserLogin",
+        "importPath": "auth.models",
+        "description": "auth.models",
         "isExtraImport": true,
-        "detail": "pydantic",
+        "detail": "auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "UserResponse",
+        "importPath": "auth.models",
+        "description": "auth.models",
+        "isExtraImport": true,
+        "detail": "auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "Token",
+        "importPath": "auth.models",
+        "description": "auth.models",
+        "isExtraImport": true,
+        "detail": "auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "UserCRUD",
+        "importPath": "auth.crud",
+        "description": "auth.crud",
+        "isExtraImport": true,
+        "detail": "auth.crud",
+        "documentation": {}
+    },
+    {
+        "label": "create_access_token",
+        "importPath": "auth.utils",
+        "description": "auth.utils",
+        "isExtraImport": true,
+        "detail": "auth.utils",
+        "documentation": {}
+    },
+    {
+        "label": "ACCESS_TOKEN_EXPIRE_MINUTES",
+        "importPath": "auth.utils",
+        "description": "auth.utils",
+        "isExtraImport": true,
+        "detail": "auth.utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
         "documentation": {}
     },
     {
@@ -2047,6 +2376,195 @@
         "description": "backend.app.settings",
         "peekOfCode": "settings = Settings()",
         "detail": "backend.app.settings",
+        "documentation": {}
+    },
+    {
+        "label": "SECRET_KEY",
+        "kind": 5,
+        "importPath": "backend.auth.config",
+        "description": "backend.auth.config",
+        "peekOfCode": "SECRET_KEY = os.getenv(\"SECRET_KEY\", \"your-secret-key-change-this-in-production-please-use-strong-key\")\nALGORITHM = os.getenv(\"ALGORITHM\", \"HS256\")\nACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv(\"ACCESS_TOKEN_EXPIRE_MINUTES\", \"1440\"))  # 24 hours",
+        "detail": "backend.auth.config",
+        "documentation": {}
+    },
+    {
+        "label": "ALGORITHM",
+        "kind": 5,
+        "importPath": "backend.auth.config",
+        "description": "backend.auth.config",
+        "peekOfCode": "ALGORITHM = os.getenv(\"ALGORITHM\", \"HS256\")\nACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv(\"ACCESS_TOKEN_EXPIRE_MINUTES\", \"1440\"))  # 24 hours",
+        "detail": "backend.auth.config",
+        "documentation": {}
+    },
+    {
+        "label": "ACCESS_TOKEN_EXPIRE_MINUTES",
+        "kind": 5,
+        "importPath": "backend.auth.config",
+        "description": "backend.auth.config",
+        "peekOfCode": "ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv(\"ACCESS_TOKEN_EXPIRE_MINUTES\", \"1440\"))  # 24 hours",
+        "detail": "backend.auth.config",
+        "documentation": {}
+    },
+    {
+        "label": "UserCRUD",
+        "kind": 6,
+        "importPath": "backend.auth.crud",
+        "description": "backend.auth.crud",
+        "peekOfCode": "class UserCRUD:\n    \"\"\"User CRUD operations\"\"\"\n    @staticmethod\n    def create_user(user_data: UserSignup) -> UserResponse:\n        \"\"\"Create a new user\"\"\"\n        users_collection = get_mongodb_client().get_users_collection()\n        # Check if user already exists\n        existing_user = users_collection.find_one({\"email\": user_data.email})\n        if existing_user:\n            raise ValueError(\"User with this email already exists\")",
+        "detail": "backend.auth.crud",
+        "documentation": {}
+    },
+    {
+        "label": "get_user_crud",
+        "kind": 2,
+        "importPath": "backend.auth.crud",
+        "description": "backend.auth.crud",
+        "peekOfCode": "def get_user_crud() -> UserCRUD:\n    \"\"\"Get UserCRUD instance\"\"\"\n    return UserCRUD()",
+        "detail": "backend.auth.crud",
+        "documentation": {}
+    },
+    {
+        "label": "MongoDB",
+        "kind": 6,
+        "importPath": "backend.auth.database",
+        "description": "backend.auth.database",
+        "peekOfCode": "class MongoDB:\n    \"\"\"MongoDB client for authentication (thread-safe singleton)\"\"\"\n    def __init__(self):\n        \"\"\"Initialize MongoDB client\"\"\"\n        if not settings.MONGODB_URL:\n            raise ValueError(\"MONGODB_URL not configured\")\n        if not settings.MONGODB_DATABASE:\n            raise ValueError(\"MONGODB_DATABASE not configured\")\n        self._client = None\n        self._db = None",
+        "detail": "backend.auth.database",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "kind": 2,
+        "importPath": "backend.auth.database",
+        "description": "backend.auth.database",
+        "peekOfCode": "def get_mongodb_client() -> MongoDB:\n    \"\"\"\n    Get or create MongoDB client (singleton pattern)\n    Returns:\n        MongoDB instance\n    \"\"\"\n    global _mongodb_client\n    with _client_lock:\n        if _mongodb_client is None:\n            _mongodb_client = MongoDB()",
+        "detail": "backend.auth.database",
+        "documentation": {}
+    },
+    {
+        "label": "close_mongodb_client",
+        "kind": 2,
+        "importPath": "backend.auth.database",
+        "description": "backend.auth.database",
+        "peekOfCode": "def close_mongodb_client():\n    \"\"\"Close MongoDB client connection\"\"\"\n    global _mongodb_client\n    with _client_lock:\n        if _mongodb_client is not None:\n            _mongodb_client.close()\n            _mongodb_client = None",
+        "detail": "backend.auth.database",
+        "documentation": {}
+    },
+    {
+        "label": "USERS_COLLECTION",
+        "kind": 5,
+        "importPath": "backend.auth.database",
+        "description": "backend.auth.database",
+        "peekOfCode": "USERS_COLLECTION = \"users\"\nclass MongoDB:\n    \"\"\"MongoDB client for authentication (thread-safe singleton)\"\"\"\n    def __init__(self):\n        \"\"\"Initialize MongoDB client\"\"\"\n        if not settings.MONGODB_URL:\n            raise ValueError(\"MONGODB_URL not configured\")\n        if not settings.MONGODB_DATABASE:\n            raise ValueError(\"MONGODB_DATABASE not configured\")\n        self._client = None",
+        "detail": "backend.auth.database",
+        "documentation": {}
+    },
+    {
+        "label": "_client_lock",
+        "kind": 5,
+        "importPath": "backend.auth.database",
+        "description": "backend.auth.database",
+        "peekOfCode": "_client_lock = threading.RLock()\ndef get_mongodb_client() -> MongoDB:\n    \"\"\"\n    Get or create MongoDB client (singleton pattern)\n    Returns:\n        MongoDB instance\n    \"\"\"\n    global _mongodb_client\n    with _client_lock:\n        if _mongodb_client is None:",
+        "detail": "backend.auth.database",
+        "documentation": {}
+    },
+    {
+        "label": "security",
+        "kind": 5,
+        "importPath": "backend.auth.dependencies",
+        "description": "backend.auth.dependencies",
+        "peekOfCode": "security = HTTPBearer()\nasync def get_current_user(\n    credentials: HTTPAuthorizationCredentials = Depends(security)\n) -> dict:\n    \"\"\"\n    Get current user from JWT token.\n    Validates JWT token and returns user dict.\n    Args:\n        credentials: HTTP Bearer token from Authorization header\n    Returns:",
+        "detail": "backend.auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "UserSignup",
+        "kind": 6,
+        "importPath": "backend.auth.models",
+        "description": "backend.auth.models",
+        "peekOfCode": "class UserSignup(BaseModel):\n    firstName: str\n    lastName: str\n    email: EmailStr\n    password: str\nclass UserLogin(BaseModel):\n    email: EmailStr\n    password: str\nclass UserResponse(BaseModel):\n    id: str",
+        "detail": "backend.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "UserLogin",
+        "kind": 6,
+        "importPath": "backend.auth.models",
+        "description": "backend.auth.models",
+        "peekOfCode": "class UserLogin(BaseModel):\n    email: EmailStr\n    password: str\nclass UserResponse(BaseModel):\n    id: str\n    firstName: str\n    lastName: str\n    email: str\n    organization_id: Optional[str] = None\n    createdAt: datetime",
+        "detail": "backend.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "UserResponse",
+        "kind": 6,
+        "importPath": "backend.auth.models",
+        "description": "backend.auth.models",
+        "peekOfCode": "class UserResponse(BaseModel):\n    id: str\n    firstName: str\n    lastName: str\n    email: str\n    organization_id: Optional[str] = None\n    createdAt: datetime\nclass Token(BaseModel):\n    access_token: str\n    token_type: str",
+        "detail": "backend.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "Token",
+        "kind": 6,
+        "importPath": "backend.auth.models",
+        "description": "backend.auth.models",
+        "peekOfCode": "class Token(BaseModel):\n    access_token: str\n    token_type: str\nclass TokenData(BaseModel):\n    email: Optional[str] = None",
+        "detail": "backend.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "TokenData",
+        "kind": 6,
+        "importPath": "backend.auth.models",
+        "description": "backend.auth.models",
+        "peekOfCode": "class TokenData(BaseModel):\n    email: Optional[str] = None",
+        "detail": "backend.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "hash_password",
+        "kind": 2,
+        "importPath": "backend.auth.utils",
+        "description": "backend.auth.utils",
+        "peekOfCode": "def hash_password(password: str) -> str:\n    \"\"\"Hash a password using bcrypt\"\"\"\n    salt = bcrypt.gensalt()\n    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)\n    return hashed.decode('utf-8')\ndef verify_password(plain_password: str, hashed_password: str) -> bool:\n    \"\"\"Verify a password against its hash\"\"\"\n    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))\ndef create_access_token(data: dict, expires_delta: Optional[timedelta] = None):\n    \"\"\"Create JWT access token\"\"\"",
+        "detail": "backend.auth.utils",
+        "documentation": {}
+    },
+    {
+        "label": "verify_password",
+        "kind": 2,
+        "importPath": "backend.auth.utils",
+        "description": "backend.auth.utils",
+        "peekOfCode": "def verify_password(plain_password: str, hashed_password: str) -> bool:\n    \"\"\"Verify a password against its hash\"\"\"\n    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))\ndef create_access_token(data: dict, expires_delta: Optional[timedelta] = None):\n    \"\"\"Create JWT access token\"\"\"\n    to_encode = data.copy()\n    if expires_delta:\n        expire = datetime.utcnow() + expires_delta\n    else:\n        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)",
+        "detail": "backend.auth.utils",
+        "documentation": {}
+    },
+    {
+        "label": "create_access_token",
+        "kind": 2,
+        "importPath": "backend.auth.utils",
+        "description": "backend.auth.utils",
+        "peekOfCode": "def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):\n    \"\"\"Create JWT access token\"\"\"\n    to_encode = data.copy()\n    if expires_delta:\n        expire = datetime.utcnow() + expires_delta\n    else:\n        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)\n    to_encode.update({\"exp\": expire})\n    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)\n    return encoded_jwt",
+        "detail": "backend.auth.utils",
+        "documentation": {}
+    },
+    {
+        "label": "verify_token",
+        "kind": 2,
+        "importPath": "backend.auth.utils",
+        "description": "backend.auth.utils",
+        "peekOfCode": "def verify_token(token: str) -> Optional[TokenData]:\n    \"\"\"Verify JWT token and return token data\"\"\"\n    try:\n        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n        email: str = payload.get(\"sub\")\n        if email is None:\n            return None\n        token_data = TokenData(email=email)\n        return token_data\n    except JWTError:",
+        "detail": "backend.auth.utils",
+        "documentation": {}
+    },
+    {
+        "label": "generate_user_id",
+        "kind": 2,
+        "importPath": "backend.auth.utils",
+        "description": "backend.auth.utils",
+        "peekOfCode": "def generate_user_id() -> ObjectId:\n    \"\"\"Generate a unique user ID using MongoDB ObjectId\"\"\"\n    return ObjectId()",
+        "detail": "backend.auth.utils",
         "documentation": {}
     },
     {
@@ -2635,11 +3153,20 @@
         "documentation": {}
     },
     {
+        "label": "router",
+        "kind": 5,
+        "importPath": "backend.routers.auth",
+        "description": "backend.routers.auth",
+        "peekOfCode": "router = APIRouter(prefix=\"/auth\", tags=[\"authentication\"])\n@router.post(\"/signup\", response_model=UserResponse)\nasync def signup(user_data: UserSignup):\n    \"\"\"\n    Register a new user\n    Args:\n        user_data: User signup data including firstName, lastName, email, password\n    Returns:\n        UserResponse: Created user information\n    \"\"\"",
+        "detail": "backend.routers.auth",
+        "documentation": {}
+    },
+    {
         "label": "ChatRequest",
         "kind": 6,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"google/gemini-2.5-pro\"\n@router.post(\"/chat\")\nasync def chat(request: ChatRequest):",
+        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")\nasync def chat(request: ChatRequest):",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -2648,7 +3175,7 @@
         "kind": 5,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"google/gemini-2.5-pro\"\n@router.post(\"/chat\")",
+        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")",
         "detail": "backend.routers.chat",
         "documentation": {}
     },

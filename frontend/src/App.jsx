@@ -23,6 +23,7 @@ import DiscoverSourcesModal from './DiscoverSourcesModal';
 import { API_ENDPOINTS } from './config';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthPage from './components/auth/AuthPage';
+import LandingPage from './pages/LandingPage';
 
 // Import military-themed components
 import CommandHeader from './components/CommandHeader';
@@ -207,7 +208,15 @@ function MainApp() {
   // Query handler with streaming
   const handleSendQuery = async (overrideQuery = null) => {
     const queryToSend = overrideQuery || query;
-    if (!queryToSend.trim() || isLoading) return;
+    console.log('[handleSendQuery] Called with:', { overrideQuery, query, queryToSend, type: typeof queryToSend, isLoading });
+
+    // Ensure queryToSend is a string before calling trim
+    if (typeof queryToSend !== 'string' || !queryToSend.trim() || isLoading) {
+      console.log('[handleSendQuery] Blocked - validation failed');
+      return;
+    }
+
+    console.log('[handleSendQuery] Proceeding with query:', queryToSend);
 
     const userMessage = {
       sender: 'user',
@@ -384,13 +393,28 @@ function MainApp() {
               currentToolCall.endTime = Date.now();
               currentToolCall.duration = currentToolCall.endTime - currentToolCall.startTime;
 
-              // Parse result if it's a JSON string
+              // Parse result if it's a JSON string and extract sources
               const result = parsed.data?.result;
               if (result && typeof result === 'string') {
                 try {
                   const parsedResult = JSON.parse(result);
                   if (Array.isArray(parsedResult)) {
                     currentToolCall.resultCount = parsedResult.length;
+
+                    // Extract sources from tool results
+                    const sources = parsedResult.map(item => ({
+                      document_name: item.metadata?.file_name || item.metadata?.video_name || 'Unknown',
+                      page_number: item.metadata?.page_number,
+                      snippet: item.text?.substring(0, 200),
+                      clip_start: item.metadata?.clip_start,
+                      clip_end: item.metadata?.clip_end,
+                      score: item.metadata?.score
+                    }));
+
+                    // Update latestSources with extracted sources
+                    if (sources.length > 0) {
+                      latestSources = sources;
+                    }
                   }
                 } catch (e) {
                   // Not JSON, that's okay
@@ -1441,13 +1465,23 @@ function App() {
 // App content with auth check
 function AppContent() {
   const { user, loading } = useAuth();
+  const [showAuthPage, setShowAuthPage] = useState(false);
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   if (!user) {
-    return <AuthPage />;
+    // Show landing page by default, or auth page if user clicked CTA
+    if (showAuthPage) {
+      return <AuthPage onBack={() => setShowAuthPage(false)} />;
+    }
+    return (
+      <LandingPage
+        onGetStarted={() => setShowAuthPage(true)}
+        onLogin={() => setShowAuthPage(true)}
+      />
+    );
   }
 
   return <MainApp />;

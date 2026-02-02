@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from app.settings import settings
 from app.middleware import  SecurityHeadersMiddleware
 from app.logger import logger
-from routers import health, upload, chat, models
+from routers import health, upload, chat, models, auth
 
 
 @asynccontextmanager
@@ -68,6 +68,7 @@ async def root():
 
 
 # Register routers with /api prefix
+app.include_router(auth.router, prefix="/api")
 app.include_router(health.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")

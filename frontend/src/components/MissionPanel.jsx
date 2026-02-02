@@ -456,8 +456,8 @@ export default function MissionPanel({
               </Button>
             )}
             <Button
-              onClick={onSendQuery}
-              disabled={isLoading || !query.trim()}
+              onClick={() => onSendQuery()}
+              disabled={isLoading || !query || typeof query !== 'string' || !query.trim()}
               size="lg"
               className="px-8 text-base"
             >

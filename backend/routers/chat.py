@@ -23,7 +23,7 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = None
     organization_id: Optional[str] = None
     document_ids: Optional[list[str]] = None
-    model: Optional[str] = "google/gemini-2.5-pro"
+    model: Optional[str] = "anthropic/claude-sonnet-4.5"
 
 
 @router.post("/chat")

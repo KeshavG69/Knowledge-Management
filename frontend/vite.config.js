@@ -25,7 +25,7 @@ export default defineConfig({
       '/api': {
         target: IN_K8S
           ? 'http://soldieriq-backend:8000'
-          : (process.env.DOCKER_ENV ? 'http://soldieriq-backend:8000' : 'http://localhost:8000'),
+          : (process.env.DOCKER_ENV ? 'http://soldieriq-backend:8000' : 'http://localhost:8001'),
         changeOrigin: true,
         secure: false,
       },

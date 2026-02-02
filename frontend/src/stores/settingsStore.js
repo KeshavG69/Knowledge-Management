@@ -6,9 +6,9 @@ export const useSettingsStore = create(
   persist(
     (set, get) => ({
       // Model settings
-      selectedModel: 'gemini-2.5-pro-preview-05-06',
+      selectedModel: 'anthropic/claude-sonnet-4.5',
       availableModels: [],
-      previousModel: 'gemini-2.5-pro-preview-05-06',
+      previousModel: 'anthropic/claude-sonnet-4.5',
       modelJustChanged: false,
 
       setSelectedModel: (model) => {
@@ -42,10 +42,10 @@ export const useSettingsStore = create(
           set({
             availableModels: [
               {
-                id: 'gemini-2.5-pro-preview-05-06',
-                name: 'Gemini 2.5 Pro (Preview)',
+                id: 'anthropic/claude-sonnet-4.5',
+                name: 'Claude Sonnet 4.5',
                 provider: 'cloud',
-                provider_label: 'Cloud'
+                provider_label: 'Anthropic'
               }
             ]
           });
