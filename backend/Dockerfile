@@ -9,6 +9,16 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
+    libxcb1 \
+    libxcb-render0 \
+    libxcb-shape0 \
+    libxcb-xfixes0 \
+    libxext6 \
+    libxrender1 \
+    libgomp1 \
+    libglib2.0-0 \
+    libsm6 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for faster dependency installation
