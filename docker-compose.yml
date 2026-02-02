@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: soldieriq-backend
+    ports:
+      - "8001:8001"
+    environment:
+      # Application
+      - APP_NAME=SoldierIQ Backend
+      - ENVIRONMENT=production
+      - DEBUG=false
+
+      # Authentication
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+      # Database
+      - MONGODB_URL=${MONGODB_URL}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+
+      # Vector Database
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}
+
+      # LLM APIs
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+
+      # iDrive E2 Storage
+      - IDRIVEE2_ENDPOINT_URL=${IDRIVEE2_ENDPOINT_URL}
+      - IDRIVEE2_ACCESS_KEY_ID=${IDRIVEE2_ACCESS_KEY_ID}
+      - IDRIVEE2_SECRET_ACCESS_KEY=${IDRIVEE2_SECRET_ACCESS_KEY}
+      - IDRIVEE2_BUCKET_NAME=${IDRIVEE2_BUCKET_NAME}
+      - PRESIGNED_URL_EXPIRATION=604800
+
+      # Document Processing
+      - UNSTRUCTURED_API_KEY=${UNSTRUCTURED_API_KEY}
+      - UNSTRUCTURED_API_URL=${UNSTRUCTURED_API_URL}
+    volumes:
+      - ./backend:/app
+      - /app/.venv  # Exclude virtual env from volume mount
+    networks:
+      - soldieriq-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend React/Vite Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Pass environment variables at build time for Vite
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+
+    container_name: soldieriq-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - soldieriq-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  soldieriq-network:
+    driver: bridge
