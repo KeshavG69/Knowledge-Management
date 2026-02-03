@@ -272,6 +272,14 @@
         "documentation": {}
     },
     {
+        "label": "UploadFile",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "BaseHTTPMiddleware",
         "importPath": "starlette.middleware.base",
         "description": "starlette.middleware.base",
@@ -285,6 +293,14 @@
         "description": "starlette.responses",
         "isExtraImport": true,
         "detail": "starlette.responses",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
         "documentation": {}
     },
     {
@@ -1297,6 +1313,22 @@
         "documentation": {}
     },
     {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -1390,6 +1422,14 @@
         "description": "datetime",
         "isExtraImport": true,
         "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
         "documentation": {}
     },
     {
@@ -1781,6 +1821,22 @@
         "documentation": {}
     },
     {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
         "label": "Groq",
         "importPath": "groq",
         "description": "groq",
@@ -2067,11 +2123,27 @@
         "documentation": {}
     },
     {
-        "label": "structural_similarity",
-        "importPath": "skimage.metrics",
-        "description": "skimage.metrics",
+        "label": "detect",
+        "importPath": "scenedetect",
+        "description": "scenedetect",
         "isExtraImport": true,
-        "detail": "skimage.metrics",
+        "detail": "scenedetect",
+        "documentation": {}
+    },
+    {
+        "label": "ContentDetector",
+        "importPath": "scenedetect",
+        "description": "scenedetect",
+        "isExtraImport": true,
+        "detail": "scenedetect",
+        "documentation": {}
+    },
+    {
+        "label": "AdaptiveDetector",
+        "importPath": "scenedetect",
+        "description": "scenedetect",
+        "isExtraImport": true,
+        "detail": "scenedetect",
         "documentation": {}
     },
     {
@@ -2225,6 +2297,14 @@
         "description": "services.mindmap_service",
         "isExtraImport": true,
         "detail": "services.mindmap_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_ingestion_service",
+        "importPath": "services.ingestion_service",
+        "description": "services.ingestion_service",
+        "isExtraImport": true,
+        "detail": "services.ingestion_service",
         "documentation": {}
     },
     {
@@ -3092,7 +3172,7 @@
         "kind": 6,
         "importPath": "backend.clients.idrivee2_client",
         "description": "backend.clients.idrivee2_client",
-        "peekOfCode": "class IDriveE2Client:\n    \"\"\"Client for iDrive E2 cloud storage operations\"\"\"\n    def __init__(self):\n        \"\"\"Initialize iDrive E2 client with aioboto3\"\"\"\n        self.endpoint_url = settings.IDRIVEE2_ENDPOINT_URL\n        self.access_key = settings.IDRIVEE2_ACCESS_KEY_ID\n        self.secret_key = settings.IDRIVEE2_SECRET_ACCESS_KEY\n        self.bucket_name = settings.IDRIVEE2_BUCKET_NAME\n        # Initialize aioboto3 session\n        self.session = aioboto3.Session(",
+        "peekOfCode": "class IDriveE2Client:\n    \"\"\"Client for iDrive E2 cloud storage operations\"\"\"\n    def __init__(self):\n        \"\"\"Initialize iDrive E2 client with aioboto3\"\"\"\n        self.endpoint_url = settings.IDRIVEE2_ENDPOINT_URL\n        self.access_key = settings.IDRIVEE2_ACCESS_KEY_ID\n        self.secret_key = settings.IDRIVEE2_SECRET_ACCESS_KEY\n        self.bucket_name = settings.IDRIVEE2_BUCKET_NAME\n        # Configure for iDrive E2 compatibility (disable checksums)\n        from botocore.config import Config",
         "detail": "backend.clients.idrivee2_client",
         "documentation": {}
     },
@@ -3353,7 +3433,7 @@
         "kind": 6,
         "importPath": "backend.clients.video_scene_detector",
         "description": "backend.clients.video_scene_detector",
-        "peekOfCode": "class VideoSceneDetector:\n    \"\"\"Thread-safe video scene detector using SSIM and entropy\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:\n                    cls._instance = super().__new__(cls)",
+        "peekOfCode": "class VideoSceneDetector:\n    \"\"\"Thread-safe video scene detector using PySceneDetect\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:\n                    cls._instance = super().__new__(cls)",
         "detail": "backend.clients.video_scene_detector",
         "documentation": {}
     },
