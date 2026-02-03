@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useChatStore } from "@/lib/stores/chatStore";
+import ModelSelector from "./ModelSelector";
 
 export default function Header() {
   const router = useRouter();
@@ -61,16 +62,9 @@ export default function Header() {
           </div>
         </div>
 
-        {/* System Info */}
-        <div className="hidden lg:flex items-center gap-4 ml-4 text-xs text-slate-400 border-l border-slate-700 pl-4">
-          <div className="flex items-center gap-2">
-            <span className="text-slate-600">SYS:</span>
-            <span className="font-mono text-amber-400/80">ACTIVE</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-600">DATE:</span>
-            <span className="font-mono">{getCurrentDate()}</span>
-          </div>
+        {/* Model Selector */}
+        <div className="ml-4">
+          <ModelSelector />
         </div>
 
         {/* New Chat Button */}
@@ -88,14 +82,14 @@ export default function Header() {
       </div>
 
       {/* User Profile */}
-      <div className="relative z-50">
+      <div className="relative">
         <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setShowMenu(prev => !prev);
           }}
-          className="flex items-center gap-3 px-3 py-2 border border-slate-700 hover:border-amber-400/40 bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 relative group"
+          className="flex items-center gap-3 px-3 py-2 border border-slate-700 hover:border-amber-400/40 bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 relative group z-50"
           style={{
             clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)'
           }}
@@ -137,13 +131,13 @@ export default function Header() {
         {showMenu && (
           <>
             <div
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-[100]"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMenu(false);
               }}
             />
-            <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-amber-400/20 shadow-2xl z-50 tactical-panel">
+            <div className="fixed top-16 right-6 w-56 bg-slate-900 border border-amber-400/20 shadow-2xl z-[200] tactical-panel">
               <div className="p-2">
                 {/* Settings Option */}
                 <button

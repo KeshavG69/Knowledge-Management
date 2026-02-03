@@ -126,7 +126,7 @@ export const chatApi = {
     message: string,
     documentIds: string[],
     sessionId: string,
-    model: string = 'anthropic/claude-sonnet-4.5'
+    model: string
   ): Promise<ReadableStream> => {
     const userParams = getUserParams();
     if (!userParams) {

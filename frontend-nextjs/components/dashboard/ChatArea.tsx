@@ -17,6 +17,7 @@ export default function ChatArea() {
     sessionId,
     isLoading,
     inputMessage,
+    selectedModel,
     setInputMessage,
     addMessage,
     updateLastMessage,
@@ -122,7 +123,8 @@ export default function ChatArea() {
       const stream = await chatApi.sendMessage(
         userMessage,
         documentIds,
-        sessionId
+        sessionId,
+        selectedModel
       );
 
       const reader = stream.getReader();
