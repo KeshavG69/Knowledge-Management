@@ -23,9 +23,11 @@ interface ChatState {
   sessionId: string;
   isLoading: boolean;
   inputMessage: string;
+  selectedModel: string;
 
   // Actions
   setInputMessage: (message: string) => void;
+  setSelectedModel: (model: string) => void;
   addMessage: (message: ChatMessage) => void;
   updateLastMessage: (content: string, sources?: DocumentSource[]) => void;
   setLoading: (loading: boolean) => void;
@@ -38,8 +40,11 @@ export const useChatStore = create<ChatState>((set) => ({
   sessionId: generateId(),
   isLoading: false,
   inputMessage: '',
+  selectedModel: 'anthropic/claude-sonnet-4.5', // Default model
 
   setInputMessage: (message) => set({ inputMessage: message }),
+
+  setSelectedModel: (model) => set({ selectedModel: model }),
 
   addMessage: (message) =>
     set((state) => ({ messages: [...state.messages, message] })),
