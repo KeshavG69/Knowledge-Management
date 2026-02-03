@@ -528,6 +528,14 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -1837,6 +1845,14 @@
         "documentation": {}
     },
     {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
         "label": "Groq",
         "importPath": "groq",
         "description": "groq",
@@ -2425,6 +2441,14 @@
         "description": "clients.agent_memory",
         "isExtraImport": true,
         "detail": "clients.agent_memory",
+        "documentation": {}
+    },
+    {
+        "label": "get_pinecone_client",
+        "importPath": "clients.pinecone_client",
+        "description": "clients.pinecone_client",
+        "isExtraImport": true,
+        "detail": "clients.pinecone_client",
         "documentation": {}
     },
     {
@@ -3037,7 +3061,7 @@
         "kind": 5,
         "importPath": "backend.clients.chunker_client",
         "description": "backend.clients.chunker_client",
-        "peekOfCode": "DEFAULT_THRESHOLD = 0.8\nDEFAULT_CHUNK_SIZE = 1000  # Optimized for Pinecone\nDEFAULT_SIMILARITY_WINDOW = 3\nDEFAULT_MIN_SENTENCES_PER_CHUNK = 1\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer",
+        "peekOfCode": "DEFAULT_THRESHOLD = 0.4\nDEFAULT_CHUNK_SIZE = 3000  # Maximum chunk size for optimal context\nDEFAULT_SIMILARITY_WINDOW = 3\nDEFAULT_MIN_SENTENCES_PER_CHUNK = 3\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer",
         "detail": "backend.clients.chunker_client",
         "documentation": {}
     },
@@ -3046,7 +3070,7 @@
         "kind": 5,
         "importPath": "backend.clients.chunker_client",
         "description": "backend.clients.chunker_client",
-        "peekOfCode": "DEFAULT_CHUNK_SIZE = 1000  # Optimized for Pinecone\nDEFAULT_SIMILARITY_WINDOW = 3\nDEFAULT_MIN_SENTENCES_PER_CHUNK = 1\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer\nDEFAULT_ENCODING = \"cl100k_base\"  # For text-embedding models",
+        "peekOfCode": "DEFAULT_CHUNK_SIZE = 3000  # Maximum chunk size for optimal context\nDEFAULT_SIMILARITY_WINDOW = 3\nDEFAULT_MIN_SENTENCES_PER_CHUNK = 3\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer\nDEFAULT_ENCODING = \"cl100k_base\"  # For text-embedding models",
         "detail": "backend.clients.chunker_client",
         "documentation": {}
     },
@@ -3055,7 +3079,7 @@
         "kind": 5,
         "importPath": "backend.clients.chunker_client",
         "description": "backend.clients.chunker_client",
-        "peekOfCode": "DEFAULT_SIMILARITY_WINDOW = 3\nDEFAULT_MIN_SENTENCES_PER_CHUNK = 1\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer\nDEFAULT_ENCODING = \"cl100k_base\"  # For text-embedding models\n@lru_cache(maxsize=4, typed=True)",
+        "peekOfCode": "DEFAULT_SIMILARITY_WINDOW = 3\nDEFAULT_MIN_SENTENCES_PER_CHUNK = 3\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer\nDEFAULT_ENCODING = \"cl100k_base\"  # For text-embedding models\n@lru_cache(maxsize=4, typed=True)",
         "detail": "backend.clients.chunker_client",
         "documentation": {}
     },
@@ -3064,7 +3088,7 @@
         "kind": 5,
         "importPath": "backend.clients.chunker_client",
         "description": "backend.clients.chunker_client",
-        "peekOfCode": "DEFAULT_MIN_SENTENCES_PER_CHUNK = 1\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer\nDEFAULT_ENCODING = \"cl100k_base\"  # For text-embedding models\n@lru_cache(maxsize=4, typed=True)\ndef get_chonkie_embeddings(",
+        "peekOfCode": "DEFAULT_MIN_SENTENCES_PER_CHUNK = 3\nDEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24\nDEFAULT_DELIM = [\". \", \"! \", \"? \", \"\\n\"]\nDEFAULT_INCLUDE_DELIM = \"prev\"\n# Token limits for OpenAI\nOPENAI_MAX_TOKENS_PER_REQUEST = 300000\nSAFE_TOKEN_LIMIT = 200000  # Safety buffer\nDEFAULT_ENCODING = \"cl100k_base\"  # For text-embedding models\n@lru_cache(maxsize=4, typed=True)\ndef get_chonkie_embeddings(",
         "detail": "backend.clients.chunker_client",
         "documentation": {}
     },
@@ -3577,7 +3601,7 @@
         "kind": 5,
         "importPath": "backend.routers.upload",
         "description": "backend.routers.upload",
-        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\nasync def process_ingestion_task(\n    task_id: str,\n    file_data: List[Dict[str, Any]],\n    folder_name: str,\n    user_id: Optional[str],\n    organization_id: Optional[str]\n):\n    \"\"\"\n    Background task for document ingestion",
+        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\nasync def process_ingestion_in_background(\n    document_ids: List[str],\n    file_data: List[Dict[str, Any]],\n    folder_name: str,\n    user_id: Optional[str],\n    organization_id: Optional[str]\n):\n    \"\"\"\n    Background task for document ingestion",
         "detail": "backend.routers.upload",
         "documentation": {}
     },
@@ -3804,6 +3828,15 @@
         "description": "backend.main",
         "peekOfCode": "def main():\n    print(\"Hello from backend!\")\nif __name__ == \"__main__\":\n    main()",
         "detail": "backend.main",
+        "documentation": {}
+    },
+    {
+        "label": "test_pinecone_metadata",
+        "kind": 2,
+        "importPath": "backend.test_pinecone_metadata",
+        "description": "backend.test_pinecone_metadata",
+        "peekOfCode": "def test_pinecone_metadata():\n    \"\"\"Query Pinecone and display metadata for video chunks\"\"\"\n    logger.info(\"=\" * 80)\n    logger.info(\"🔍 PINECONE METADATA TEST\")\n    logger.info(\"=\" * 80)\n    # Initialize Pinecone client\n    logger.info(\"\\n📌 Initializing Pinecone client...\")\n    pinecone_client = get_pinecone_client()\n    # From your ingestion logs:\n    DOCUMENT_ID = \"69822473b0da425b8515a25b\"",
+        "detail": "backend.test_pinecone_metadata",
         "documentation": {}
     },
     {

@@ -105,6 +105,7 @@ def create_knowledge_retriever(
                         "file_name": metadata.get("file_name", "Unknown"),
                         "folder_name": metadata.get("folder_name", "N/A"),
                         "score": score,
+                        "file_key": metadata.get("file_key", ""),  # S3 object key
                     }
                 }
 
@@ -118,6 +119,7 @@ def create_knowledge_retriever(
                         "clip_end": metadata.get("clip_end"),
                         "scene_id": metadata.get("scene_id"),
                         "key_frame_timestamp": metadata.get("key_frame_timestamp"),
+                        "keyframe_file_key": metadata.get("keyframe_file_key", ""),  # Thumbnail S3 key
                     })
 
                 documents.append(doc_dict)

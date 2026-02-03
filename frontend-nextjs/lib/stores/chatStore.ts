@@ -1,0 +1,65 @@
+import { create } from 'zustand';
+import { ChatMessage, SourceReference } from '@/types';
+
+const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+export interface DocumentSource extends SourceReference {
+  text: string;
+  score: number;
+  folder_name: string;
+  file_key: string;
+  // Video-specific fields (optional)
+  video_id?: string;
+  video_name?: string;
+  clip_start?: number;
+  clip_end?: number;
+  scene_id?: string;
+  key_frame_timestamp?: number;
+  keyframe_file_key?: string;
+}
+
+interface ChatState {
+  messages: ChatMessage[];
+  sessionId: string;
+  isLoading: boolean;
+  inputMessage: string;
+
+  // Actions
+  setInputMessage: (message: string) => void;
+  addMessage: (message: ChatMessage) => void;
+  updateLastMessage: (content: string, sources?: DocumentSource[]) => void;
+  setLoading: (loading: boolean) => void;
+  clearChat: () => void;
+  startNewSession: () => void;
+}
+
+export const useChatStore = create<ChatState>((set) => ({
+  messages: [],
+  sessionId: generateId(),
+  isLoading: false,
+  inputMessage: '',
+
+  setInputMessage: (message) => set({ inputMessage: message }),
+
+  addMessage: (message) =>
+    set((state) => ({ messages: [...state.messages, message] })),
+
+  updateLastMessage: (content, sources) =>
+    set((state) => {
+      const messages = [...state.messages];
+      if (messages.length > 0) {
+        messages[messages.length - 1] = {
+          ...messages[messages.length - 1],
+          content,
+          ...(sources && { sources }),
+        };
+      }
+      return { messages };
+    }),
+
+  setLoading: (loading) => set({ isLoading: loading }),
+
+  clearChat: () => set({ messages: [] }),
+
+  startNewSession: () => set({ messages: [], sessionId: generateId() }),
+}));
