@@ -15,8 +15,8 @@ from app.logger import logger
 router = APIRouter(prefix="/upload", tags=["upload"])
 
 
-async def process_ingestion_task(
-    task_id: str,
+async def process_ingestion_in_background(
+    document_ids: List[str],
     file_data: List[Dict[str, Any]],
     folder_name: str,
     user_id: Optional[str],
@@ -25,85 +25,64 @@ async def process_ingestion_task(
     """
     Background task for document ingestion
 
+    Documents already exist with status="processing" (created in upload endpoint).
+    This function updates those existing documents throughout the pipeline.
+
     Args:
-        task_id: Task ID for tracking
+        document_ids: List of pre-created document IDs
         file_data: List of dicts with 'content', 'filename', 'content_type'
         folder_name: Folder name for organization
         user_id: Optional user ID
         organization_id: Optional organization ID
     """
-    mongodb_client = get_mongodb_client()
     ingestion_service = get_ingestion_service()
 
     try:
-        # Update task status to processing
-        await mongodb_client.async_update_document(
-            collection="ingestion_tasks",
-            query={"_id": ObjectId(task_id)},
-            update={
-                "$set": {
-                    "status": "processing",
-                    "updated_at": datetime.utcnow()
-                }
-            }
-        )
+        logger.info(f"🚀 Background ingestion started for {len(file_data)} files")
 
-        logger.info(f"🚀 Background task {task_id} started processing {len(file_data)} files")
-
-        # Reconstruct UploadFile-like objects from stored data
+        # Process each file individually with its document ID
         from io import BytesIO
         from fastapi import UploadFile
 
-        upload_files = []
-        for file_info in file_data:
-            file_obj = BytesIO(file_info["content"])
-            upload_file = UploadFile(
-                file=file_obj,
-                filename=file_info["filename"],
-                headers={"content-type": file_info["content_type"]}
-            )
-            upload_files.append(upload_file)
+        for i, (document_id, file_info) in enumerate(zip(document_ids, file_data)):
+            try:
+                logger.info(f"📄 Processing file {i+1}/{len(file_data)}: {file_info['filename']}")
 
-        # Run ingestion
-        result = await ingestion_service.ingest_documents(
-            files=upload_files,
-            folder_name=folder_name,
-            user_id=user_id,
-            organization_id=organization_id
-        )
+                # Reconstruct UploadFile object
+                file_obj = BytesIO(file_info["content"])
+                upload_file = UploadFile(
+                    file=file_obj,
+                    filename=file_info["filename"],
+                    headers={"content-type": file_info["content_type"]}
+                )
 
-        # Update task status to completed
-        await mongodb_client.async_update_document(
-            collection="ingestion_tasks",
-            query={"_id": ObjectId(task_id)},
-            update={
-                "$set": {
-                    "status": "completed",
-                    "result": result,
-                    "updated_at": datetime.utcnow(),
-                    "completed_at": datetime.utcnow()
-                }
-            }
-        )
+                # Process this single file (will update existing document)
+                await ingestion_service._process_single_document_with_existing_id(
+                    document_id=document_id,
+                    file=upload_file,
+                    folder_name=folder_name,
+                    user_id=user_id,
+                    organization_id=organization_id
+                )
 
-        logger.info(f"✅ Background task {task_id} completed successfully")
+                logger.info(f"✅ Completed processing: {file_info['filename']}")
+
+            except Exception as e:
+                logger.error(f"❌ Failed to process {file_info['filename']}: {str(e)}")
+                # Mark this document as failed
+                await ingestion_service._update_document_status(
+                    document_id=document_id,
+                    status="failed",
+                    stage="failed",
+                    stage_description=f"Processing failed: {str(e)}",
+                    error=str(e),
+                    failed_at=datetime.utcnow()
+                )
+
+        logger.info(f"✅ Background ingestion completed for all files")
 
     except Exception as e:
-        logger.error(f"❌ Background task {task_id} failed: {str(e)}")
-
-        # Update task status to failed
-        await mongodb_client.async_update_document(
-            collection="ingestion_tasks",
-            query={"_id": ObjectId(task_id)},
-            update={
-                "$set": {
-                    "status": "failed",
-                    "error": str(e),
-                    "updated_at": datetime.utcnow(),
-                    "failed_at": datetime.utcnow()
-                }
-            }
-        )
+        logger.error(f"❌ Background ingestion failed: {str(e)}")
 
 
 @router.post("/documents")
@@ -118,14 +97,16 @@ async def upload_documents(
     Upload multiple documents for ingestion (background processing)
 
     This endpoint:
-    1. Validates input and creates a task record
-    2. Returns immediately with task_id
+    1. Validates input
+    2. Returns immediately with file list
     3. Processes ingestion in background:
+       - Creates document records with status="processing"
        - Uploads files to iDrive E2
        - Extracts raw content
        - Stores in MongoDB
        - Chunks content semantically
        - Stores chunks in Pinecone
+       - Updates status to "completed" or "failed"
 
     Args:
         background_tasks: FastAPI background tasks
@@ -135,7 +116,7 @@ async def upload_documents(
         organization_id: Optional organization ID for tracking
 
     Returns:
-        Task ID for tracking ingestion status
+        List of filenames that will be processed
     """
     try:
         # Validate input
@@ -165,94 +146,56 @@ async def upload_documents(
             })
             await file.seek(0)  # Reset file pointer
 
-        # Create task record in MongoDB
-        mongodb_client = get_mongodb_client()
-        task_document = {
-            "status": "queued",
-            "folder_name": folder_name.strip(),
-            "user_id": ObjectId(user_id) if user_id else None,
-            "organization_id": ObjectId(organization_id) if organization_id else None,
-            "total_files": len(files),
-            "file_names": [f["filename"] for f in file_data],
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
-        }
+        # Create document records with status="processing" FIRST (before background task)
+        ingestion_service = get_ingestion_service()
+        from utils.file_utils import sanitize_filename, get_file_size_mb, get_file_extension
 
-        task_id = await mongodb_client.async_insert_document(
-            collection="ingestion_tasks",
-            document=task_document
-        )
+        document_ids = []
+        for file_info in file_data:
+            safe_filename = sanitize_filename(file_info["filename"])
+            file_key = f"{folder_name.strip()}/{safe_filename}"
+            file_size_mb = get_file_size_mb(file_info["content"])
 
-        # Add background task
+            # Create document record with status="processing"
+            document_id = await ingestion_service._create_document_with_status(
+                file_name=file_info["filename"],
+                folder_name=folder_name.strip(),
+                file_key=file_key,
+                file_size_mb=file_size_mb,
+                user_id=user_id,
+                organization_id=organization_id,
+                additional_metadata=None
+            )
+            document_ids.append(document_id)
+            logger.info(f"📝 Created document record: {document_id} for {file_info['filename']}")
+
+        # Add background task (will update existing documents)
         background_tasks.add_task(
-            process_ingestion_task,
-            task_id=str(task_id),
+            process_ingestion_in_background,
+            document_ids=document_ids,
             file_data=file_data,
             folder_name=folder_name.strip(),
             user_id=user_id,
             organization_id=organization_id
         )
 
-        logger.info(f"✅ Task {task_id} queued for background processing")
+        logger.info(f"✅ Created {len(document_ids)} document records and queued for background processing")
 
         return {
             "success": True,
-            "message": f"Ingestion task queued for {len(files)} files",
+            "message": f"Ingestion started for {len(files)} files",
             "data": {
-                "task_id": str(task_id),
-                "status": "queued",
                 "total_files": len(files),
-                "folder_name": folder_name.strip()
+                "document_ids": document_ids,
+                "file_names": [f["filename"] for f in file_data],
+                "folder_name": folder_name.strip(),
+                "status": "processing"
             }
         }
 
     except Exception as e:
         logger.error(f"❌ Upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-
-@router.get("/tasks/{task_id}")
-async def get_task_status(task_id: str):
-    """
-    Get ingestion task status
-
-    Args:
-        task_id: Task ID returned from upload endpoint
-
-    Returns:
-        Task status and result (if completed)
-    """
-    try:
-        # Validate task_id
-        if not ObjectId.is_valid(task_id):
-            raise HTTPException(status_code=400, detail=f"Invalid task_id format: {task_id}")
-
-        mongodb_client = get_mongodb_client()
-        task = await mongodb_client.async_find_document(
-            collection="ingestion_tasks",
-            query={"_id": ObjectId(task_id)}
-        )
-
-        if not task:
-            raise HTTPException(status_code=404, detail="Task not found")
-
-        # Convert ObjectId to string for JSON serialization
-        task["_id"] = str(task["_id"])
-        if task.get("user_id"):
-            task["user_id"] = str(task["user_id"])
-        if task.get("organization_id"):
-            task["organization_id"] = str(task["organization_id"])
-
-        return {
-            "success": True,
-            "data": task
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Get task status failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get task status: {str(e)}")
 
 
 @router.get("/documents/{document_id}")
