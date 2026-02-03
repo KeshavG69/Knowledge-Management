@@ -139,7 +139,7 @@ export default function Sidebar() {
   const totalDocs = Array.isArray(documents) ? documents.length : 0;
 
   return (
-    <div className="w-96 bg-slate-900 border-r border-amber-400/20 flex flex-col relative scan-lines">
+    <div className="flex-1 bg-slate-900 border-r border-amber-400/20 flex flex-col relative scan-lines">
       {/* Decorative corner bracket */}
       <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-amber-400/40 z-10"></div>
 

@@ -2,11 +2,10 @@
 Mind Map Router - API endpoints for mind map generation
 """
 
-from typing import List
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 
-from models.mindmap import MindMapRequest, MindMapResponse
+from models.mindmap import MindMapRequest
 from services.mindmap_service import get_mindmap_service
 from app.logger import logger
 
@@ -119,33 +118,42 @@ async def get_mindmap(mind_map_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get mind map: {str(e)}")
 
 
-@router.post("/list")
-async def list_mindmaps_by_documents(document_ids: List[str]):
+@router.get("/list")
+async def list_mindmaps(
+    user_id: str,
+    organization_id: str
+):
     """
-    List all mind maps that include any of the specified documents
+    List all mind maps for a user and organization
 
     Args:
-        document_ids: List of MongoDB document IDs
+        user_id: MongoDB user ID
+        organization_id: MongoDB organization ID
 
     Returns:
-        List of mind maps
+        List of mind maps belonging to the user/organization
 
-    Example request body:
-    ```json
-    ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
-    ```
+    Example:
+    GET /api/mindmap/list?user_id=507f1f77bcf86cd799439011&organization_id=507f1f77bcf86cd799439012
     """
     try:
-        # Validate all document_ids
-        for doc_id in document_ids:
-            if not ObjectId.is_valid(doc_id):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid document_id format: {doc_id}"
-                )
+        # Validate IDs
+        if not ObjectId.is_valid(user_id):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid user_id format: {user_id}"
+            )
+
+        if not ObjectId.is_valid(organization_id):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid organization_id format: {organization_id}"
+            )
+
+        logger.info(f"📋 Listing mind maps for user: {user_id}, org: {organization_id}")
 
         mindmap_service = get_mindmap_service()
-        mindmaps = await mindmap_service.list_mindmaps_by_documents(document_ids)
+        mindmaps = await mindmap_service.list_mindmaps_by_user(user_id, organization_id)
 
         return {
             "success": True,

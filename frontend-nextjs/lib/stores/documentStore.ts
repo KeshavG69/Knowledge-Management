@@ -2,6 +2,74 @@ import { create } from 'zustand';
 import { Document, KnowledgeBase } from '@/types';
 import { documentsApi } from '../api/documents';
 
+// Helper function for background polling
+const startBackgroundPolling = (
+  uploadedDocIds: string[],
+  maxFileSizeMB: number,
+  get: any,
+  set: any
+) => {
+  // Calculate dynamic polling interval based on file size
+  const calculatePollingInterval = (sizeMB: number): number => {
+    if (sizeMB < 1) {
+      return 1500; // Small files: 1.5 seconds
+    } else if (sizeMB < 5) {
+      return 2500; // Medium files (1-5MB): 2.5 seconds
+    } else if (sizeMB < 20) {
+      return 4000; // Large files (5-20MB): 4 seconds
+    } else if (sizeMB < 50) {
+      return 6000; // Very large files (20-50MB): 6 seconds
+    } else if (sizeMB < 100) {
+      return 10000; // Huge files (50-100MB): 10 seconds
+    } else {
+      return 15000; // Massive files (>100MB): 15 seconds
+    }
+  };
+
+  const pollingIntervalMs = calculatePollingInterval(maxFileSizeMB);
+  console.log(`📊 Background polling started: ${pollingIntervalMs}ms interval (max file size: ${maxFileSizeMB.toFixed(2)}MB)`);
+
+  // Poll SPECIFIC documents by ID to check for status updates (more efficient)
+  const pollInterval = setInterval(async () => {
+    try {
+      // Fetch each document by ID to check status
+      const statusChecks = await Promise.all(
+        uploadedDocIds.map(docId => documentsApi.getDocument(docId))
+      );
+
+      // Update documents in store with latest status
+      const currentDocs = get().documents;
+      const updatedDocs = currentDocs.map((doc: Document) => {
+        const updatedDoc = statusChecks.find(d => d._id === doc._id);
+        return updatedDoc || doc;
+      });
+      set({ documents: updatedDocs });
+
+      // Check if all uploaded documents are completed/failed
+      const stillProcessing = statusChecks.filter(d => d.status === 'processing');
+
+      if (stillProcessing.length === 0) {
+        // All documents processed
+        clearInterval(pollInterval);
+        set({ uploadStatus: 'completed' });
+
+        // Refresh the full list once to ensure we have latest data
+        await get().fetchDocuments();
+        await get().fetchKnowledgeBases();
+
+        // Clear status after 2 seconds
+        setTimeout(() => {
+          set({ uploadStatus: null, uploadProgress: null });
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error('Polling error:', error);
+      clearInterval(pollInterval);
+      set({ uploadStatus: 'failed', error: error.message, uploadProgress: null });
+    }
+  }, pollingIntervalMs); // Dynamic interval based on file size
+};
+
 interface DocumentState {
   // State
   documents: Document[];
@@ -85,7 +153,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // Add placeholders to existing documents (don't replace)
       set({ documents: [...placeholderDocs, ...existingDocs] });
 
-      // Upload files - backend creates real documents
+      // Upload files - backend creates real documents and starts ingestion
       await documentsApi.uploadDocuments(files, folderName);
 
       // Fetch documents to get the real IDs from backend
@@ -109,66 +177,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         return;
       }
 
+      // Set to processing status - at this point upload is done and ingestion started
       set({ uploadStatus: 'processing' });
 
-      // Calculate dynamic polling interval based on file size
-      const calculatePollingInterval = (sizeMB: number): number => {
-        if (sizeMB < 1) {
-          return 1500; // Small files: 1.5 seconds
-        } else if (sizeMB < 5) {
-          return 2500; // Medium files (1-5MB): 2.5 seconds
-        } else if (sizeMB < 20) {
-          return 4000; // Large files (5-20MB): 4 seconds
-        } else if (sizeMB < 50) {
-          return 6000; // Very large files (20-50MB): 6 seconds
-        } else if (sizeMB < 100) {
-          return 10000; // Huge files (50-100MB): 10 seconds
-        } else {
-          return 15000; // Massive files (>100MB): 15 seconds
-        }
-      };
+      // Start background polling (non-blocking) - function returns immediately
+      startBackgroundPolling(uploadedDocIds, maxFileSizeMB, get, set);
 
-      const pollingIntervalMs = calculatePollingInterval(maxFileSizeMB);
-      console.log(`📊 Polling interval: ${pollingIntervalMs}ms (max file size: ${maxFileSizeMB.toFixed(2)}MB)`);
-
-      // Poll SPECIFIC documents by ID to check for status updates (more efficient)
-      const pollInterval = setInterval(async () => {
-        try {
-          // Fetch each document by ID to check status
-          const statusChecks = await Promise.all(
-            uploadedDocIds.map(docId => documentsApi.getDocument(docId))
-          );
-
-          // Update documents in store with latest status
-          const currentDocs = get().documents;
-          const updatedDocs = currentDocs.map(doc => {
-            const updatedDoc = statusChecks.find(d => d._id === doc._id);
-            return updatedDoc || doc;
-          });
-          set({ documents: updatedDocs });
-
-          // Check if all uploaded documents are completed/failed
-          const stillProcessing = statusChecks.filter(d => d.status === 'processing');
-
-          if (stillProcessing.length === 0) {
-            // All documents processed
-            clearInterval(pollInterval);
-            set({ uploadStatus: 'completed' });
-
-            // Refresh the full list once to ensure we have latest data
-            await get().fetchDocuments();
-            await get().fetchKnowledgeBases();
-
-            // Clear status after 2 seconds
-            setTimeout(() => {
-              set({ uploadStatus: null, uploadProgress: null });
-            }, 2000);
-          }
-        } catch (error: any) {
-          clearInterval(pollInterval);
-          set({ uploadStatus: 'failed', error: error.message, uploadProgress: null });
-        }
-      }, pollingIntervalMs); // Dynamic interval based on file size
+      // Function returns here - modal can close while polling continues in background
 
     } catch (error: any) {
       set({ error: error.message, uploadStatus: 'failed', uploadProgress: null });

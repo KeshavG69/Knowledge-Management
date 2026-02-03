@@ -4,17 +4,14 @@ Supports multiple documents (like NotebookLM)
 Returns mind map data as JSON for React component visualization
 """
 
-import os
 from typing import Optional, List, Dict, Any
-from datetime import datetime
-from langchain_openai import ChatOpenAI
+from datetime import datetime, timezone
 from langchain_core.prompts import ChatPromptTemplate
 from bson import ObjectId
 
 from models.mindmap import MindMap, DocumentSummary
 from clients.mongodb_client import get_mongodb_client
 from app.logger import logger
-from app.settings import settings
 from clients.ultimate_llm import get_llm
 
 class MindMapService:
@@ -110,8 +107,8 @@ class MindMapService:
                 "nodes": mind_map_data["nodes"],
                 "edges": mind_map_data["edges"],
                 "document_count": len(documents),
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
 
             mind_map_id = await self.mongodb_client.async_insert_document(
@@ -207,22 +204,27 @@ class MindMapService:
             logger.error(f"❌ Failed to get mind map: {str(e)}")
             return None
 
-    async def list_mindmaps_by_documents(self, document_ids: List[str]) -> List[Dict[str, Any]]:
+    async def list_mindmaps_by_user(self, user_id: str, organization_id: str) -> List[Dict[str, Any]]:
         """
-        List all mind maps that include any of the specified documents
+        List all mind maps for a specific user and organization
 
         Args:
-            document_ids: List of MongoDB document IDs
+            user_id: MongoDB user ID
+            organization_id: MongoDB organization ID
 
         Returns:
             List of mind maps
         """
         try:
             # Convert to ObjectIds
-            object_ids = [ObjectId(doc_id) for doc_id in document_ids if ObjectId.is_valid(doc_id)]
+            user_obj_id = ObjectId(user_id)
+            org_obj_id = ObjectId(organization_id)
 
             cursor = self.mongodb_client.db["mindmaps"].find(
-                {"document_ids": {"$in": object_ids}}
+                {
+                    "user_id": user_obj_id,
+                    "organization_id": org_obj_id
+                }
             ).sort("created_at", -1)  # Most recent first
 
             mindmaps = []
@@ -243,6 +245,7 @@ class MindMapService:
 
                 mindmaps.append(doc)
 
+            logger.info(f"✅ Found {len(mindmaps)} mind maps for user {user_id}")
             return mindmaps
 
         except Exception as e:

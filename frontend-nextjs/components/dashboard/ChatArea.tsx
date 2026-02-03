@@ -565,9 +565,9 @@ export default function ChatArea() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="status-indicator status-idle"></div>
-                  <span className="text-slate-500 tracking-wider">
-                    NO DOCUMENTS SELECTED
+                  <div className="status-indicator bg-amber-400"></div>
+                  <span className="text-amber-400 tracking-wider">
+                    GENERAL MODE
                   </span>
                 </div>
               )}
@@ -593,16 +593,16 @@ export default function ChatArea() {
               onKeyDown={handleKeyDown}
               placeholder={
                 selectedDocs.size === 0
-                  ? "SELECT DOCUMENTS FROM REPOSITORY TO BEGIN..."
+                  ? "ENTER QUERY (NO DOCUMENTS SELECTED - GENERAL MODE)..."
                   : "ENTER QUERY FOR INTELLIGENCE ANALYSIS..."
               }
-              disabled={isLoading || selectedDocs.size === 0}
+              disabled={isLoading}
               className="tactical-input pr-14 py-3 resize-none max-h-32 disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-slate-600 placeholder:text-xs placeholder:tracking-wider"
               rows={1}
             />
             <button
               type="submit"
-              disabled={isLoading || !inputMessage.trim() || selectedDocs.size === 0}
+              disabled={isLoading || !inputMessage.trim()}
               className="absolute right-2 bottom-2 tactical-btn tactical-btn-primary px-3 py-2 disabled:opacity-30"
             >
               {isLoading ? (

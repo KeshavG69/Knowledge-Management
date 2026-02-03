@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useChatStore } from "@/lib/stores/chatStore";
@@ -9,7 +9,20 @@ export default function Header() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { startNewSession } = useChatStore();
-  const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(true); // TEMPORARY: Testing if dropdown renders at all
+
+  console.log("Header render, showMenu:", showMenu);
+
+  // Track component lifecycle
+  useEffect(() => {
+    console.log("Header MOUNTED");
+    return () => console.log("Header UNMOUNTED");
+  }, []);
+
+  // Track showMenu changes
+  useEffect(() => {
+    console.log("showMenu changed to:", showMenu);
+  }, [showMenu]);
 
   const handleLogout = async () => {
     await logout();
@@ -18,17 +31,6 @@ export default function Header() {
 
   const handleNewChat = () => {
     startNewSession();
-  };
-
-  // Get current time for tactical display
-  const getCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
   };
 
   const getCurrentDate = () => {
@@ -41,7 +43,7 @@ export default function Header() {
   };
 
   return (
-    <header className="h-16 bg-slate-900 border-b border-amber-400/20 flex items-center justify-between px-6 relative scan-lines">
+    <header className="h-16 bg-slate-900 border-b border-amber-400/20 flex items-center justify-between px-6 relative scan-lines z-30">
       {/* Decorative corner brackets */}
       <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400/40"></div>
       <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-amber-400/40"></div>
@@ -82,10 +84,6 @@ export default function Header() {
             <span className="text-slate-600">DATE:</span>
             <span className="font-mono">{getCurrentDate()}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-600">TIME:</span>
-            <span className="font-mono tabular-nums">{getCurrentTime()}</span>
-          </div>
         </div>
 
         {/* New Chat Button */}
@@ -103,9 +101,17 @@ export default function Header() {
       </div>
 
       {/* User Profile */}
-      <div className="relative">
+      <div className="relative z-50">
         <button
-          onClick={() => setShowMenu(!showMenu)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Menu clicked, current state:", showMenu);
+            setShowMenu(prev => {
+              console.log("Setting menu to:", !prev);
+              return !prev;
+            });
+          }}
           className="flex items-center gap-3 px-3 py-2 border border-slate-700 hover:border-amber-400/40 bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 relative group"
           style={{
             clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)'
@@ -148,30 +154,42 @@ export default function Header() {
         {showMenu && (
           <>
             <div
-              className="fixed inset-0 z-10"
-              onClick={() => setShowMenu(false)}
+              className="fixed inset-0 z-40"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log("Backdrop clicked");
+                setShowMenu(false);
+              }}
             />
-            <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-amber-400/20 shadow-2xl z-20 tactical-panel">
+            <div className="absolute right-0 mt-2 w-56 bg-red-500 border-4 border-yellow-400 shadow-2xl z-50 tactical-panel" style={{ position: 'absolute' }}>
               <div className="p-2">
-                {/* User Info Section */}
-                <div className="px-3 py-2 border-b border-slate-700 mb-2">
-                  <div className="text-[10px] text-slate-600 tracking-widest mb-1">
-                    OPERATOR ID
-                  </div>
-                  <div className="text-sm text-amber-400 font-mono break-all">
-                    {user?.email}
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="status-indicator status-active"></div>
-                    <span className="text-xs text-tactical-green">
-                      AUTHENTICATED
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
+                {/* Settings Option */}
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setShowMenu(false);
+                    // TODO: Navigate to settings page
+                    console.log("Settings clicked");
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-amber-400 border border-transparent hover:border-amber-400/30 transition-all duration-200 text-sm font-semibold tracking-wide mb-1"
+                  style={{
+                    clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    SETTINGS
+                  </span>
+                </button>
+
+                {/* Logout Option */}
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    handleLogout();
+                  }}
                   className="w-full text-left px-4 py-2.5 text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-all duration-200 text-sm font-semibold tracking-wide"
                   style={{
                     clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
@@ -181,7 +199,7 @@ export default function Header() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    TERMINATE SESSION
+                    LOGOUT
                   </span>
                 </button>
               </div>
