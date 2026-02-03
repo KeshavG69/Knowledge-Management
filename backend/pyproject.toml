@@ -55,6 +55,8 @@ dependencies = [
     "numpy>=2.4.1",
     "yt-dlp>=2026.1.29",
     "pydub>=0.25.1",
+    "scenedetect>=0.6.5",
+    "av>=14.0.0",
     # Authentication
     "bcrypt>=4.1.2",
     "python-jose[cryptography]>=3.3.0",

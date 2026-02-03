@@ -20,6 +20,16 @@ class IDriveE2Client:
         self.secret_key = settings.IDRIVEE2_SECRET_ACCESS_KEY
         self.bucket_name = settings.IDRIVEE2_BUCKET_NAME
 
+        # Configure for iDrive E2 compatibility (disable checksums)
+        from botocore.config import Config
+        self.config = Config(
+            signature_version='s3v4',
+            s3={
+                'payload_signing_enabled': False,
+                'addressing_style': 'path'
+            }
+        )
+
         # Initialize aioboto3 session
         self.session = aioboto3.Session(
             aws_access_key_id=self.access_key,
@@ -54,7 +64,12 @@ class IDriveE2Client:
             if content_type:
                 extra_args['ContentType'] = content_type
 
-            async with self.session.client('s3', endpoint_url=self.endpoint_url) as client:
+            async with self.session.client(
+                's3',
+                endpoint_url=self.endpoint_url,
+                config=self.config
+            ) as client:
+                # Upload without checksum validation (iDrive E2 compatibility)
                 await client.upload_fileobj(
                     file_obj,
                     self.bucket_name,
@@ -83,7 +98,11 @@ class IDriveE2Client:
             Exception: If download fails
         """
         try:
-            async with self.session.client('s3', endpoint_url=self.endpoint_url) as client:
+            async with self.session.client(
+                's3',
+                endpoint_url=self.endpoint_url,
+                config=self.config
+            ) as client:
                 response = await client.get_object(
                     Bucket=self.bucket_name,
                     Key=object_name
@@ -111,7 +130,11 @@ class IDriveE2Client:
             Exception: If deletion fails
         """
         try:
-            async with self.session.client('s3', endpoint_url=self.endpoint_url) as client:
+            async with self.session.client(
+                's3',
+                endpoint_url=self.endpoint_url,
+                config=self.config
+            ) as client:
                 await client.delete_object(
                     Bucket=self.bucket_name,
                     Key=object_name
@@ -205,7 +228,11 @@ class IDriveE2Client:
             Exception: If URL generation fails
         """
         try:
-            async with self.session.client('s3', endpoint_url=self.endpoint_url) as client:
+            async with self.session.client(
+                's3',
+                endpoint_url=self.endpoint_url,
+                config=self.config
+            ) as client:
                 url = await client.generate_presigned_url(
                     'get_object',
                     Params={

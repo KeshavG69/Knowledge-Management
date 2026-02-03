@@ -218,6 +218,7 @@ class IngestionService:
             organization_id=organization_id,
             additional_metadata=additional_metadata
         )
+        logger.info(f"✅ MongoDB storage complete. Document ID: {document_id}")
 
         # Step 4 & 5: Chunking and Pinecone storage
         total_chunks = 0
@@ -252,6 +253,10 @@ class IngestionService:
                 ids.append(f"{document_id}_{chunk['chunk_id']}")
 
             # Add to Pinecone in thread pool
+            logger.info(f"🔄 Starting Pinecone storage for {len(texts)} video chunks...")
+            logger.info(f"   - Namespace: {organization_id}")
+            logger.info(f"   - First text preview: {texts[0][:100]}..." if texts else "   - No texts")
+
             await asyncio.to_thread(
                 self.pinecone_client.add_documents,
                 texts=texts,

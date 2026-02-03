@@ -164,20 +164,26 @@ class VideoAligner:
             visual_descriptions = await asyncio.gather(*vlm_tasks)
             logger.info(f"✅ Completed {num_scenes} VLM descriptions")
 
-            # Step 3: Batch all blending (25 concurrent)
-            logger.info(f"🔗 Step 3/3: Processing {num_scenes} content blends (25 concurrent)...")
-            semaphore_blend = asyncio.Semaphore(25)
+            # Step 3: Simple concatenation (no LLM blending - 2x faster!)
+            logger.info(f"🔗 Step 3/3: Blending {num_scenes} content (concatenation)...")
+            blended_texts = []
+            for i in range(num_scenes):
+                transcript = transcript_texts[i]
+                visual = visual_descriptions[i]
 
-            async def blend_one_content(i: int):
-                async with semaphore_blend:
-                    return await self._blend_multimodal_content_async(
-                        transcript_texts[i],
-                        visual_descriptions[i]
-                    )
+                # Simple concatenation instead of LLM call
+                if transcript and visual:
+                    blended = f"{transcript}\n\n{visual}"
+                elif transcript:
+                    blended = transcript
+                elif visual:
+                    blended = visual
+                else:
+                    blended = "[No content available for this scene]"
 
-            blend_tasks = [blend_one_content(i) for i in range(num_scenes)]
-            blended_texts = await asyncio.gather(*blend_tasks)
-            logger.info(f"✅ Completed {num_scenes} content blends")
+                blended_texts.append(blended)
+
+            logger.info(f"✅ Completed {num_scenes} content blends (instant!)")
 
             # Step 4: Assemble final results
             aligned_chunks = []
@@ -261,7 +267,7 @@ class VideoAligner:
             image_base64 = base64.b64encode(buffer).decode('utf-8')
 
             # Get VLM (using OpenAI vision)
-            llm = get_llm(model="openai/gpt-5-nano", provider="openrouter")
+            llm = get_llm(model="google/gemma-3-27b-it", provider="openrouter")
 
             # Create prompt (same as image_analysis_client.py)
             prompt = ChatPromptTemplate.from_messages([

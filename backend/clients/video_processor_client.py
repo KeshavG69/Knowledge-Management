@@ -108,43 +108,41 @@ class VideoProcessorClient:
 
                     # Task 2: Video frame processing (runs in thread pool)
                     async def process_video_frames():
-                        logger.info("🎬 Stages 2-5/7: Video frame processing - PARALLEL")
+                        logger.info("🎬 Stages 2-4/7: Video frame processing (PySceneDetect) - PARALLEL")
 
-                        frame_extractor = get_video_frame_extractor()
                         scene_detector = get_video_scene_detector()
+                        frame_extractor = get_video_frame_extractor()
 
-                        # Calculate optimal FPS
-                        target_fps = await asyncio.to_thread(
-                            self._calculate_optimal_fps,
-                            file_content,
-                            filename
-                        )
-                        logger.info(f"⚙️ Using target FPS: {target_fps} (optimized for video length)")
-
-                        # Stage 2 & 3: SINGLE-PASS scene detection + entropy caching
-                        logger.info("🎬 Stage 2/7: SINGLE-PASS scene detection + entropy caching")
-                        frame_generator = frame_extractor.extract_frames_streaming(
+                        # Stage 2: PySceneDetect scene detection (full resolution for accuracy)
+                        logger.info("🎬 Stage 2/7: PySceneDetect scene detection (full resolution)")
+                        scenes, entropy_cache = await asyncio.to_thread(
+                            scene_detector.detect_scenes_from_video,
                             file_content,
                             filename,
-                            target_fps=target_fps
+                            threshold=18.0,  # Lower threshold = more sensitive (detects more scenes)
+                            downscale=1  # Full resolution = catches subtle changes
                         )
-                        scenes, entropy_cache = scene_detector.detect_scenes_and_cache_entropy_streaming(frame_generator)
 
                         if not scenes:
                             raise Exception("No scenes detected in video")
 
-                        logger.info(f"✅ SINGLE-PASS complete: {len(scenes)} scenes, {len(entropy_cache)} entropy values")
+                        logger.info(f"✅ PySceneDetect complete: {len(scenes)} scenes detected")
 
-                        # Stage 3: Select key frames from cache
-                        logger.info("🔑 Stage 3/7: Selecting key frames from cache")
-                        key_frames_data = scene_detector.select_key_frames_from_cache(scenes, entropy_cache)
-                        del entropy_cache
+                        # Stage 3: Select key frames (uses middle frame + entropy)
+                        logger.info("🔑 Stage 3/7: Selecting key frames from scenes")
+                        key_frames_data = await asyncio.to_thread(
+                            scene_detector.select_key_frames_from_video,
+                            file_content,
+                            filename,
+                            scenes
+                        )
                         logger.info(f"✅ Selected {len(key_frames_data)} key frames")
 
                         # Stage 4: Extract color frames (BATCH - 10-20x faster!)
                         logger.info("🖼️ Stage 4/7: Color frame extraction (batch mode)")
                         frame_numbers = [kf['frame_number'] for kf in key_frames_data]
-                        color_frames = frame_extractor.extract_color_frames_batch(
+                        color_frames = await asyncio.to_thread(
+                            frame_extractor.extract_color_frames_batch,
                             file_content,
                             filename,
                             frame_numbers
