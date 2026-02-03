@@ -13,11 +13,11 @@ from app.logger import logger
 from app.settings import settings
 
 
-# Default chunking parameters
-DEFAULT_THRESHOLD = 0.8
-DEFAULT_CHUNK_SIZE = 1000  # Optimized for Pinecone
+# Default chunking parameters (using large_chunk settings)
+DEFAULT_THRESHOLD = 0.4
+DEFAULT_CHUNK_SIZE = 3000  # Maximum chunk size for optimal context
 DEFAULT_SIMILARITY_WINDOW = 3
-DEFAULT_MIN_SENTENCES_PER_CHUNK = 1
+DEFAULT_MIN_SENTENCES_PER_CHUNK = 3
 DEFAULT_MIN_CHARACTERS_PER_SENTENCE = 24
 DEFAULT_DELIM = [". ", "! ", "? ", "\n"]
 DEFAULT_INCLUDE_DELIM = "prev"
@@ -339,7 +339,7 @@ class ChunkerClient:
                 # Get appropriate chunker based on type
                 if chunker_type == "large_chunk":
                     chunker = get_semantic_chunker(
-                        chunk_size=1200,
+                        chunk_size=3000,
                         min_sentences_per_chunk=3,
                         threshold=0.4,
                         **kwargs
