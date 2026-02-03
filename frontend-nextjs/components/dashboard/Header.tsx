@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useChatStore } from "@/lib/stores/chatStore";
@@ -9,20 +9,7 @@ export default function Header() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { startNewSession } = useChatStore();
-  const [showMenu, setShowMenu] = useState(true); // TEMPORARY: Testing if dropdown renders at all
-
-  console.log("Header render, showMenu:", showMenu);
-
-  // Track component lifecycle
-  useEffect(() => {
-    console.log("Header MOUNTED");
-    return () => console.log("Header UNMOUNTED");
-  }, []);
-
-  // Track showMenu changes
-  useEffect(() => {
-    console.log("showMenu changed to:", showMenu);
-  }, [showMenu]);
+  const [showMenu, setShowMenu] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -106,11 +93,7 @@ export default function Header() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log("Menu clicked, current state:", showMenu);
-            setShowMenu(prev => {
-              console.log("Setting menu to:", !prev);
-              return !prev;
-            });
+            setShowMenu(prev => !prev);
           }}
           className="flex items-center gap-3 px-3 py-2 border border-slate-700 hover:border-amber-400/40 bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 relative group"
           style={{
@@ -157,18 +140,16 @@ export default function Header() {
               className="fixed inset-0 z-40"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("Backdrop clicked");
                 setShowMenu(false);
               }}
             />
-            <div className="absolute right-0 mt-2 w-56 bg-red-500 border-4 border-yellow-400 shadow-2xl z-50 tactical-panel" style={{ position: 'absolute' }}>
+            <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-amber-400/20 shadow-2xl z-50 tactical-panel">
               <div className="p-2">
                 {/* Settings Option */}
                 <button
                   onClick={() => {
                     setShowMenu(false);
                     // TODO: Navigate to settings page
-                    console.log("Settings clicked");
                   }}
                   className="w-full text-left px-4 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-amber-400 border border-transparent hover:border-amber-400/30 transition-all duration-200 text-sm font-semibold tracking-wide mb-1"
                   style={{
