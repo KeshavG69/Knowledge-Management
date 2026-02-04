@@ -297,13 +297,13 @@ export default function ChatArea() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-950 relative scan-lines grid-overlay">
+    <div className="flex-1 flex flex-col bg-slate-950 relative scan-lines grid-overlay min-h-0">
       {/* Decorative corner bracket */}
       <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400/40 z-10"></div>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col">
-        <div className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm flex-shrink-0">
           <div className="flex items-center px-6 py-3">
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,7 +314,7 @@ export default function ChatArea() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 tactical-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 tactical-scrollbar min-h-0">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="max-w-3xl mx-auto text-center">
@@ -461,7 +461,23 @@ export default function ChatArea() {
                     }`}>
                       {message.content ? (
                         message.role === "assistant" ? (
-                          <div className="prose prose-invert prose-sm max-w-none prose-headings:text-amber-400 prose-a:text-tactical-green prose-strong:text-slate-100 prose-code:text-amber-400 prose-code:bg-slate-800/50 prose-code:px-1 prose-code:rounded prose-pre:bg-slate-800/50 prose-pre:border prose-pre:border-slate-700">
+                          <div className="prose prose-invert prose-sm max-w-none
+                            prose-headings:text-amber-400 prose-headings:font-bold prose-headings:tracking-wide
+                            prose-h1:text-lg prose-h1:mb-4 prose-h1:mt-6 prose-h1:pb-2 prose-h1:border-b prose-h1:border-slate-700/50
+                            prose-h2:text-base prose-h2:mb-3 prose-h2:mt-5
+                            prose-h3:text-sm prose-h3:mb-2 prose-h3:mt-4
+                            prose-p:mb-4 prose-p:leading-relaxed
+                            prose-ul:my-4 prose-ul:space-y-2
+                            prose-ol:my-4 prose-ol:space-y-2
+                            prose-li:leading-relaxed
+                            prose-blockquote:border-l-4 prose-blockquote:border-amber-400/50 prose-blockquote:pl-4 prose-blockquote:my-4
+                            prose-a:text-tactical-green prose-a:underline prose-a:decoration-tactical-green/30 hover:prose-a:decoration-tactical-green
+                            prose-strong:text-slate-100 prose-strong:font-semibold
+                            prose-code:text-amber-400 prose-code:bg-slate-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
+                            prose-pre:bg-slate-800/50 prose-pre:border prose-pre:border-slate-700 prose-pre:my-4 prose-pre:p-4
+                            prose-hr:border-slate-700/50 prose-hr:my-6
+                            prose-table:my-4
+                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {message.content}
                             </ReactMarkdown>
@@ -544,7 +560,7 @@ export default function ChatArea() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-slate-800 bg-slate-900/90 backdrop-blur-sm p-4">
+      <div className="border-t border-slate-800 bg-slate-900/90 backdrop-blur-sm p-4 flex-shrink-0">
         <div className="max-w-5xl mx-auto">
           {/* Status Bar */}
           <div className="flex items-center justify-between mb-3 text-xs">
