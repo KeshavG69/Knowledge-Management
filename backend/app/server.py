@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from app.settings import settings
 from app.middleware import  SecurityHeadersMiddleware
 from app.logger import logger
-from routers import health, upload, chat, models, auth, mindmap, report_suggestions, reports
+from routers import health, upload, chat, models, auth, mindmap, report_suggestions, reports, flashcards
 
 
 @asynccontextmanager
@@ -76,6 +76,7 @@ app.include_router(models.router, prefix="/api")
 app.include_router(mindmap.router, prefix="/api")
 app.include_router(report_suggestions.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(flashcards.router, prefix="/api")
 
 
 if __name__ == "__main__":

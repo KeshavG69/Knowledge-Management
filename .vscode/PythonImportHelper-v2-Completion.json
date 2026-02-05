@@ -192,6 +192,22 @@
         "documentation": {}
     },
     {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "APIRouter",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -333,6 +349,14 @@
         "description": "starlette.responses",
         "isExtraImport": true,
         "detail": "starlette.responses",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
         "documentation": {}
     },
     {
@@ -865,6 +889,14 @@
         "documentation": {}
     },
     {
+        "label": "flashcards",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
         "label": "BaseSettings",
         "importPath": "pydantic_settings",
         "description": "pydantic_settings",
@@ -1242,6 +1274,22 @@
     },
     {
         "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -2625,6 +2673,22 @@
         "importPath": "uuid",
         "description": "uuid",
         "detail": "uuid",
+        "documentation": {}
+    },
+    {
+        "label": "GenerateFlashcardsRequest",
+        "importPath": "models.flashcard_models",
+        "description": "models.flashcard_models",
+        "isExtraImport": true,
+        "detail": "models.flashcard_models",
+        "documentation": {}
+    },
+    {
+        "label": "get_flashcard_generator_service",
+        "importPath": "services.flashcard_generator",
+        "description": "services.flashcard_generator",
+        "isExtraImport": true,
+        "detail": "services.flashcard_generator",
         "documentation": {}
     },
     {
@@ -4066,6 +4130,15 @@
     {
         "label": "router",
         "kind": 5,
+        "importPath": "backend.routers.flashcards",
+        "description": "backend.routers.flashcards",
+        "peekOfCode": "router = APIRouter(prefix=\"/flashcards\", tags=[\"flashcards\"])\n@router.post(\"/generate\")\nasync def generate_flashcards(request: GenerateFlashcardsRequest) -> Dict[str, Any]:\n    \"\"\"\n    Generate flashcards from documents using Map-Reduce\n    Args:\n        request: Flashcard generation request with document IDs\n    Returns:\n        Dict with flashcard data (title, cards, workflow_id)\n    \"\"\"",
+        "detail": "backend.routers.flashcards",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
         "importPath": "backend.routers.health",
         "description": "backend.routers.health",
         "peekOfCode": "router = APIRouter(tags=[\"health\"])\n@router.get(\"/health\", response_model=HealthCheckResponse)\n@router.get(\"/healthz\", response_model=HealthCheckResponse)\nasync def health_check() -> HealthCheckResponse:\n    \"\"\"\n    Health check endpoint\n    Returns the current status of the application\n    \"\"\"\n    logger.info(\"Health check requested\")\n    return HealthCheckResponse(",
@@ -4167,7 +4240,7 @@
         "kind": 6,
         "importPath": "backend.services.flashcard_generator",
         "description": "backend.services.flashcard_generator",
-        "peekOfCode": "class FlashcardGeneratorService:\n    \"\"\"Service for generating flashcards using Map-Reduce\"\"\"\n    def __init__(self):\n        \"\"\"Initialize flashcard generator service\"\"\"\n        self.mongodb_client = get_mongodb_client()\n        self.llm = get_llm(model=\"google/gemini-2.0-flash-exp:free\", provider=\"openrouter\")\n    async def generate_flashcards(\n        self,\n        document_ids: List[str],\n        user_id: Optional[str] = None,",
+        "peekOfCode": "class FlashcardGeneratorService:\n    \"\"\"Service for generating flashcards using Map-Reduce\"\"\"\n    def __init__(self):\n        \"\"\"Initialize flashcard generator service\"\"\"\n        self.mongodb_client = get_mongodb_client()\n        self.llm = get_llm(model=\"google/gemini-3-flash-preview\", provider=\"openrouter\")\n    async def generate_flashcards(\n        self,\n        document_ids: List[str],\n        user_id: Optional[str] = None,",
         "detail": "backend.services.flashcard_generator",
         "documentation": {}
     },
