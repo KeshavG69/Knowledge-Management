@@ -267,13 +267,13 @@ class VideoAligner:
             image_base64 = base64.b64encode(buffer).decode('utf-8')
 
             # Get VLM (using OpenAI vision)
-            llm = get_llm(model="google/gemma-3-27b-it", provider="openrouter")
+            llm = get_llm(model="openai/gpt-5-nano", provider="openrouter")
 
-            # Create prompt (same as image_analysis_client.py)
+            # Create prompt (enhanced for maximum visual detail)
             prompt = ChatPromptTemplate.from_messages([
                 (
                     "system",
-                    "Extract ALL information from this image with precise attention to structure and layout. "
+                    "Extract ALL information from this image with EXTREME attention to detail. "
                     "DO NOT include any opening statements, explanations, or closing remarks. "
                     "START AND END with the extracted content only. "
                     "\n\n"
@@ -286,13 +286,24 @@ class VideoAligner:
                     "- Identify headers, footers, page numbers, and other document elements\n"
                     "\n"
                     "For images with NO TEXT or minimal text:\n"
-                    "- Provide an extremely detailed visual description of EVERYTHING you can see\n"
-                    "- Describe objects, people, scenes, colors, composition, spatial relationships\n"
-                    "- Include details about lighting, textures, backgrounds, foregrounds\n"
-                    "- Describe any actions, emotions, or interactions visible\n"
-                    "- Be thorough and comprehensive - leave nothing out\n"
+                    "- Provide an EXHAUSTIVELY DETAILED visual description of EVERYTHING visible in the frame\n"
+                    "- Describe ALL objects, people, animals, items - no matter how small or insignificant\n"
+                    "- Detail the scene setting: indoor/outdoor, location type, environment\n"
+                    "- Colors: specific color names, gradients, color relationships\n"
+                    "- Lighting: direction, intensity, shadows, highlights, time of day\n"
+                    "- Composition: foreground/middle/background elements, depth, perspective\n"
+                    "- Spatial relationships: what's next to what, above/below, near/far\n"
+                    "- Textures and materials: smooth/rough, reflective/matte, fabric types\n"
+                    "- Actions and movement: what people/objects are doing, body language\n"
+                    "- Facial expressions and emotions if people are visible\n"
+                    "- Text visible anywhere in the scene (signs, labels, screens)\n"
+                    "- Brands, logos, identifiable items\n"
+                    "- Atmospheric details: weather, mood, ambiance\n"
+                    "- Camera angle and framing\n"
+                    "- Any unusual or noteworthy details\n"
+                    "- Be VERBOSE and COMPREHENSIVE - capture every visible detail\n"
                     "\n"
-                    "This is a critical data extraction task - ensure ALL content (text or visual) is captured comprehensively."
+                    "This is a critical data extraction task - ensure ALL content (text or visual) is captured with MAXIMUM detail and thoroughness."
                 ),
                 (
                     "user",
@@ -363,13 +374,16 @@ class VideoAligner:
                 (
                     "system",
                     "You are combining transcript (spoken words) with visual description (what was shown on screen) "
-                    "from a video segment. Create a single coherent description that:\n"
-                    "- Merges both modalities naturally\n"
+                    "from a video segment. Create a single HIGHLY DETAILED and coherent description that:\n"
+                    "- Merges both modalities naturally and comprehensively\n"
                     "- Removes redundancy (don't repeat same info from both sources)\n"
-                    "- Keeps all important details from both sources\n"
-                    "- Maintains context and clarity\n"
+                    "- Keeps ALL important details from BOTH sources - be thorough and verbose\n"
+                    "- Preserves ALL specific details: names, numbers, data points, visual elements, actions\n"
+                    "- Maintains context and clarity while being exhaustive\n"
+                    "- Includes both what was SAID (transcript) and what was SHOWN (visual)\n"
+                    "- Be comprehensive - don't summarize or condense, expand and elaborate\n"
                     "- Outputs ONLY the blended content, no preamble or explanation\n\n"
-                    "Format the output as a natural paragraph or structured text, depending on content."
+                    "Format the output as detailed, natural paragraphs or structured text. Prioritize completeness over brevity."
                 ),
                 (
                     "user",
