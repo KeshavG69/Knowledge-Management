@@ -97,23 +97,27 @@ class MindMapService:
                 "edges": [edge.model_dump() for edge in mind_map.edges]
             }
 
-            # Step 5: Save to MongoDB
-            mind_map_doc = {
+            # Step 5: Save to MongoDB (unified workflows collection)
+            workflow_doc = {
+                "type": "mindmap",
                 "document_ids": [ObjectId(doc_id) for doc_id in document_ids],
                 "user_id": ObjectId(user_id) if user_id else None,
                 "organization_id": ObjectId(organization_id) if organization_id else None,
-                "summary": doc_summary.summary,
-                "key_points": doc_summary.key_points,
-                "nodes": mind_map_data["nodes"],
-                "edges": mind_map_data["edges"],
-                "document_count": len(documents),
+                "status": "completed",
+                "data": {
+                    "summary": doc_summary.summary,
+                    "key_points": doc_summary.key_points,
+                    "nodes": mind_map_data["nodes"],
+                    "edges": mind_map_data["edges"],
+                    "document_count": len(documents)
+                },
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc)
             }
 
             mind_map_id = await self.mongodb_client.async_insert_document(
-                collection="mindmaps",
-                document=mind_map_doc
+                collection="workflows",
+                document=workflow_doc
             )
 
             logger.info(f"✅ Mind map saved to MongoDB: {mind_map_id}")
@@ -121,7 +125,6 @@ class MindMapService:
             return {
                 "mind_map_id": str(mind_map_id),
                 "document_ids": document_ids,
-                "document_count": len(documents),
                 "summary": doc_summary.summary,
                 "key_points": doc_summary.key_points,
                 "mind_map": mind_map_data,  # Frontend will render this
@@ -163,42 +166,51 @@ class MindMapService:
 
     async def get_mindmap(self, mind_map_id: str) -> Optional[Dict[str, Any]]:
         """
-        Retrieve mind map by ID
+        Retrieve mind map by ID from workflows collection
 
         Args:
-            mind_map_id: MongoDB mind map ID
+            mind_map_id: MongoDB workflow ID
 
         Returns:
             Mind map document with JSON data
         """
         try:
-            mind_map = await self.mongodb_client.async_find_document(
-                collection="mindmaps",
-                query={"_id": ObjectId(mind_map_id)}
+            workflow = await self.mongodb_client.async_find_document(
+                collection="workflows",
+                query={"_id": ObjectId(mind_map_id), "type": "mindmap"}
             )
 
-            if mind_map:
+            if workflow:
                 # Convert ObjectIds to strings
-                mind_map["_id"] = str(mind_map["_id"])
+                workflow["_id"] = str(workflow["_id"])
+                workflow["document_ids"] = [str(doc_id) for doc_id in workflow.get("document_ids", [])]
 
-                # Handle both single document_id (legacy) and document_ids (new)
-                if mind_map.get("document_ids"):
-                    mind_map["document_ids"] = [str(doc_id) for doc_id in mind_map["document_ids"]]
-                elif mind_map.get("document_id"):
-                    mind_map["document_ids"] = [str(mind_map["document_id"])]
+                if workflow.get("user_id"):
+                    workflow["user_id"] = str(workflow["user_id"])
+                if workflow.get("organization_id"):
+                    workflow["organization_id"] = str(workflow["organization_id"])
 
-                if mind_map.get("user_id"):
-                    mind_map["user_id"] = str(mind_map["user_id"])
-                if mind_map.get("organization_id"):
-                    mind_map["organization_id"] = str(mind_map["organization_id"])
+                # Extract data from nested structure
+                data = workflow.get("data", {})
 
-                # Format for frontend
-                mind_map["mind_map"] = {
-                    "nodes": mind_map.get("nodes", []),
-                    "edges": mind_map.get("edges", [])
+                # Format for frontend (flatten structure)
+                return {
+                    "mind_map_id": workflow["_id"],
+                    "document_ids": workflow["document_ids"],
+                    "user_id": workflow.get("user_id"),
+                    "organization_id": workflow.get("organization_id"),
+                    "status": workflow.get("status"),
+                    "summary": data.get("summary", ""),
+                    "key_points": data.get("key_points", []),
+                    "mind_map": {
+                        "nodes": data.get("nodes", []),
+                        "edges": data.get("edges", [])
+                    },
+                    "created_at": workflow.get("created_at"),
+                    "updated_at": workflow.get("updated_at")
                 }
 
-            return mind_map
+            return None
 
         except Exception as e:
             logger.error(f"❌ Failed to get mind map: {str(e)}")
@@ -206,7 +218,7 @@ class MindMapService:
 
     async def list_mindmaps_by_user(self, user_id: str, organization_id: str) -> List[Dict[str, Any]]:
         """
-        List all mind maps for a specific user and organization
+        List all mind maps for a specific user and organization from workflows collection
 
         Args:
             user_id: MongoDB user ID
@@ -220,30 +232,44 @@ class MindMapService:
             user_obj_id = ObjectId(user_id)
             org_obj_id = ObjectId(organization_id)
 
-            cursor = self.mongodb_client.db["mindmaps"].find(
-                {
+            workflows = await self.mongodb_client.async_find_documents(
+                collection="workflows",
+                query={
+                    "type": "mindmap",
                     "user_id": user_obj_id,
                     "organization_id": org_obj_id
                 }
-            ).sort("created_at", -1)  # Most recent first
+            )
 
             mindmaps = []
-            async for doc in cursor:
-                doc["_id"] = str(doc["_id"])
-                doc["document_ids"] = [str(doc_id) for doc_id in doc.get("document_ids", [])]
+            for workflow in workflows:
+                workflow["_id"] = str(workflow["_id"])
+                workflow["document_ids"] = [str(doc_id) for doc_id in workflow.get("document_ids", [])]
 
-                if doc.get("user_id"):
-                    doc["user_id"] = str(doc["user_id"])
-                if doc.get("organization_id"):
-                    doc["organization_id"] = str(doc["organization_id"])
+                if workflow.get("user_id"):
+                    workflow["user_id"] = str(workflow["user_id"])
+                if workflow.get("organization_id"):
+                    workflow["organization_id"] = str(workflow["organization_id"])
 
-                # Format for frontend
-                doc["mind_map"] = {
-                    "nodes": doc.get("nodes", []),
-                    "edges": doc.get("edges", [])
-                }
+                # Extract data from nested structure
+                data = workflow.get("data", {})
 
-                mindmaps.append(doc)
+                # Format for frontend (flatten structure)
+                mindmaps.append({
+                    "mind_map_id": workflow["_id"],
+                    "document_ids": workflow["document_ids"],
+                    "user_id": workflow.get("user_id"),
+                    "organization_id": workflow.get("organization_id"),
+                    "status": workflow.get("status"),
+                    "summary": data.get("summary", ""),
+                    "key_points": data.get("key_points", []),
+                    "mind_map": {
+                        "nodes": data.get("nodes", []),
+                        "edges": data.get("edges", [])
+                    },
+                    "created_at": workflow.get("created_at"),
+                    "updated_at": workflow.get("updated_at")
+                })
 
             logger.info(f"✅ Found {len(mindmaps)} mind maps for user {user_id}")
             return mindmaps

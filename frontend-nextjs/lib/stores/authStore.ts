@@ -1,6 +1,40 @@
 import { create } from 'zustand';
 import { User, LoginCredentials, SignupData, authApi } from '../api/auth';
 
+// Helper function to format error messages from API responses
+function formatErrorMessage(error: any): string {
+  const detail = error.response?.data?.detail;
+
+  // If detail is an array (FastAPI validation errors)
+  if (Array.isArray(detail)) {
+    return detail
+      .map((err: any) => {
+        // Extract the error message and location
+        const location = err.loc?.slice(1).join(' > ') || 'field';
+        const message = err.msg || 'Invalid value';
+        return `${location}: ${message}`;
+      })
+      .join(', ');
+  }
+
+  // If detail is a string
+  if (typeof detail === 'string') {
+    return detail;
+  }
+
+  // If detail is an object with a message
+  if (detail && typeof detail === 'object' && detail.msg) {
+    return detail.msg;
+  }
+
+  // Fallback error messages
+  if (error.message) {
+    return error.message;
+  }
+
+  return 'An unexpected error occurred';
+}
+
 interface AuthState {
   user: User | null;
   isLoading: boolean;
@@ -30,7 +64,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Store tokens in localStorage
       localStorage.setItem('access_token', response.access_token);
-      localStorage.setItem('refresh_token', response.refresh_token);
+      if (response.refresh_token) {
+        localStorage.setItem('refresh_token', response.refresh_token);
+      }
 
       // Store user in localStorage for API access
       localStorage.setItem('user', JSON.stringify(response.user));
@@ -38,8 +74,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Store user in state
       set({ user: response.user, isLoading: false });
     } catch (error: any) {
+      const errorMessage = formatErrorMessage(error);
       set({
-        error: error.response?.data?.detail || 'Login failed',
+        error: errorMessage,
         isLoading: false,
       });
       throw error;
@@ -53,8 +90,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
       return response;
     } catch (error: any) {
+      const errorMessage = formatErrorMessage(error);
       set({
-        error: error.response?.data?.detail || 'Signup failed',
+        error: errorMessage,
         isLoading: false,
       });
       throw error;

@@ -6,7 +6,7 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
-  organization_id: string;
+  organization_id?: string;
 }
 
 export interface LoginCredentials {
@@ -17,12 +17,13 @@ export interface LoginCredentials {
 export interface SignupData {
   email: string;
   password: string;
-  name?: string;
+  firstName: string;
+  lastName: string;
 }
 
 interface LoginResponse {
   access_token: string;
-  refresh_token: string;
+  refresh_token?: string;
   token_type: string;
   user: User;
 }
