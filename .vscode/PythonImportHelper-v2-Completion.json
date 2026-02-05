@@ -224,6 +224,46 @@
         "documentation": {}
     },
     {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "BackgroundTasks",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "UploadFile",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -536,6 +576,38 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -546,6 +618,14 @@
     },
     {
         "label": "JSONResponse",
+        "importPath": "fastapi.responses",
+        "description": "fastapi.responses",
+        "isExtraImport": true,
+        "detail": "fastapi.responses",
+        "documentation": {}
+    },
+    {
+        "label": "StreamingResponse",
         "importPath": "fastapi.responses",
         "description": "fastapi.responses",
         "isExtraImport": true,
@@ -754,6 +834,22 @@
     },
     {
         "label": "mindmap",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
+        "label": "report_suggestions",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
+        "label": "reports",
         "importPath": "routers",
         "description": "routers",
         "isExtraImport": true,
@@ -1129,6 +1225,22 @@
         "documentation": {}
     },
     {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Dict",
         "importPath": "typing",
         "description": "typing",
@@ -1234,6 +1346,78 @@
     },
     {
         "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "AsyncGenerator",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1409,6 +1593,22 @@
         "documentation": {}
     },
     {
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -1422,6 +1622,46 @@
         "description": "datetime",
         "isExtraImport": true,
         "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
         "documentation": {}
     },
     {
@@ -1674,6 +1914,22 @@
         "documentation": {}
     },
     {
+        "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
         "label": "bcrypt",
         "kind": 6,
         "isExtraImport": true,
@@ -1904,6 +2160,22 @@
     },
     {
         "label": "get_llm_agno",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
         "importPath": "clients.ultimate_llm",
         "description": "clients.ultimate_llm",
         "isExtraImport": true,
@@ -2292,6 +2564,38 @@
         "documentation": {}
     },
     {
+        "label": "SuggestFormatsRequest",
+        "importPath": "models.report_models",
+        "description": "models.report_models",
+        "isExtraImport": true,
+        "detail": "models.report_models",
+        "documentation": {}
+    },
+    {
+        "label": "GenerateReportRequest",
+        "importPath": "models.report_models",
+        "description": "models.report_models",
+        "isExtraImport": true,
+        "detail": "models.report_models",
+        "documentation": {}
+    },
+    {
+        "label": "get_format_suggester_service",
+        "importPath": "services.format_suggester",
+        "description": "services.format_suggester",
+        "isExtraImport": true,
+        "detail": "services.format_suggester",
+        "documentation": {}
+    },
+    {
+        "label": "get_report_generator_service",
+        "importPath": "services.report_generator",
+        "description": "services.report_generator",
+        "isExtraImport": true,
+        "detail": "services.report_generator",
+        "documentation": {}
+    },
+    {
         "label": "get_ingestion_service",
         "importPath": "services.ingestion_service",
         "description": "services.ingestion_service",
@@ -2305,6 +2609,22 @@
         "description": "services.ingestion_service",
         "isExtraImport": true,
         "detail": "services.ingestion_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
         "documentation": {}
     },
     {
@@ -3578,6 +3898,24 @@
         "documentation": {}
     },
     {
+        "label": "SuggestFormatsRequest",
+        "kind": 6,
+        "importPath": "backend.models.report_models",
+        "description": "backend.models.report_models",
+        "peekOfCode": "class SuggestFormatsRequest(BaseModel):\n    \"\"\"Request to trigger format suggestion generation (background task)\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to analyze\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")\nclass GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    model: str = Field(\"google/gemini-2.5-pro\", description=\"LLM model to use\")",
+        "detail": "backend.models.report_models",
+        "documentation": {}
+    },
+    {
+        "label": "GenerateReportRequest",
+        "kind": 6,
+        "importPath": "backend.models.report_models",
+        "description": "backend.models.report_models",
+        "peekOfCode": "class GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    model: str = Field(\"google/gemini-2.5-pro\", description=\"LLM model to use\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")",
+        "detail": "backend.models.report_models",
+        "documentation": {}
+    },
+    {
         "label": "router",
         "kind": 5,
         "importPath": "backend.routers.auth",
@@ -3629,6 +3967,24 @@
         "description": "backend.routers.models",
         "peekOfCode": "router = APIRouter(tags=[\"models\"])\n@router.get(\"/models\")\nasync def list_models() -> dict:\n    \"\"\"\n    List all available AI models for chat (OpenRouter aliases)\n    Returns:\n        Dict with list of available models\n    \"\"\"\n    logger.info(\"Listing available models\")\n    models = [",
         "detail": "backend.routers.models",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
+        "importPath": "backend.routers.report_suggestions",
+        "description": "backend.routers.report_suggestions",
+        "peekOfCode": "router = APIRouter(prefix=\"/report-suggestions\", tags=[\"report-suggestions\"])\n@router.post(\"/suggest-formats\")\nasync def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks):\n    \"\"\"\n    Trigger background task to generate format suggestions\n    This endpoint:\n    1. Checks if suggestions already exist for these documents\n    2. If yes, returns existing workflow_id\n    3. If no, creates new workflow and triggers background task\n    Frontend should poll /report-suggestions/get-suggestions with document_ids to check status",
+        "detail": "backend.routers.report_suggestions",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
+        "importPath": "backend.routers.reports",
+        "description": "backend.routers.reports",
+        "peekOfCode": "router = APIRouter(prefix=\"/reports\", tags=[\"reports\"])\n@router.post(\"/generate\")\nasync def generate_report(request: GenerateReportRequest):\n    \"\"\"\n    Generate a report from documents using Map-Reduce with streaming\n    This endpoint:\n    1. Takes document IDs and a prompt (from frontend)\n    2. Uses Map-Reduce to process documents in parallel\n    3. Streams progress updates via Server-Sent Events\n    4. Returns final report in markdown format",
+        "detail": "backend.routers.reports",
         "documentation": {}
     },
     {
@@ -3686,6 +4042,33 @@
         "documentation": {}
     },
     {
+        "label": "FormatSuggesterService",
+        "kind": 6,
+        "importPath": "backend.services.format_suggester",
+        "description": "backend.services.format_suggester",
+        "peekOfCode": "class FormatSuggesterService:\n    \"\"\"Service for generating format suggestions using Map-Reduce\"\"\"\n    def __init__(self):\n        \"\"\"Initialize format suggester service\"\"\"\n        self.mongodb_client = get_mongodb_client()\n        self.llm = get_llm(model=\"google/gemini-3-flash-preview\", provider=\"openrouter\")\n    async def get_or_create_suggestions(\n        self,\n        document_ids: List[str],\n        user_id: Optional[str] = None,",
+        "detail": "backend.services.format_suggester",
+        "documentation": {}
+    },
+    {
+        "label": "get_format_suggester_service",
+        "kind": 2,
+        "importPath": "backend.services.format_suggester",
+        "description": "backend.services.format_suggester",
+        "peekOfCode": "def get_format_suggester_service() -> FormatSuggesterService:\n    \"\"\"Get or create FormatSuggesterService singleton\"\"\"\n    global _format_suggester_service\n    if _format_suggester_service is None:\n        _format_suggester_service = FormatSuggesterService()\n    return _format_suggester_service",
+        "detail": "backend.services.format_suggester",
+        "documentation": {}
+    },
+    {
+        "label": "_format_suggester_service",
+        "kind": 5,
+        "importPath": "backend.services.format_suggester",
+        "description": "backend.services.format_suggester",
+        "peekOfCode": "_format_suggester_service = None\ndef get_format_suggester_service() -> FormatSuggesterService:\n    \"\"\"Get or create FormatSuggesterService singleton\"\"\"\n    global _format_suggester_service\n    if _format_suggester_service is None:\n        _format_suggester_service = FormatSuggesterService()\n    return _format_suggester_service",
+        "detail": "backend.services.format_suggester",
+        "documentation": {}
+    },
+    {
         "label": "IngestionService",
         "kind": 6,
         "importPath": "backend.services.ingestion_service",
@@ -3737,6 +4120,33 @@
         "description": "backend.services.mindmap_service",
         "peekOfCode": "_mindmap_service = None\ndef get_mindmap_service() -> MindMapService:\n    \"\"\"Get or create MindMapService singleton\"\"\"\n    global _mindmap_service\n    if _mindmap_service is None:\n        _mindmap_service = MindMapService()\n    return _mindmap_service",
         "detail": "backend.services.mindmap_service",
+        "documentation": {}
+    },
+    {
+        "label": "ReportGeneratorService",
+        "kind": 6,
+        "importPath": "backend.services.report_generator",
+        "description": "backend.services.report_generator",
+        "peekOfCode": "class ReportGeneratorService:\n    \"\"\"Service for generating reports using Map-Reduce\"\"\"\n    def __init__(self):\n        \"\"\"Initialize report generator service\"\"\"\n        self.mongodb_client = get_mongodb_client()\n        self.llm = get_llm(model=\"google/gemini-2.0-flash-exp:free\", provider=\"openrouter\")\n    async def generate_report_stream(\n        self,\n        document_ids: List[str],\n        prompt: str,",
+        "detail": "backend.services.report_generator",
+        "documentation": {}
+    },
+    {
+        "label": "get_report_generator_service",
+        "kind": 2,
+        "importPath": "backend.services.report_generator",
+        "description": "backend.services.report_generator",
+        "peekOfCode": "def get_report_generator_service() -> ReportGeneratorService:\n    \"\"\"Get or create ReportGeneratorService singleton\"\"\"\n    global _report_generator_service\n    if _report_generator_service is None:\n        _report_generator_service = ReportGeneratorService()\n    return _report_generator_service",
+        "detail": "backend.services.report_generator",
+        "documentation": {}
+    },
+    {
+        "label": "_report_generator_service",
+        "kind": 5,
+        "importPath": "backend.services.report_generator",
+        "description": "backend.services.report_generator",
+        "peekOfCode": "_report_generator_service = None\ndef get_report_generator_service() -> ReportGeneratorService:\n    \"\"\"Get or create ReportGeneratorService singleton\"\"\"\n    global _report_generator_service\n    if _report_generator_service is None:\n        _report_generator_service = ReportGeneratorService()\n    return _report_generator_service",
+        "detail": "backend.services.report_generator",
         "documentation": {}
     },
     {

@@ -346,57 +346,6 @@ export default function ChatArea() {
                 Upload classified documents and query for strategic insights.
               </p>
 
-              {/* Capabilities Grid */}
-              <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-                <div className="tactical-panel p-5 data-load">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-1 h-8 bg-amber-400"></div>
-                    <div className="text-amber-400 font-bold text-sm tracking-wider">
-                      SEMANTIC SEARCH
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-400 leading-relaxed text-left">
-                    Advanced context-aware document retrieval with precision citations
-                  </div>
-                </div>
-
-                <div className="tactical-panel p-5 data-load" style={{ animationDelay: '50ms' }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-1 h-8 bg-amber-400"></div>
-                    <div className="text-amber-400 font-bold text-sm tracking-wider">
-                      KNOWLEDGE BASES
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-400 leading-relaxed text-left">
-                    Organize intelligence by mission, classification, or operational domain
-                  </div>
-                </div>
-
-                <div className="tactical-panel p-5 data-load" style={{ animationDelay: '100ms' }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-1 h-8 bg-amber-400"></div>
-                    <div className="text-amber-400 font-bold text-sm tracking-wider">
-                      MULTI-DOCUMENT
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-400 leading-relaxed text-left">
-                    Cross-reference multiple intelligence sources simultaneously
-                  </div>
-                </div>
-
-                <div className="tactical-panel p-5 data-load" style={{ animationDelay: '150ms' }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-1 h-8 bg-amber-400"></div>
-                    <div className="text-amber-400 font-bold text-sm tracking-wider">
-                      REAL-TIME STREAM
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-400 leading-relaxed text-left">
-                    Immediate tactical responses with live analysis streaming
-                  </div>
-                </div>
-              </div>
-
               {/* Instructions */}
               <div className="mt-8 p-4 bg-slate-900/50 border border-slate-800 inline-block">
                 <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -456,28 +405,38 @@ export default function ChatArea() {
                     </div>
 
                     {/* Message Content */}
-                    <div className={`text-sm leading-relaxed ${
-                      message.role === "user" ? "text-slate-100" : "text-slate-200"
+                    <div className={`${
+                      message.role === "user" ? "text-slate-100 text-sm leading-relaxed" : ""
                     }`}>
                       {message.content ? (
                         message.role === "assistant" ? (
-                          <div className="prose prose-invert prose-sm max-w-none
-                            prose-headings:text-amber-400 prose-headings:font-bold prose-headings:tracking-wide
-                            prose-h1:text-lg prose-h1:mb-4 prose-h1:mt-6 prose-h1:pb-2 prose-h1:border-b prose-h1:border-slate-700/50
-                            prose-h2:text-base prose-h2:mb-3 prose-h2:mt-5
-                            prose-h3:text-sm prose-h3:mb-2 prose-h3:mt-4
-                            prose-p:mb-4 prose-p:leading-relaxed
-                            prose-ul:my-4 prose-ul:space-y-2
-                            prose-ol:my-4 prose-ol:space-y-2
-                            prose-li:leading-relaxed
-                            prose-blockquote:border-l-4 prose-blockquote:border-amber-400/50 prose-blockquote:pl-4 prose-blockquote:my-4
-                            prose-a:text-tactical-green prose-a:underline prose-a:decoration-tactical-green/30 hover:prose-a:decoration-tactical-green
-                            prose-strong:text-slate-100 prose-strong:font-semibold
-                            prose-code:text-amber-400 prose-code:bg-slate-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
-                            prose-pre:bg-slate-800/50 prose-pre:border prose-pre:border-slate-700 prose-pre:my-4 prose-pre:p-4
-                            prose-hr:border-slate-700/50 prose-hr:my-6
-                            prose-table:my-4
-                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                          <div className="prose prose-invert max-w-none font-['Inter',sans-serif]
+                            text-[15px] leading-[1.9]
+                            prose-headings:text-amber-400 prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-headings:font-['Inter',sans-serif]
+                            prose-h1:text-2xl prose-h1:mb-8 prose-h1:mt-12
+                            prose-h2:text-xl prose-h2:mb-7 prose-h2:mt-10 prose-h2:font-bold
+                            prose-h3:text-lg prose-h3:mb-6 prose-h3:mt-9 prose-h3:font-semibold
+                            prose-h4:text-base prose-h4:mb-5 prose-h4:mt-8 prose-h4:font-semibold prose-h4:text-amber-300
+                            prose-p:mb-7 prose-p:leading-[1.9] prose-p:text-slate-100
+                            prose-ul:my-7 prose-ul:space-y-4 prose-ul:leading-[1.9]
+                            prose-ol:my-7 prose-ol:space-y-4 prose-ol:leading-[1.9]
+                            prose-li:leading-[1.9] prose-li:text-slate-100 prose-li:my-2.5
+                            prose-li>p:my-3 prose-li>p:leading-[1.9]
+                            prose-blockquote:border-l-4 prose-blockquote:border-amber-400/50 prose-blockquote:pl-6 prose-blockquote:my-7 prose-blockquote:py-3 prose-blockquote:italic
+                            prose-a:text-tactical-green prose-a:no-underline hover:prose-a:underline prose-a:transition-all
+                            prose-strong:text-slate-50 prose-strong:font-bold
+                            prose-em:text-slate-200 prose-em:italic
+                            prose-code:text-amber-300 prose-code:bg-slate-800/70 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[13px] prose-code:font-mono prose-code:before:content-[''] prose-code:after:content-['']
+                            prose-pre:bg-slate-800/70 prose-pre:border prose-pre:border-slate-700/50 prose-pre:my-7 prose-pre:p-5 prose-pre:rounded-lg prose-pre:overflow-x-auto
+                            prose-hr:border-slate-700/50 prose-hr:my-12 prose-hr:border-t
+                            prose-table:my-7 prose-table:text-sm
+                            prose-thead:border-b-2 prose-thead:border-slate-700
+                            prose-th:py-3 prose-th:px-4 prose-th:text-left prose-th:font-semibold prose-th:text-amber-400
+                            prose-td:py-3 prose-td:px-4 prose-td:border-t prose-td:border-slate-800
+                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
+                            [&_ul]:list-disc [&_ul]:pl-7
+                            [&_ol]:list-decimal [&_ol]:pl-7
+                            [&_ul_ul]:my-3 [&_ol_ol]:my-3">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {message.content}
                             </ReactMarkdown>
@@ -565,14 +524,6 @@ export default function ChatArea() {
           {/* Status Bar */}
           <div className="flex items-center justify-between mb-3 text-xs">
             <div className="flex items-center gap-4">
-              {/* Session ID */}
-              <div className="flex items-center gap-2">
-                <span className="text-slate-600 tracking-wider">SESSION:</span>
-                <span className="text-amber-400/70 font-mono">
-                  {sessionId.slice(0, 8).toUpperCase()}
-                </span>
-              </div>
-
               {/* Document Count */}
               {selectedDocs.size > 0 ? (
                 <div className="flex items-center gap-2">
