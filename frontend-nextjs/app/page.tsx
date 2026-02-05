@@ -27,7 +27,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Tactical background effects */}
-      <div className="absolute inset-0 scan-lines opacity-30"></div>
       <div className="absolute inset-0 bg-gradient-to-br from-amber-900/10 via-slate-950 to-slate-950"></div>
 
       {/* Navigation */}

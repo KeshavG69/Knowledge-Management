@@ -139,15 +139,15 @@ export default function Sidebar() {
   const totalDocs = Array.isArray(documents) ? documents.length : 0;
 
   return (
-    <div className="flex-1 bg-slate-900 border-r border-amber-400/20 flex flex-col relative scan-lines">
+    <div className="flex-1 bg-white dark:bg-slate-900 border-r border-slate-300 dark:border-amber-400/20 flex flex-col relative">
       {/* Decorative corner bracket */}
-      <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-amber-400/40 z-10"></div>
+      <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-blue-400/40 dark:border-amber-400/40 z-10"></div>
 
       {/* Header */}
-      <div className="p-4 border-b border-slate-700/50">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700/50">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-6 bg-amber-400"></div>
-          <h2 className="text-base font-bold text-amber-400 tracking-wider">
+          <div className="w-1 h-6 bg-blue-600 dark:bg-amber-400"></div>
+          <h2 className="text-base font-bold text-blue-600 dark:text-amber-400 tracking-wider">
             DOCUMENT REPOSITORY
           </h2>
         </div>
@@ -204,36 +204,36 @@ export default function Sidebar() {
       </div>
 
       {/* Stats Bar */}
-      <div className="px-4 py-2 bg-slate-800/50 border-b border-slate-700/30 flex items-center justify-between text-xs">
+      <div className="px-4 py-2 bg-slate-200 dark:bg-slate-800/50 border-b border-slate-300 dark:border-slate-700/30 flex items-center justify-between text-xs">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-amber-400 rounded-full"></div>
-            <span className="text-slate-400">TOTAL:</span>
-            <span className="text-amber-400 font-mono font-semibold">{totalDocs}</span>
+            <div className="w-1.5 h-1.5 bg-blue-500 dark:bg-amber-400 rounded-full"></div>
+            <span className="text-slate-600 dark:text-slate-400">TOTAL:</span>
+            <span className="text-blue-600 dark:text-amber-400 font-mono font-semibold">{totalDocs}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-tactical-green rounded-full"></div>
-            <span className="text-slate-400">SELECTED:</span>
+            <span className="text-slate-600 dark:text-slate-400">SELECTED:</span>
             <span className="text-tactical-green font-mono font-semibold">{selectedDocs.size}</span>
           </div>
         </div>
       </div>
 
       {/* Folder Tree */}
-      <div className="flex-1 overflow-y-auto tactical-scrollbar p-4 grid-overlay">
+      <div className="flex-1 overflow-y-auto tactical-scrollbar p-4">
         {/* Selection Controls */}
         {totalDocs > 0 && (
-          <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-300 dark:border-slate-800">
             <button
               onClick={selectAllDocs}
-              className="text-xs text-amber-400 hover:text-amber-300 tracking-wide font-semibold transition-colors"
+              className="text-xs text-blue-600 dark:text-amber-400 hover:text-blue-700 dark:hover:text-amber-300 tracking-wide font-semibold transition-colors"
             >
               SELECT ALL
             </button>
             {selectedDocs.size > 0 && (
               <button
                 onClick={deselectAllDocs}
-                className="text-xs text-slate-500 hover:text-slate-400 tracking-wide transition-colors"
+                className="text-xs text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 tracking-wide transition-colors"
               >
                 CLEAR
               </button>
@@ -244,12 +244,12 @@ export default function Sidebar() {
         {/* Documents Tree */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-8 h-8 border-2 border-amber-400/20 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+            <div className="w-8 h-8 border-2 border-blue-200 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin mb-4"></div>
             <div className="text-slate-500 text-sm">LOADING REPOSITORY...</div>
           </div>
         ) : folderList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <svg className="w-16 h-16 text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 text-slate-400 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <div className="text-slate-500 text-sm mb-2">NO DOCUMENTS</div>
@@ -282,7 +282,7 @@ export default function Sidebar() {
                 >
                   {/* Folder Header */}
                   <div
-                    className="relative group transition-all duration-200 bg-slate-800/40 border-slate-700/50 hover:border-amber-400/30"
+                    className="relative group transition-all duration-200 bg-slate-200 dark:bg-slate-800/40 border border-slate-300 dark:border-slate-700/50 hover:border-blue-400 dark:hover:border-amber-400/30"
                     style={{
                       clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)',
                     }}
@@ -291,7 +291,7 @@ export default function Sidebar() {
                       {/* Expand/Collapse Button */}
                       <button
                         onClick={() => toggleFolder(folderName)}
-                        className="text-amber-400 hover:text-amber-300 transition-colors"
+                        className="text-blue-600 dark:text-amber-400 hover:text-blue-700 dark:hover:text-amber-300 transition-colors"
                       >
                         <svg
                           className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
@@ -324,13 +324,13 @@ export default function Sidebar() {
                       />
 
                       {/* Folder Icon */}
-                      <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-blue-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
                       </svg>
 
                       {/* Folder Name */}
                       <div className="flex-1">
-                        <div className="text-sm font-semibold text-slate-200 tracking-wide">
+                        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-wide">
                           {folderName}
                         </div>
                         <div className="text-[10px] text-slate-500 font-mono mt-0.5">
@@ -341,7 +341,7 @@ export default function Sidebar() {
                       {/* Delete Folder Button */}
                       <button
                         onClick={() => handleDeleteKB(folderName)}
-                        className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 p-1"
+                        className="opacity-0 group-hover:opacity-100 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1"
                         title="Delete knowledge base"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,16 +351,16 @@ export default function Sidebar() {
                     </div>
 
                     {/* Decorative corner */}
-                    <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-amber-400/20"></div>
+                    <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-blue-400/20 dark:border-amber-400/20"></div>
                   </div>
 
                   {/* Folder Documents */}
                   {isExpanded && folderDocs.length > 0 && (
-                    <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-700/30 pl-3">
+                    <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-300 dark:border-slate-700/30 pl-3">
                       {folderDocs.map((doc, docIdx) => (
                         <div
                           key={doc._id}
-                          className="relative bg-slate-800/30 border border-slate-700/40 hover:border-amber-400/30 hover:bg-slate-800/50 transition-all duration-200 group"
+                          className="relative bg-slate-100 dark:bg-slate-800/30 border border-slate-300 dark:border-slate-700/40 hover:border-blue-400 dark:hover:border-amber-400/30 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-all duration-200 group"
                           style={{
                             clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)',
                           }}
@@ -375,25 +375,25 @@ export default function Sidebar() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <div className="text-xs font-medium text-slate-200 truncate flex-1">
+                                <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
                                   {doc.file_name}
                                 </div>
                                 {doc.status === 'processing' && (
-                                  <div className="w-3 h-3 border border-amber-400/20 border-t-amber-400 rounded-full animate-spin flex-shrink-0"></div>
+                                  <div className="w-3 h-3 border border-blue-200 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin flex-shrink-0"></div>
                                 )}
                                 {doc.status === 'failed' && (
-                                  <svg className="w-3 h-3 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-3 h-3 text-red-500 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                   </svg>
                                 )}
                               </div>
                               {doc.status === 'processing' && doc.processing_stage_description && (
-                                <div className="text-[9px] text-amber-400/70 mt-0.5">
+                                <div className="text-[9px] text-blue-600 dark:text-amber-400/70 mt-0.5">
                                   {doc.processing_stage_description}
                                 </div>
                               )}
                               {doc.status === 'failed' && doc.error && (
-                                <div className="text-[9px] text-red-400 mt-0.5">
+                                <div className="text-[9px] text-red-500 dark:text-red-400 mt-0.5">
                                   {doc.error}
                                 </div>
                               )}
@@ -409,7 +409,7 @@ export default function Sidebar() {
                             </div>
                             <button
                               onClick={() => handleDeleteDoc(doc._id)}
-                              className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all duration-200 p-1"
+                              className="opacity-0 group-hover:opacity-100 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1"
                               title="Delete document"
                             >
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
