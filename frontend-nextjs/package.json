@@ -13,6 +13,7 @@
     "@aws-sdk/s3-request-presigner": "^3.981.0",
     "axios": "^1.7.0",
     "d3": "^7.9.0",
+    "jspdf": "^4.1.0",
     "markmap-common": "^0.18.9",
     "markmap-lib": "^0.18.12",
     "markmap-view": "^0.18.12",

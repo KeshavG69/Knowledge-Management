@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useChatStore } from "@/lib/stores/chatStore";
 import ModelSelector from "./ModelSelector";
+import ThemeToggle from "../ThemeToggle";
 
 export default function Header() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function Header() {
   };
 
   return (
-    <header className="h-16 bg-slate-900 border-b border-amber-400/20 flex items-center justify-between px-6 relative scan-lines z-30">
+    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-amber-400/20 flex items-center justify-between px-6 relative z-30">
       {/* Decorative corner brackets */}
       <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400/40"></div>
       <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-amber-400/40"></div>
@@ -53,10 +54,10 @@ export default function Header() {
           </div>
 
           <div>
-            <h1 className="text-xl font-bold text-amber-400 tracking-wider leading-none">
-              SOLDIER<span className="text-amber-300">IQ</span>
+            <h1 className="text-xl font-bold text-blue-600 dark:text-amber-400 tracking-wider leading-none">
+              SOLDIER<span className="text-blue-500 dark:text-amber-300">IQ</span>
             </h1>
-            <div className="text-[10px] text-slate-500 tracking-widest mt-0.5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-500 tracking-widest mt-0.5">
               INTEL MANAGEMENT SYSTEM
             </div>
           </div>
@@ -81,44 +82,48 @@ export default function Header() {
         </button>
       </div>
 
-      {/* User Profile */}
-      <div className="relative">
+      <div className="flex items-center gap-3">
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
+        {/* User Profile */}
+        <div className="relative">
         <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setShowMenu(prev => !prev);
           }}
-          className="flex items-center gap-3 px-3 py-2 border border-slate-700 hover:border-amber-400/40 bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 relative group z-50"
+          className="flex items-center gap-3 px-3 py-2 border border-slate-300 dark:border-slate-700 hover:border-blue-400 dark:hover:border-amber-400/40 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-200 relative group z-50"
           style={{
             clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)'
           }}
         >
           {/* User Avatar */}
           <div className="relative">
-            <div className="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-amber-600/20 border border-amber-400/50 flex items-center justify-center">
-              <span className="text-amber-400 font-bold text-sm">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-blue-600/20 dark:from-amber-500/20 dark:to-amber-600/20 border border-blue-400/50 dark:border-amber-400/50 flex items-center justify-center">
+              <span className="text-blue-600 dark:text-amber-400 font-bold text-sm">
                 {user?.email?.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-slate-900 border border-tactical-green flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-white dark:bg-slate-900 border border-tactical-green flex items-center justify-center">
               <div className="w-1.5 h-1.5 bg-tactical-green rounded-full"></div>
             </div>
           </div>
 
           {/* User Info */}
           <div className="text-left hidden sm:block">
-            <div className="text-xs text-amber-400/90 font-semibold tracking-wide">
+            <div className="text-xs text-blue-600 dark:text-amber-400/90 font-semibold tracking-wide">
               OPERATOR
             </div>
-            <div className="text-xs text-slate-400 font-mono truncate max-w-[150px]">
+            <div className="text-xs text-slate-600 dark:text-slate-400 font-mono truncate max-w-[150px]">
               {user?.email}
             </div>
           </div>
 
           {/* Dropdown Arrow */}
           <svg
-            className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 text-slate-500 dark:text-slate-500 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -137,7 +142,7 @@ export default function Header() {
                 setShowMenu(false);
               }}
             />
-            <div className="fixed top-16 right-6 w-56 bg-slate-900 border border-amber-400/20 shadow-2xl z-[200] tactical-panel">
+            <div className="fixed top-16 right-6 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-amber-400/20 shadow-2xl z-[200] tactical-panel">
               <div className="p-2">
                 {/* Settings Option */}
                 <button
@@ -145,7 +150,7 @@ export default function Header() {
                     setShowMenu(false);
                     // TODO: Navigate to settings page
                   }}
-                  className="w-full text-left px-4 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-amber-400 border border-transparent hover:border-amber-400/30 transition-all duration-200 text-sm font-semibold tracking-wide mb-1"
+                  className="w-full text-left px-4 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-amber-400 border border-transparent hover:border-blue-400/30 dark:hover:border-amber-400/30 transition-all duration-200 text-sm font-semibold tracking-wide mb-1"
                   style={{
                     clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
                   }}
@@ -165,7 +170,7 @@ export default function Header() {
                     setShowMenu(false);
                     handleLogout();
                   }}
-                  className="w-full text-left px-4 py-2.5 text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-all duration-200 text-sm font-semibold tracking-wide"
+                  className="w-full text-left px-4 py-2.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 border border-transparent hover:border-red-400/30 dark:hover:border-red-500/30 transition-all duration-200 text-sm font-semibold tracking-wide"
                   style={{
                     clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
                   }}
@@ -181,6 +186,7 @@ export default function Header() {
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Bottom scan line */}

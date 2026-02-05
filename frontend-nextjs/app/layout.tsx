@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AuthInitializer from "@/components/auth/AuthInitializer";
+import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "SoldierIQ - Knowledge Management",
@@ -15,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthInitializer />
-        {children}
+        <ThemeProvider>
+          <AuthInitializer />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

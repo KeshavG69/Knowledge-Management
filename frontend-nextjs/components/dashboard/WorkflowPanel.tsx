@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useDocumentStore } from "@/lib/stores/documentStore";
 import { mindmapApi, MindMapResponse } from "@/lib/api/mindmap";
+import { flashcardsApi, FlashcardData } from "@/lib/api/flashcards";
 import MindMapViewer from "./MindMapViewer";
+import ReportStudio from "./ReportStudio";
+import FlashcardViewer from "./FlashcardViewer";
 
 interface WorkflowOption {
   id: string;
@@ -22,6 +25,8 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
   const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [mindMapData, setMindMapData] = useState<MindMapResponse | null>(null);
+  const [showReportStudio, setShowReportStudio] = useState(false);
+  const [flashcardData, setFlashcardData] = useState<FlashcardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { selectedDocs, documents } = useDocumentStore();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -72,7 +77,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     {
       id: "reports",
       title: "Reports",
-      available: false,
+      available: true,
       description: "Generate comprehensive reports and summaries",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +88,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     {
       id: "flashcards",
       title: "Flashcards",
-      available: false,
+      available: true,
       description: "Create study flashcards from your documents",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,6 +167,40 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
         setTimeout(() => setError(null), 5000);
       }
     }
+
+    // Handle flashcards generation
+    if (workflow.id === "flashcards") {
+      // Check if documents are selected
+      if (selectedDocs.size === 0) {
+        setError("Please select at least one document to generate flashcards");
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+
+      try {
+        setIsGenerating(true);
+
+        // Convert Set to Array of document IDs
+        const documentIds = Array.from(selectedDocs);
+
+        // Call API to generate flashcards
+        const response = await flashcardsApi.generate(documentIds);
+
+        // Show flashcard viewer
+        setFlashcardData(response);
+        setIsGenerating(false);
+      } catch (err: any) {
+        console.error("Failed to generate flashcards:", err);
+        setError(err.response?.data?.detail || "Failed to generate flashcards. Please try again.");
+        setIsGenerating(false);
+        setTimeout(() => setError(null), 5000);
+      }
+    }
+
+    // Handle reports workflow
+    if (workflow.id === "reports") {
+      setShowReportStudio(true);
+    }
   };
 
   const handleCloseMindMap = () => {
@@ -169,17 +208,27 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     setSelectedWorkflow(null);
   };
 
+  const handleCloseFlashcards = () => {
+    setFlashcardData(null);
+    setSelectedWorkflow(null);
+  };
+
+  const handleCloseReportStudio = () => {
+    setShowReportStudio(false);
+    setSelectedWorkflow(null);
+  };
+
   // Collapsed state - show vertical workflow buttons
   if (isCollapsed) {
     return (
-      <div className="w-14 bg-slate-950 border-l border-slate-800 flex flex-col relative">
+      <div className="w-14 bg-slate-100 dark:bg-slate-950 border-l border-slate-300 dark:border-slate-800 flex flex-col relative">
         {/* Expand button */}
         <button
           onClick={() => setIsCollapsed(false)}
-          className="w-full p-3 hover:bg-slate-900 transition-colors border-b border-slate-800 group flex items-center justify-center"
+          className="w-full p-3 hover:bg-slate-200 dark:hover:bg-slate-900 transition-colors border-b border-slate-300 dark:border-slate-800 group flex items-center justify-center"
           title="Expand Workflow Panel"
         >
-          <svg className="w-5 h-5 text-amber-400 group-hover:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-blue-600 dark:text-amber-400 group-hover:text-blue-700 dark:group-hover:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
           </svg>
         </button>
@@ -194,18 +243,18 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
                 disabled={!workflow.available}
                 className={`relative p-2 flex items-center justify-center transition-all group ${
                   workflow.available
-                    ? 'bg-slate-900/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-400/50 cursor-pointer'
-                    : 'bg-slate-900/30 border border-slate-800/30 opacity-50 cursor-not-allowed'
+                    ? 'bg-white dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 hover:border-blue-400 dark:hover:border-amber-400/50 cursor-pointer'
+                    : 'bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-slate-800/30 opacity-50 cursor-not-allowed'
                 }`}
                 title={workflow.title + (workflow.available ? '' : ' (Coming Soon)')}
               >
                 {/* Coming Soon Dot */}
                 {!workflow.available && (
-                  <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-slate-600 rounded-full"></div>
+                  <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
                 )}
 
                 {/* Icon */}
-                <div className={workflow.available ? 'text-amber-400' : 'text-slate-600'}>
+                <div className={workflow.available ? 'text-blue-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-600'}>
                   {workflow.icon}
                 </div>
               </button>
@@ -217,22 +266,22 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
   }
 
   return (
-    <div className="flex-1 bg-slate-950 border-l border-slate-800 flex flex-col relative scan-lines">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 border-l border-slate-300 dark:border-slate-800 flex flex-col relative">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm p-4">
+      <div className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-blue-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>
-            <h2 className="text-sm font-bold text-amber-400 tracking-wider">WORKFLOW</h2>
+            <h2 className="text-sm font-bold text-blue-600 dark:text-amber-400 tracking-wider">WORKFLOW</h2>
           </div>
           <button
             onClick={() => setIsCollapsed(true)}
-            className="p-1 hover:bg-slate-800 rounded transition-colors"
+            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors"
             title="Collapse Workflow Panel"
           >
-            <svg className="w-4 h-4 text-slate-500 hover:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-slate-500 hover:text-blue-600 dark:hover:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
             </svg>
           </button>
@@ -252,26 +301,26 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
               disabled={!workflow.available}
               className={`relative tactical-panel p-3 text-left transition-all group ${
                 workflow.available
-                  ? 'hover:border-amber-400/50 cursor-pointer'
+                  ? 'hover:border-blue-400 dark:hover:border-amber-400/50 cursor-pointer'
                   : 'opacity-50 cursor-not-allowed'
               }`}
               title={workflow.description}
             >
               {/* Coming Soon Badge */}
               {!workflow.available && (
-                <div className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-slate-700 border border-slate-600 text-[8px] font-bold text-slate-400 tracking-wider">
+                <div className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-slate-300 dark:bg-slate-700 border border-slate-400 dark:border-slate-600 text-[8px] font-bold text-slate-600 dark:text-slate-400 tracking-wider">
                   SOON
                 </div>
               )}
 
               {/* Icon */}
-              <div className={`mb-2 ${workflow.available ? 'text-amber-400' : 'text-slate-600'}`}>
+              <div className={`mb-2 ${workflow.available ? 'text-blue-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-600'}`}>
                 {workflow.icon}
               </div>
 
               {/* Title */}
               <div className={`text-[10px] font-semibold tracking-wider leading-tight ${
-                workflow.available ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-600'
+                workflow.available ? 'text-slate-800 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-amber-400' : 'text-slate-500 dark:text-slate-600'
               }`}>
                 {workflow.title}
               </div>
@@ -280,17 +329,17 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
         </div>
 
         {/* Info Box */}
-        <div className="mt-4 tactical-panel p-3 bg-slate-900/30">
+        <div className="mt-4 tactical-panel p-3 bg-blue-50 dark:bg-slate-900/30">
           <div className="flex items-start gap-2">
             <svg className="w-4 h-4 text-tactical-green mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
               <div className="text-[10px] text-tactical-green font-semibold tracking-wider mb-1">
-                MIND MAP AVAILABLE
+                ACTIVE WORKFLOWS
               </div>
-              <div className="text-[9px] text-slate-500 leading-relaxed">
-                Select documents and generate interactive mind maps. More workflows coming soon.
+              <div className="text-[9px] text-slate-600 dark:text-slate-500 leading-relaxed">
+                Mind Maps, Reports, and Flashcards available. Select documents to generate intelligence products.
               </div>
             </div>
           </div>
@@ -298,16 +347,16 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
 
         {/* Selected Documents Info */}
         {selectedDocs.size > 0 && (
-          <div className="mt-4 tactical-panel p-3 bg-amber-900/20 border-amber-400/30">
+          <div className="mt-4 tactical-panel p-3 bg-blue-50 dark:bg-amber-900/20 border-blue-200 dark:border-amber-400/30">
             <div className="flex items-center gap-2 mb-1">
-              <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 text-blue-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-[10px] text-amber-400 font-semibold tracking-wider">
+              <span className="text-[10px] text-blue-700 dark:text-amber-400 font-semibold tracking-wider">
                 {selectedDocs.size} DOCUMENT{selectedDocs.size !== 1 ? 'S' : ''} SELECTED
               </span>
             </div>
-            <div className="text-[9px] text-slate-400">
+            <div className="text-[9px] text-slate-600 dark:text-slate-400">
               Ready to generate mind map
             </div>
           </div>
@@ -315,16 +364,16 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
 
         {/* Error Message */}
         {error && (
-          <div className="mt-4 tactical-panel p-3 bg-red-900/20 border-red-400/30">
+          <div className="mt-4 tactical-panel p-3 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-400/30">
             <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <div className="text-[10px] text-red-400 font-semibold tracking-wider mb-1">
+                <div className="text-[10px] text-red-700 dark:text-red-400 font-semibold tracking-wider mb-1">
                   ERROR
                 </div>
-                <div className="text-[9px] text-red-300 leading-relaxed">
+                <div className="text-[9px] text-red-600 dark:text-red-300 leading-relaxed">
                   {error}
                 </div>
               </div>
@@ -335,11 +384,11 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
 
       {/* Loading Overlay */}
       {isGenerating && (
-        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-slate-100/90 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-10">
           <div className="text-center">
-            <div className="inline-block w-12 h-12 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p className="text-sm text-amber-400 font-semibold tracking-wider">GENERATING MIND MAP</p>
-            <p className="text-xs text-slate-400 mt-1">Analyzing {selectedDocs.size} document{selectedDocs.size !== 1 ? 's' : ''}...</p>
+            <div className="inline-block w-12 h-12 border-2 border-blue-600 dark:border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm text-blue-700 dark:text-amber-400 font-semibold tracking-wider">GENERATING MIND MAP</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Analyzing {selectedDocs.size} document{selectedDocs.size !== 1 ? 's' : ''}...</p>
           </div>
         </div>
       )}
@@ -347,6 +396,16 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
       {/* Mind Map Viewer Modal */}
       {mindMapData && (
         <MindMapViewer mindMapData={mindMapData} onClose={handleCloseMindMap} />
+      )}
+
+      {/* Flashcard Viewer Modal */}
+      {flashcardData && (
+        <FlashcardViewer flashcardData={flashcardData} onClose={handleCloseFlashcards} />
+      )}
+
+      {/* Report Studio Modal - Rendered outside of workflow panel */}
+      {showReportStudio && (
+        <ReportStudio onClose={handleCloseReportStudio} />
       )}
     </div>
   );

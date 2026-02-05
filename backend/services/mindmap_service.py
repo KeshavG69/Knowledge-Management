@@ -313,10 +313,23 @@ class MindMapService:
             ("system", """You are an expert at creating mind maps that visualize complex information.
             Generate a hierarchical mind map that shows key concepts and their relationships.
 
-            Rules:
+            CRITICAL RULES FOR NODE IDs vs CONTENT:
+            - Each node has TWO separate fields: 'id' and 'content'
+            - Node 'id': Simple letters like "A", "B", "C", "D", etc.
+            - Node 'content': The actual text/concept (max 5 words)
+            - Edges MUST use node IDs (A, B, C), NEVER use content text
+
+            Example of CORRECT structure:
+            - Node: {{"id": "A", "content": "Main Topic"}}
+            - Node: {{"id": "B", "content": "Subtopic One"}}
+            - Edge: {{"from_id": "A", "to_id": "B"}}  ← Uses IDs, not content!
+
+            Example of WRONG structure (DO NOT DO THIS):
+            - Edge: {{"from_id": "Main Topic", "to_id": "Subtopic One"}}  ← WRONG! Uses content instead of IDs
+
+            General Rules:
             - Keep node content concise (max 5 words per node)
             - Create a clear hierarchy with a central root node
-            - Use meaningful node IDs (A, B, C, D, etc.)
             - Connect related concepts with edges (from parent to children)
             - Organize from general (root) to specific (leaves)
             - Create at least 10-25 nodes for a comprehensive visualization
@@ -335,7 +348,9 @@ Key Points:
 {key_points}
 
 Generate nodes and edges that show the relationships between concepts.
-The root node should represent the main overarching topic.""")
+The root node should represent the main overarching topic.
+
+REMEMBER: Edges must use node IDs (like "A", "B", "C"), NOT the node content text!""")
         ])
 
         # Format key points

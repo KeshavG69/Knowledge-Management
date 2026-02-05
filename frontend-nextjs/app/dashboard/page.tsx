@@ -81,7 +81,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-zinc-950">
+    <div className="h-screen flex flex-col bg-slate-50 dark:bg-zinc-950">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar with resize handle */}
