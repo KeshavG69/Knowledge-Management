@@ -70,6 +70,8 @@ class FlashcardGeneratorService:
             )
 
             flashcard_data["workflow_id"] = str(workflow_id)
+            flashcard_data["document_count"] = len(document_ids)
+            flashcard_data["card_count"] = len(flashcard_data["cards"])
             return flashcard_data
 
         except Exception as e:

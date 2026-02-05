@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useDocumentStore } from "@/lib/stores/documentStore";
 import { mindmapApi, MindMapResponse } from "@/lib/api/mindmap";
+import { flashcardsApi, FlashcardData } from "@/lib/api/flashcards";
 import MindMapViewer from "./MindMapViewer";
 import ReportStudio from "./ReportStudio";
+import FlashcardViewer from "./FlashcardViewer";
 
 interface WorkflowOption {
   id: string;
@@ -24,6 +26,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
   const [isGenerating, setIsGenerating] = useState(false);
   const [mindMapData, setMindMapData] = useState<MindMapResponse | null>(null);
   const [showReportStudio, setShowReportStudio] = useState(false);
+  const [flashcardData, setFlashcardData] = useState<FlashcardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { selectedDocs, documents } = useDocumentStore();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -85,7 +88,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     {
       id: "flashcards",
       title: "Flashcards",
-      available: false,
+      available: true,
       description: "Create study flashcards from your documents",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,6 +168,35 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
       }
     }
 
+    // Handle flashcards generation
+    if (workflow.id === "flashcards") {
+      // Check if documents are selected
+      if (selectedDocs.size === 0) {
+        setError("Please select at least one document to generate flashcards");
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+
+      try {
+        setIsGenerating(true);
+
+        // Convert Set to Array of document IDs
+        const documentIds = Array.from(selectedDocs);
+
+        // Call API to generate flashcards
+        const response = await flashcardsApi.generate(documentIds);
+
+        // Show flashcard viewer
+        setFlashcardData(response);
+        setIsGenerating(false);
+      } catch (err: any) {
+        console.error("Failed to generate flashcards:", err);
+        setError(err.response?.data?.detail || "Failed to generate flashcards. Please try again.");
+        setIsGenerating(false);
+        setTimeout(() => setError(null), 5000);
+      }
+    }
+
     // Handle reports workflow
     if (workflow.id === "reports") {
       setShowReportStudio(true);
@@ -173,6 +205,11 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
 
   const handleCloseMindMap = () => {
     setMindMapData(null);
+    setSelectedWorkflow(null);
+  };
+
+  const handleCloseFlashcards = () => {
+    setFlashcardData(null);
     setSelectedWorkflow(null);
   };
 
@@ -302,7 +339,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
                 ACTIVE WORKFLOWS
               </div>
               <div className="text-[9px] text-slate-600 dark:text-slate-500 leading-relaxed">
-                Mind Maps and Reports available. Select documents to generate intelligence products.
+                Mind Maps, Reports, and Flashcards available. Select documents to generate intelligence products.
               </div>
             </div>
           </div>
@@ -359,6 +396,11 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
       {/* Mind Map Viewer Modal */}
       {mindMapData && (
         <MindMapViewer mindMapData={mindMapData} onClose={handleCloseMindMap} />
+      )}
+
+      {/* Flashcard Viewer Modal */}
+      {flashcardData && (
+        <FlashcardViewer flashcardData={flashcardData} onClose={handleCloseFlashcards} />
       )}
 
       {/* Report Studio Modal - Rendered outside of workflow panel */}
