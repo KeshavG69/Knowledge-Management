@@ -6,6 +6,7 @@ import { useDocumentStore } from "@/lib/stores/documentStore";
 import { chatApi } from "@/lib/api/documents";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import VideoClipViewer from "./VideoClipViewer";
 
 interface SourceWithUrl extends DocumentSource {
   presignedUrl?: string;
@@ -30,6 +31,19 @@ export default function ChatArea() {
 
   // Track presigned URLs for sources by file_key
   const [sourceUrls, setSourceUrls] = useState<Map<string, string>>(new Map());
+
+  // Video viewer state
+  const [videoViewer, setVideoViewer] = useState<{
+    isOpen: boolean;
+    url: string;
+    filename: string;
+    clipStart?: number;
+    clipEnd?: number;
+  }>({
+    isOpen: false,
+    url: "",
+    filename: "",
+  });
 
   // Fetch presigned URLs for all sources in messages
   useEffect(() => {
@@ -221,12 +235,22 @@ export default function ChatArea() {
                         keyframe_file_key: result.metadata?.keyframe_file_key,
                       }));
 
-                      // Deduplicate by document_id, keeping highest score for each document
+                      // Deduplicate sources
+                      // For videos with different clips, use scene_id or timestamp as part of key
+                      // For regular documents, deduplicate by document_id
                       const uniqueSourcesMap = new Map<string, DocumentSource>();
                       allSources.forEach(source => {
-                        const existing = uniqueSourcesMap.get(source.document_id);
+                        // Create unique key: for videos with clips, include scene_id or timestamp
+                        let key = source.document_id;
+                        if (source.scene_id) {
+                          key = `${source.document_id}-${source.scene_id}`;
+                        } else if (source.clip_start !== undefined) {
+                          key = `${source.document_id}-${source.clip_start}-${source.clip_end}`;
+                        }
+
+                        const existing = uniqueSourcesMap.get(key);
                         if (!existing || source.score > existing.score) {
-                          uniqueSourcesMap.set(source.document_id, source);
+                          uniqueSourcesMap.set(key, source);
                         }
                       });
 
@@ -455,7 +479,7 @@ export default function ChatArea() {
 
                     {/* Sources */}
                     {message.sources && message.sources.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-slate-700/50">
+                      <div className="mt-4 pt-4 border-t border-slate-300 dark:border-slate-700/50">
                         <div className="flex items-center gap-2 mb-2">
                           <svg className="w-4 h-4 text-tactical-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -466,19 +490,43 @@ export default function ChatArea() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {message.sources.map((source: any, idx) => {
-                            const presignedUrl = sourceUrls.get(source.file_key);
-                            const SourceElement = presignedUrl ? 'a' : 'div';
+                            const finalUrl = sourceUrls.get(source.file_key);
+
+                            // Check if this is a video file
+                            const isVideo = source.filename && /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(source.filename);
+
+                            // For videos with clip times, open in video viewer
+                            const hasClipTimes = source.clip_start !== undefined && source.clip_end !== undefined;
+                            const shouldUseVideoViewer = isVideo && hasClipTimes && finalUrl;
+
+                            const handleClick = (e: React.MouseEvent) => {
+                              if (shouldUseVideoViewer) {
+                                e.preventDefault();
+                                setVideoViewer({
+                                  isOpen: true,
+                                  url: finalUrl!,
+                                  filename: source.filename,
+                                  clipStart: source.clip_start,
+                                  clipEnd: source.clip_end,
+                                });
+                              }
+                            };
+
+                            const SourceElement = finalUrl ? (shouldUseVideoViewer ? 'button' : 'a') : 'div';
 
                             return (
                               <SourceElement
                                 key={idx}
-                                {...(presignedUrl ? {
-                                  href: presignedUrl,
+                                {...(finalUrl && !shouldUseVideoViewer ? {
+                                  href: finalUrl,
                                   target: "_blank",
                                   rel: "noopener noreferrer"
                                 } : {})}
-                                className={`text-xs text-slate-400 bg-slate-800/50 border border-slate-700/50 px-2 py-1 flex items-center gap-1.5 ${
-                                  presignedUrl ? 'hover:border-tactical-green/50 hover:text-tactical-green transition-colors cursor-pointer' : ''
+                                {...(shouldUseVideoViewer ? {
+                                  onClick: handleClick
+                                } : {})}
+                                className={`text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/50 px-2 py-1 flex items-center gap-1.5 ${
+                                  finalUrl ? 'hover:border-tactical-green/50 hover:text-tactical-green transition-colors cursor-pointer' : ''
                                 }`}
                                 style={{
                                   clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)',
@@ -487,12 +535,12 @@ export default function ChatArea() {
                                 <div className="w-1 h-1 bg-tactical-green/50 rounded-full"></div>
                                 <span className="truncate max-w-[200px]">{source.filename}</span>
                                 {source.scene_id && (
-                                  <span className="text-slate-600 text-[10px]">
+                                  <span className="text-slate-500 dark:text-slate-600 text-[10px]">
                                     [{formatTimestamp(source.clip_start || 0)}]
                                   </span>
                                 )}
-                                {presignedUrl && (
-                                  <svg className="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {finalUrl && (
+                                  <svg className="w-3 h-3 text-slate-500 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                   </svg>
                                 )}
@@ -593,6 +641,17 @@ export default function ChatArea() {
 
       {/* Bottom border accent */}
       <div className="h-px bg-gradient-to-r from-transparent via-blue-400/30 dark:via-amber-400/30 to-transparent"></div>
+
+      {/* Video Clip Viewer Modal */}
+      {videoViewer.isOpen && (
+        <VideoClipViewer
+          videoUrl={videoViewer.url}
+          filename={videoViewer.filename}
+          clipStart={videoViewer.clipStart}
+          clipEnd={videoViewer.clipEnd}
+          onClose={() => setVideoViewer({ isOpen: false, url: "", filename: "" })}
+        />
+      )}
     </div>
   );
 }
