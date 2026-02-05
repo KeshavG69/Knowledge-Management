@@ -188,7 +188,6 @@ Here are summaries of all the documents:
 Generate a comprehensive report following the format and structure specified in the prompt above.
 
 IMPORTANT:
-- Include source citations in the format [Source: filename.pdf] after each fact or point
 - Use markdown formatting for better readability
 - Be thorough and detailed
 - Structure the report with clear sections and headings

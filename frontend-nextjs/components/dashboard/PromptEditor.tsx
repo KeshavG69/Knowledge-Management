@@ -39,14 +39,14 @@ export default function PromptEditor({
   };
 
   return (
-    <div className="tactical-panel p-4 bg-slate-900/50">
+    <div className="tactical-panel p-4 bg-slate-200 dark:bg-slate-900/50">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-blue-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
-          <h3 className="text-[10px] font-bold text-amber-400 tracking-wider">
+          <h3 className="text-[10px] font-bold text-blue-700 dark:text-amber-400 tracking-wider">
             CUSTOMIZE PROMPT
           </h3>
         </div>
@@ -55,7 +55,7 @@ export default function PromptEditor({
         {isEdited && (
           <button
             onClick={handleReset}
-            className="px-2 py-1 text-[9px] font-bold tracking-wider text-slate-400 hover:text-amber-400 transition-colors"
+            className="px-2 py-1 text-[9px] font-bold tracking-wider text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-amber-400 transition-colors"
             title="Reset to original prompt"
           >
             RESET
@@ -68,7 +68,7 @@ export default function PromptEditor({
         value={prompt}
         onChange={(e) => handlePromptChange(e.target.value)}
         disabled={disabled || isGenerating}
-        className="w-full h-48 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-[11px] text-slate-300 leading-relaxed resize-none focus:outline-none focus:border-amber-400 transition-colors tactical-scrollbar disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full h-48 bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-3 py-2 text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed resize-none focus:outline-none focus:border-blue-500 dark:focus:border-amber-400 transition-colors tactical-scrollbar disabled:opacity-50 disabled:cursor-not-allowed"
         placeholder="Enter your custom prompt here..."
       />
 
@@ -96,11 +96,11 @@ export default function PromptEditor({
       <button
         onClick={onGenerate}
         disabled={disabled || isGenerating || !prompt.trim()}
-        className="w-full mt-4 px-4 py-3 bg-amber-400 hover:bg-amber-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-slate-950 disabled:text-slate-500 font-bold text-sm tracking-wider transition-colors flex items-center justify-center gap-2"
+        className="w-full mt-4 px-4 py-3 bg-blue-600 dark:bg-amber-400 hover:bg-blue-700 dark:hover:bg-amber-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white dark:text-slate-950 disabled:text-slate-400 dark:disabled:text-slate-500 font-bold text-sm tracking-wider transition-colors flex items-center justify-center gap-2"
       >
         {isGenerating ? (
           <>
-            <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-white dark:border-slate-950 border-t-transparent rounded-full animate-spin"></div>
             GENERATING...
           </>
         ) : (

@@ -608,6 +608,14 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -1201,6 +1209,22 @@
         "documentation": {}
     },
     {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Optional",
         "importPath": "typing",
         "description": "typing",
@@ -1282,6 +1306,38 @@
     },
     {
         "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1609,6 +1665,22 @@
         "documentation": {}
     },
     {
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -1630,6 +1702,14 @@
         "description": "datetime",
         "isExtraImport": true,
         "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
         "documentation": {}
     },
     {
@@ -1867,6 +1947,22 @@
     },
     {
         "label": "EmailStr",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "Field",
         "importPath": "pydantic",
         "description": "pydantic",
         "isExtraImport": true,
@@ -2160,6 +2256,14 @@
     },
     {
         "label": "get_llm_agno",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
         "importPath": "clients.ultimate_llm",
         "description": "clients.ultimate_llm",
         "isExtraImport": true,
@@ -2609,6 +2713,14 @@
         "description": "services.ingestion_service",
         "isExtraImport": true,
         "detail": "services.ingestion_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
         "documentation": {}
     },
     {
@@ -3835,6 +3947,15 @@
         "documentation": {}
     },
     {
+        "label": "GenerateFlashcardsRequest",
+        "kind": 6,
+        "importPath": "backend.models.flashcard_models",
+        "description": "backend.models.flashcard_models",
+        "peekOfCode": "class GenerateFlashcardsRequest(BaseModel):\n    \"\"\"Request to generate flashcards from documents\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to generate flashcards from\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")",
+        "detail": "backend.models.flashcard_models",
+        "documentation": {}
+    },
+    {
         "label": "HealthCheckResponse",
         "kind": 6,
         "importPath": "backend.models.health",
@@ -4039,6 +4160,33 @@
         "description": "backend.services.agent_streaming",
         "peekOfCode": "def sanitize_payload(data: Dict[str, Any]) -> Dict[str, Any]:\n    \"\"\"Ensure payload is JSON-serializable\"\"\"\n    import json\n    try:\n        json.dumps(data)\n        return data\n    except TypeError:\n        def _coerce(value: Any) -> Any:\n            if isinstance(value, dict):\n                return {k: _coerce(v) for k, v in value.items()}",
         "detail": "backend.services.agent_streaming",
+        "documentation": {}
+    },
+    {
+        "label": "FlashcardGeneratorService",
+        "kind": 6,
+        "importPath": "backend.services.flashcard_generator",
+        "description": "backend.services.flashcard_generator",
+        "peekOfCode": "class FlashcardGeneratorService:\n    \"\"\"Service for generating flashcards using Map-Reduce\"\"\"\n    def __init__(self):\n        \"\"\"Initialize flashcard generator service\"\"\"\n        self.mongodb_client = get_mongodb_client()\n        self.llm = get_llm(model=\"google/gemini-2.0-flash-exp:free\", provider=\"openrouter\")\n    async def generate_flashcards(\n        self,\n        document_ids: List[str],\n        user_id: Optional[str] = None,",
+        "detail": "backend.services.flashcard_generator",
+        "documentation": {}
+    },
+    {
+        "label": "get_flashcard_generator_service",
+        "kind": 2,
+        "importPath": "backend.services.flashcard_generator",
+        "description": "backend.services.flashcard_generator",
+        "peekOfCode": "def get_flashcard_generator_service() -> FlashcardGeneratorService:\n    \"\"\"Get or create flashcard generator service singleton\"\"\"\n    global _flashcard_generator_service\n    if _flashcard_generator_service is None:\n        _flashcard_generator_service = FlashcardGeneratorService()\n    return _flashcard_generator_service",
+        "detail": "backend.services.flashcard_generator",
+        "documentation": {}
+    },
+    {
+        "label": "_flashcard_generator_service",
+        "kind": 5,
+        "importPath": "backend.services.flashcard_generator",
+        "description": "backend.services.flashcard_generator",
+        "peekOfCode": "_flashcard_generator_service = None\ndef get_flashcard_generator_service() -> FlashcardGeneratorService:\n    \"\"\"Get or create flashcard generator service singleton\"\"\"\n    global _flashcard_generator_service\n    if _flashcard_generator_service is None:\n        _flashcard_generator_service = FlashcardGeneratorService()\n    return _flashcard_generator_service",
+        "detail": "backend.services.flashcard_generator",
         "documentation": {}
     },
     {

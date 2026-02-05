@@ -32,11 +32,11 @@
 
 @layer base {
   * {
-    @apply border-slate-700;
+    @apply border-slate-300 dark:border-slate-700;
   }
 
   body {
-    @apply bg-slate-950 text-slate-100;
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 14px;
     line-height: 1.6;
@@ -53,7 +53,15 @@
 @layer components {
   /* Tactical Panel with Corner Brackets */
   .tactical-panel {
-    @apply relative bg-slate-900/80 backdrop-blur-sm;
+    @apply relative bg-white/90 backdrop-blur-sm;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    box-shadow:
+      0 0 20px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(59, 130, 246, 0.1);
+  }
+
+  .dark .tactical-panel {
+    @apply bg-slate-900/80;
     border: 1px solid rgba(251, 191, 36, 0.15);
     box-shadow:
       0 0 20px rgba(0, 0, 0, 0.5),
@@ -111,9 +119,9 @@
 
   /* Tactical Button */
   .tactical-btn {
-    @apply relative px-4 py-2 bg-slate-800 text-amber-400 font-semibold tracking-wider uppercase text-xs;
-    @apply border border-amber-400/30 transition-all duration-200;
-    @apply hover:bg-amber-400/10 hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)];
+    @apply relative px-4 py-2 bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-amber-400 font-semibold tracking-wider uppercase text-xs;
+    @apply border border-blue-300 dark:border-amber-400/30 transition-all duration-200;
+    @apply hover:bg-blue-50 dark:hover:bg-amber-400/10 hover:border-blue-500 dark:hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_20px_rgba(251,191,36,0.3)];
     clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
   }
 
@@ -122,14 +130,14 @@
   }
 
   .tactical-btn-primary {
-    @apply bg-amber-500/20 text-amber-300 border-amber-400/50;
-    @apply hover:bg-amber-500/30 hover:text-amber-200;
+    @apply bg-blue-500/20 dark:bg-amber-500/20 text-blue-700 dark:text-amber-300 border-blue-400 dark:border-amber-400/50;
+    @apply hover:bg-blue-500/30 dark:hover:bg-amber-500/30 hover:text-blue-800 dark:hover:text-amber-200;
   }
 
   /* Tactical Input */
   .tactical-input {
-    @apply w-full px-4 py-2.5 bg-slate-900/50 text-slate-100 border border-slate-600/50;
-    @apply focus:outline-none focus:border-amber-400/60 focus:shadow-[0_0_15px_rgba(251,191,36,0.2)];
+    @apply w-full px-4 py-2.5 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600/50;
+    @apply focus:outline-none focus:border-blue-500 dark:focus:border-amber-400/60 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] dark:focus:shadow-[0_0_15px_rgba(251,191,36,0.2)];
     @apply transition-all duration-200 font-mono text-sm;
     clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   }
