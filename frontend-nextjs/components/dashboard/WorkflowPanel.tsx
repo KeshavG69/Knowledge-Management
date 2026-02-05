@@ -357,7 +357,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
               </span>
             </div>
             <div className="text-[9px] text-slate-600 dark:text-slate-400">
-              Ready to generate mind map
+              Ready to generate intelligence products
             </div>
           </div>
         )}
@@ -387,7 +387,11 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
         <div className="absolute inset-0 bg-slate-100/90 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-10">
           <div className="text-center">
             <div className="inline-block w-12 h-12 border-2 border-blue-600 dark:border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p className="text-sm text-blue-700 dark:text-amber-400 font-semibold tracking-wider">GENERATING MIND MAP</p>
+            <p className="text-sm text-blue-700 dark:text-amber-400 font-semibold tracking-wider">
+              {selectedWorkflow === 'mind-map' && 'GENERATING MIND MAP'}
+              {selectedWorkflow === 'flashcards' && 'GENERATING FLASHCARDS'}
+              {selectedWorkflow === 'reports' && 'GENERATING REPORT'}
+            </p>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Analyzing {selectedDocs.size} document{selectedDocs.size !== 1 ? 's' : ''}...</p>
           </div>
         </div>
