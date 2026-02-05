@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useDocumentStore } from "@/lib/stores/documentStore";
 import { mindmapApi, MindMapResponse } from "@/lib/api/mindmap";
 import MindMapViewer from "./MindMapViewer";
+import ReportStudio from "./ReportStudio";
 
 interface WorkflowOption {
   id: string;
@@ -22,6 +23,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
   const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [mindMapData, setMindMapData] = useState<MindMapResponse | null>(null);
+  const [showReportStudio, setShowReportStudio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { selectedDocs, documents } = useDocumentStore();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -72,7 +74,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     {
       id: "reports",
       title: "Reports",
-      available: false,
+      available: true,
       description: "Generate comprehensive reports and summaries",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,10 +164,20 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
         setTimeout(() => setError(null), 5000);
       }
     }
+
+    // Handle reports workflow
+    if (workflow.id === "reports") {
+      setShowReportStudio(true);
+    }
   };
 
   const handleCloseMindMap = () => {
     setMindMapData(null);
+    setSelectedWorkflow(null);
+  };
+
+  const handleCloseReportStudio = () => {
+    setShowReportStudio(false);
     setSelectedWorkflow(null);
   };
 
@@ -287,10 +299,10 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
             </svg>
             <div>
               <div className="text-[10px] text-tactical-green font-semibold tracking-wider mb-1">
-                MIND MAP AVAILABLE
+                ACTIVE WORKFLOWS
               </div>
               <div className="text-[9px] text-slate-500 leading-relaxed">
-                Select documents and generate interactive mind maps. More workflows coming soon.
+                Mind Maps and Reports available. Select documents to generate intelligence products.
               </div>
             </div>
           </div>
@@ -347,6 +359,11 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
       {/* Mind Map Viewer Modal */}
       {mindMapData && (
         <MindMapViewer mindMapData={mindMapData} onClose={handleCloseMindMap} />
+      )}
+
+      {/* Report Studio Modal - Rendered outside of workflow panel */}
+      {showReportStudio && (
+        <ReportStudio onClose={handleCloseReportStudio} />
       )}
     </div>
   );

@@ -3902,7 +3902,7 @@
         "kind": 6,
         "importPath": "backend.models.report_models",
         "description": "backend.models.report_models",
-        "peekOfCode": "class SuggestFormatsRequest(BaseModel):\n    \"\"\"Request to trigger format suggestion generation (background task)\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to analyze\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")\nclass GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    model: str = Field(\"google/gemini-2.5-pro\", description=\"LLM model to use\")",
+        "peekOfCode": "class SuggestFormatsRequest(BaseModel):\n    \"\"\"Request to trigger format suggestion generation (background task)\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to analyze\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")\nclass GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")",
         "detail": "backend.models.report_models",
         "documentation": {}
     },
@@ -3911,7 +3911,7 @@
         "kind": 6,
         "importPath": "backend.models.report_models",
         "description": "backend.models.report_models",
-        "peekOfCode": "class GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    model: str = Field(\"google/gemini-2.5-pro\", description=\"LLM model to use\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")",
+        "peekOfCode": "class GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")",
         "detail": "backend.models.report_models",
         "documentation": {}
     },
@@ -4127,7 +4127,7 @@
         "kind": 6,
         "importPath": "backend.services.report_generator",
         "description": "backend.services.report_generator",
-        "peekOfCode": "class ReportGeneratorService:\n    \"\"\"Service for generating reports using Map-Reduce\"\"\"\n    def __init__(self):\n        \"\"\"Initialize report generator service\"\"\"\n        self.mongodb_client = get_mongodb_client()\n        self.llm = get_llm(model=\"google/gemini-2.0-flash-exp:free\", provider=\"openrouter\")\n    async def generate_report_stream(\n        self,\n        document_ids: List[str],\n        prompt: str,",
+        "peekOfCode": "class ReportGeneratorService:\n    \"\"\"Service for generating reports using Map-Reduce\"\"\"\n    def __init__(self):\n        \"\"\"Initialize report generator service\"\"\"\n        self.mongodb_client = get_mongodb_client()\n        self.llm = get_llm(model=\"google/gemini-3-flash-preview\", provider=\"openrouter\")\n    async def generate_report_stream(\n        self,\n        document_ids: List[str],\n        prompt: str,",
         "detail": "backend.services.report_generator",
         "documentation": {}
     },

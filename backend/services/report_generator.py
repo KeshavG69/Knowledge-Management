@@ -19,7 +19,7 @@ class ReportGeneratorService:
     def __init__(self):
         """Initialize report generator service"""
         self.mongodb_client = get_mongodb_client()
-        self.llm = get_llm(model="google/gemini-2.0-flash-exp:free", provider="openrouter")
+        self.llm = get_llm(model="google/gemini-3-flash-preview", provider="openrouter")
 
     async def generate_report_stream(
         self,
