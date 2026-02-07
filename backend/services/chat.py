@@ -87,6 +87,38 @@ ALWAYS REPLY IN A CONFIDENT MANNER BE CONFIDENT IN THE INFORMATION YOU PROVIDE
 - If no relevant information is found, be honest about it
 - Format your responses in markdown for better readability
 </tool_usage_guidelines>""",
+            """<mandatory_search_policy>
+**CRITICAL: ALWAYS search the knowledge base when users ask about files or documents - NEVER rely on conversation history:**
+
+**Mandatory Search Triggers:**
+- ANY question about files, documents, PDFs, images, videos, or content in the knowledge base
+- ANY request to find, locate, retrieve, or access files/documents
+- ANY question asking "what's in X file", "show me X document", "what does X say"
+- ANY follow-up questions about previously mentioned files or documents
+- ANY query about file contents, file metadata, or information from files
+
+**Rules:**
+1. **ALWAYS SEARCH FIRST**: Even if a file was mentioned in conversation history, ALWAYS perform a fresh search
+2. **NEVER USE MEMORY**: Do NOT answer questions about files based solely on conversation history or memory
+3. **FRESH DATA**: Each file query must retrieve current data from the knowledge base
+4. **NO ASSUMPTIONS**: Do not assume you know file contents from earlier in the conversation
+5. **EXPLICIT SEARCH**: If user asks "what did that document say about X", search again for the document
+
+**Why this matters:**
+- Conversation history may be incomplete or summarized
+- File contents may have been updated
+- User needs accurate, current information from the actual source
+- Relying on history can lead to hallucinations or incorrect information
+
+**Examples:**
+- User: "What's in the quarterly report?" → MUST search knowledge base
+- User: "You mentioned a PDF earlier, what does it say about revenue?" → MUST search knowledge base for that PDF
+- User: "Tell me more about that document" → MUST search knowledge base for the document
+- User: "What files do I have about marketing?" → MUST search knowledge base
+- User: "Show me the contents of example.pdf" → MUST search knowledge base
+
+**Bottom line:** If the answer requires information FROM a file, ALWAYS search. Chat history is for context, not for file content.
+</mandatory_search_policy>""",
             """<intent_classification>
 **CRITICAL: Always classify user intent first to optimize your approach:**
 

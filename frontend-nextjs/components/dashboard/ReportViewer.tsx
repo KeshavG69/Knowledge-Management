@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { jsPDF } from "jspdf";
 
 interface ReportViewerProps {
@@ -265,31 +266,38 @@ export default function ReportViewer({ reportContent, reportTitle, onClose }: Re
 
         {/* Report Content */}
         <div className="flex-1 overflow-y-auto p-6 tactical-scrollbar bg-slate-50 dark:bg-slate-950">
-          <div className="prose dark:prose-invert max-w-none font-['Inter',sans-serif]
+          <div className="prose dark:prose-invert prose max-w-none font-['Inter',sans-serif]
             text-[15px] leading-[1.9]
-            prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight
+            prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-headings:font-['Inter',sans-serif]
             dark:prose-headings:text-amber-400 prose-headings:text-blue-600
+            prose-h1:text-2xl prose-h1:mb-8 prose-h1:mt-12
+            prose-h2:text-xl prose-h2:mb-7 prose-h2:mt-10 prose-h2:font-bold
+            prose-h3:text-lg prose-h3:mb-6 prose-h3:mt-9 prose-h3:font-semibold
+            prose-h4:text-base prose-h4:mb-5 prose-h4:mt-8 prose-h4:font-semibold dark:prose-h4:text-amber-300 prose-h4:text-blue-500
             prose-p:mb-7 prose-p:leading-[1.9] dark:prose-p:text-slate-100 prose-p:text-slate-800
             prose-ul:my-7 prose-ul:space-y-4 prose-ul:leading-[1.9]
-            dark:prose-ul:text-slate-200 prose-ul:text-slate-700
             prose-ol:my-7 prose-ol:space-y-4 prose-ol:leading-[1.9]
-            dark:prose-ol:text-slate-200 prose-ol:text-slate-700
-            prose-li:mb-3 dark:prose-li:text-slate-200 prose-li:text-slate-700
-            dark:prose-strong:text-amber-400 prose-strong:text-blue-700 prose-strong:font-bold
-            dark:prose-code:text-amber-300 prose-code:text-blue-600
-            dark:prose-code:bg-slate-900/50 prose-code:bg-blue-50
-            prose-code:px-2 prose-code:py-1 prose-code:rounded
-            dark:prose-a:text-amber-400 prose-a:text-blue-600
-            prose-a:no-underline hover:prose-a:underline
-            dark:prose-blockquote:text-slate-300 prose-blockquote:text-slate-600
-            dark:prose-blockquote:border-amber-400/30 prose-blockquote:border-blue-400/30
-            prose-blockquote:pl-6 prose-blockquote:py-2
-            prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-8
-            prose-h2:text-2xl prose-h2:mb-5 prose-h2:mt-8
-            prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-6
-            prose-h4:text-lg prose-h4:mb-3 prose-h4:mt-5"
+            prose-li:leading-[1.9] dark:prose-li:text-slate-100 prose-li:text-slate-800 prose-li:my-2.5
+            prose-li>p:my-3 prose-li>p:leading-[1.9]
+            prose-blockquote:border-l-4 dark:prose-blockquote:border-amber-400/50 prose-blockquote:border-blue-500/50 prose-blockquote:pl-6 prose-blockquote:my-7 prose-blockquote:py-3 prose-blockquote:italic
+            prose-a:text-tactical-green prose-a:no-underline hover:prose-a:underline prose-a:transition-all
+            dark:prose-strong:text-slate-50 prose-strong:text-slate-900 prose-strong:font-bold
+            dark:prose-em:text-slate-200 prose-em:text-slate-700 prose-em:italic
+            dark:prose-code:text-amber-300 prose-code:text-blue-600 dark:prose-code:bg-slate-800/70 prose-code:bg-slate-200 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[13px] prose-code:font-mono prose-code:before:content-[''] prose-code:after:content-['']
+            dark:prose-pre:bg-slate-800/70 prose-pre:bg-slate-200 dark:prose-pre:border-slate-700/50 prose-pre:border-slate-300 prose-pre:my-7 prose-pre:p-5 prose-pre:rounded-lg prose-pre:overflow-x-auto
+            dark:prose-hr:border-slate-700/50 prose-hr:border-slate-300 prose-hr:my-12 prose-hr:border-t
+            prose-table:my-7 prose-table:text-sm
+            dark:prose-thead:border-slate-700 prose-thead:border-slate-300 prose-thead:border-b-2
+            dark:prose-th:text-amber-400 prose-th:text-blue-600 prose-th:py-3 prose-th:px-4 prose-th:text-left prose-th:font-semibold
+            dark:prose-td:border-slate-800 prose-td:border-slate-200 prose-td:py-3 prose-td:px-4 prose-td:border-t
+            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
+            [&_ul]:list-disc [&_ul]:pl-7
+            [&_ol]:list-decimal [&_ol]:pl-7
+            [&_ul_ul]:my-3 [&_ol_ol]:my-3"
           >
-            <ReactMarkdown>{reportContent}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {reportContent}
+            </ReactMarkdown>
           </div>
         </div>
       </div>
