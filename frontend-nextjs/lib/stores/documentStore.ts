@@ -2,6 +2,58 @@ import { create } from 'zustand';
 import { Document, KnowledgeBase } from '@/types';
 import { documentsApi } from '../api/documents';
 
+// LocalStorage helpers
+const STORAGE_KEY_SELECTED_KB = 'soldieriq_selected_kb';
+const STORAGE_KEY_SELECTED_DOCS = 'soldieriq_selected_docs';
+
+const loadSelectedKB = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_SELECTED_KB);
+    return stored || null;
+  } catch (e) {
+    console.error('Failed to load selected KB from localStorage:', e);
+    return null;
+  }
+};
+
+const saveSelectedKB = (kb: string | null) => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (kb === null) {
+      localStorage.removeItem(STORAGE_KEY_SELECTED_KB);
+    } else {
+      localStorage.setItem(STORAGE_KEY_SELECTED_KB, kb);
+    }
+  } catch (e) {
+    console.error('Failed to save selected KB to localStorage:', e);
+  }
+};
+
+const loadSelectedDocs = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_SELECTED_DOCS);
+    if (stored) {
+      const array = JSON.parse(stored);
+      return new Set(array);
+    }
+  } catch (e) {
+    console.error('Failed to load selected docs from localStorage:', e);
+  }
+  return new Set();
+};
+
+const saveSelectedDocs = (docs: Set<string>) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const array = Array.from(docs);
+    localStorage.setItem(STORAGE_KEY_SELECTED_DOCS, JSON.stringify(array));
+  } catch (e) {
+    console.error('Failed to save selected docs to localStorage:', e);
+  }
+};
+
 // Helper function for background polling
 const startBackgroundPolling = (
   uploadedDocIds: string[],
@@ -99,8 +151,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   // State
   documents: [],
   knowledgeBases: [],
-  selectedKB: null,
-  selectedDocs: new Set(),
+  selectedKB: loadSelectedKB(),
+  selectedDocs: loadSelectedDocs(),
   isLoading: false,
   error: null,
   uploadStatus: null,
@@ -213,7 +265,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  setSelectedKB: (kb) => set({ selectedKB: kb }),
+  setSelectedKB: (kb) => {
+    saveSelectedKB(kb);
+    set({ selectedKB: kb });
+  },
 
   toggleDocSelection: (docId) => {
     const selectedDocs = new Set(get().selectedDocs);
@@ -222,16 +277,23 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     } else {
       selectedDocs.add(docId);
     }
+    saveSelectedDocs(selectedDocs);
     set({ selectedDocs });
   },
 
   selectAllDocs: () => {
     const { documents } = get();
     const docIds = Array.isArray(documents) ? documents.map(d => d._id) : [];
-    set({ selectedDocs: new Set(docIds) });
+    const selectedDocs = new Set(docIds);
+    saveSelectedDocs(selectedDocs);
+    set({ selectedDocs });
   },
 
-  deselectAllDocs: () => set({ selectedDocs: new Set() }),
+  deselectAllDocs: () => {
+    const selectedDocs = new Set<string>();
+    saveSelectedDocs(selectedDocs);
+    set({ selectedDocs });
+  },
 
   selectFolderDocs: (folderName) => {
     const { documents, selectedDocs } = get();
@@ -240,6 +302,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       : [];
     const newSelected = new Set(selectedDocs);
     folderDocIds.forEach(id => newSelected.add(id));
+    saveSelectedDocs(newSelected);
     set({ selectedDocs: newSelected });
   },
 
@@ -250,6 +313,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       : [];
     const newSelected = new Set(selectedDocs);
     folderDocIds.forEach(id => newSelected.delete(id));
+    saveSelectedDocs(newSelected);
     set({ selectedDocs: newSelected });
   },
 }));

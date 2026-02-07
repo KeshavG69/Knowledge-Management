@@ -175,28 +175,30 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
           </div>
         )}
 
-        {!episode && !isGenerating && (
+        {(!episode || episode.status === 'processing' || episode.status === 'script_generated' || isGenerating) && (
           <button 
             onClick={handleGenerate} 
-            disabled={selectedDocumentIds.length === 0}
-            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-amber-400 dark:hover:bg-amber-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white dark:text-slate-900 disabled:text-slate-500 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            disabled={selectedDocumentIds.length === 0 || isGenerating || Boolean(episode && episode.status !== 'failed')}
+            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-amber-400 dark:hover:bg-amber-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white dark:text-slate-900 disabled:text-slate-500 dark:disabled:text-slate-500 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
-            Generate Podcast
+            {isGenerating || (episode && (episode.status === 'processing' || episode.status === 'script_generated')) ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/20 dark:border-slate-900/20 border-t-white dark:border-t-slate-900 rounded-full animate-spin" />
+                Generating Podcast...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                Generate Podcast
+              </>
+            )}
           </button>
         )}
 
         {episode && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-md">
-              {getStatusIcon()}
-              <div className="flex-1">
-                <p className="font-medium text-slate-800 dark:text-slate-200">{getStatusText()}</p>
-                {episode.title && <p className="text-sm text-slate-600 dark:text-slate-400">{episode.title}</p>}
-              </div>
-            </div>
 
             {episode.summary && (
               <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-md">

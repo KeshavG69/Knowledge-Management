@@ -17,6 +17,7 @@ export default function ChatArea() {
     messages,
     sessionId,
     isLoading,
+    isLoadingSession,
     inputMessage,
     selectedModel,
     setInputMessage,
@@ -324,6 +325,13 @@ export default function ChatArea() {
     <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-950 relative min-h-0">
       {/* Decorative corner bracket */}
       <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400/40 z-10"></div>
+
+      {/* Loading Session Overlay */}
+      {isLoadingSession && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="w-16 h-16 border-4 border-blue-400/20 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin"></div>
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
