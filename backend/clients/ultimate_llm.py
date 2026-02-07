@@ -96,7 +96,7 @@ class UltimateLLM:
                     openai_api_key=config["api_key"],
                     openai_api_base=config["base_url"],
                     temperature=0,
-                    max_tokens=10000
+                    max_tokens=20000
                 )
                 logger.info(f"✅ Created LangChain instance: provider={provider}, model={model}")
 

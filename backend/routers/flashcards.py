@@ -3,18 +3,19 @@ Flashcards API Router
 Endpoints for generating flashcards from documents
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 
 from models.flashcard_models import GenerateFlashcardsRequest
 from services.flashcard_generator import get_flashcard_generator_service
 from app.logger import logger
+from auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/flashcards", tags=["flashcards"])
 
 
 @router.post("/generate")
-async def generate_flashcards(request: GenerateFlashcardsRequest) -> Dict[str, Any]:
+async def generate_flashcards(request: GenerateFlashcardsRequest, current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
     """
     Generate flashcards from documents using Map-Reduce
 

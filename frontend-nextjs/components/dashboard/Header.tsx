@@ -6,11 +6,12 @@ import { useAuthStore } from "@/lib/stores/authStore";
 import { useChatStore } from "@/lib/stores/chatStore";
 import ModelSelector from "./ModelSelector";
 import ThemeToggle from "../ThemeToggle";
+import SessionDropdown from "./SessionDropdown";
 
 export default function Header() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { startNewSession } = useChatStore();
+  const { messages } = useChatStore();
   const [showMenu, setShowMenu] = useState(false);
 
   const handleLogout = async () => {
@@ -18,9 +19,8 @@ export default function Header() {
     router.push("/auth/login");
   };
 
-  const handleNewChat = () => {
-    startNewSession();
-  };
+  // Check if user has sent any messages in the current session
+  const hasUserMessages = messages.some((msg) => msg.role === "user");
 
   const getCurrentDate = () => {
     const now = new Date();
@@ -68,18 +68,10 @@ export default function Header() {
           <ModelSelector />
         </div>
 
-        {/* New Chat Button */}
-        <button
-          onClick={handleNewChat}
-          className="tactical-btn tactical-btn-primary ml-4"
-        >
-          <span className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            NEW SESSION
-          </span>
-        </button>
+        {/* Session Dropdown */}
+        <div className="ml-4">
+          <SessionDropdown hasUserMessages={hasUserMessages} />
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

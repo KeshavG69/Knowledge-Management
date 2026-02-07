@@ -3,14 +3,16 @@ Chat API Endpoints
 Handles conversational AI interactions with knowledge base using SSE streaming
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from services.chat import create_chat_agent
 from services.agent_streaming import stream_agent_response
 from utils.streaming import create_sse_event_stream
 from app.logger import logger
+from auth.dependencies import get_current_user
+from clients.mongodb_client import get_mongodb_client
 import uuid
 
 router = APIRouter(tags=["chat"])
@@ -27,7 +29,7 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """
     Send a message to the chat agent and get a streaming response
 
@@ -86,6 +88,341 @@ async def chat(request: ChatRequest):
     except Exception as e:
         logger.error(f"Chat endpoint error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
+
+
+@router.get("/chat/sessions")
+async def list_chat_sessions(
+    user_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+    limit: int = 50,
+    skip: int = 0
+) -> Dict[str, Any]:
+    """
+    List all chat sessions for the current user
+
+    Returns sessions sorted by most recently updated first.
+    Each session includes:
+    - session_id: Unique identifier
+    - name: Session name or preview of first message
+    - created_at: When session was created
+    - updated_at: When session was last updated
+    - message_preview: Preview of first message
+
+    Note: agent_sessions collection only stores user_id (not organization_id).
+    Organization-level filtering is handled by user authentication.
+
+    Args:
+        user_id: Optional user ID (defaults to current authenticated user)
+        current_user: Authenticated user from token
+        limit: Maximum number of sessions to return (default: 50)
+        skip: Number of sessions to skip for pagination (default: 0)
+
+    Returns:
+        Dict with success status and list of sessions
+    """
+    try:
+        # Use provided user_id or fall back to authenticated user
+        effective_user_id = user_id or str(current_user["_id"])
+
+        logger.info(f"📋 Listing chat sessions for user: {effective_user_id}")
+
+        mongodb = get_mongodb_client()
+
+        # Query by user_id only (agent_sessions collection doesn't store organization_id)
+        query = {"user_id": effective_user_id}
+
+        # Get sessions with limited projection for performance
+        sessions = await mongodb.async_find_documents(
+            collection="agent_sessions",
+            query=query,
+            projection={
+                "session_id": 1,
+                "session_data": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "runs": {"$slice": 1}  # Just first run for message preview
+            },
+            limit=limit,
+            skip=skip
+        )
+
+        logger.info(f"Retrieved {len(sessions)} raw sessions from MongoDB")
+
+        # Sort by updated_at descending (most recent first)
+        sessions_sorted = sorted(
+            sessions,
+            key=lambda x: x.get("updated_at", 0),
+            reverse=True
+        )
+
+        logger.info(f"Sorted {len(sessions_sorted)} sessions")
+
+        # Transform for frontend
+        result = []
+        for session in sessions_sorted:
+            # Get first message as preview
+            message_preview = ""
+            first_user_message = ""
+
+            if session.get("runs") and len(session["runs"]) > 0:
+                messages = session["runs"][0].get("messages", [])
+                for msg in messages:
+                    if msg.get("role") == "user":
+                        first_user_message = msg.get("content", "")
+                        message_preview = first_user_message[:100]
+                        if len(first_user_message) > 100:
+                            message_preview += "..."
+                        break
+
+            # Use session name if available, otherwise use first message
+            session_name = session.get("session_data", {}).get("session_name")
+            if not session_name:
+                session_name = first_user_message[:50] if first_user_message else "New Chat"
+                if first_user_message and len(first_user_message) > 50:
+                    session_name += "..."
+
+            result.append({
+                "session_id": session["session_id"],
+                "name": session_name,
+                "message_preview": message_preview,
+                "created_at": session.get("created_at"),
+                "updated_at": session.get("updated_at")
+            })
+
+        logger.info(f"✅ Found {len(result)} chat sessions")
+
+        return {
+            "success": True,
+            "sessions": result,
+            "count": len(result)
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Failed to list chat sessions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list sessions: {str(e)}")
+
+
+@router.get("/chat/sessions/{session_id}")
+async def get_chat_session(
+    session_id: str,
+    user_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Get full chat history for a specific session
+
+    Returns all messages in the session in chronological order.
+    Only returns sessions owned by the authenticated user.
+
+    Note: agent_sessions collection only stores user_id (not organization_id).
+
+    Args:
+        session_id: The unique session identifier
+        user_id: Optional user ID (defaults to current authenticated user)
+        current_user: Authenticated user from token
+
+    Returns:
+        Dict with session details and full message history
+    """
+    try:
+        # Use provided user_id or fall back to authenticated user
+        effective_user_id = user_id or str(current_user["_id"])
+
+        logger.info(f"📖 Getting chat session: {session_id} for user: {effective_user_id}")
+
+        mongodb = get_mongodb_client()
+
+        # Security: Ensure user owns this session (filter by user_id only)
+        query = {
+            "session_id": session_id,
+            "user_id": effective_user_id
+        }
+
+        session = await mongodb.async_find_document(
+            collection="agent_sessions",
+            query=query
+        )
+
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Session not found or you don't have access to it"
+            )
+
+        # Extract clean message history (avoiding duplicates from from_history)
+        messages = []
+        for run in session.get("runs", []):
+            for message in run.get("messages", []):
+                # Only include new messages, not historical ones
+                if message.get("from_history", False):
+                    continue
+
+                # Skip messages without content (e.g., tool calls)
+                if "content" not in message:
+                    continue
+
+                # Skip system messages (AI instructions/prompts)
+                message_role = message.get("role")
+                if message_role == "system":
+                    continue
+
+                # Only include user and assistant messages
+                if message_role in ["user", "assistant"]:
+                    messages.append({
+                        "role": message_role,
+                        "content": message["content"],
+                        "created_at": message.get("created_at"),
+                        "model": message.get("model") if message_role == "assistant" else None
+                    })
+
+        logger.info(f"✅ Retrieved {len(messages)} messages from session")
+
+        return {
+            "success": True,
+            "session_id": session_id,
+            "session_name": session.get("session_data", {}).get("session_name"),
+            "messages": messages,
+            "created_at": session.get("created_at"),
+            "updated_at": session.get("updated_at")
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to get chat session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get session: {str(e)}")
+
+
+@router.delete("/chat/sessions/{session_id}")
+async def delete_chat_session(
+    session_id: str,
+    user_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Delete a chat session
+
+    Permanently deletes a session and all its messages.
+    Only the owner can delete their sessions.
+
+    Note: agent_sessions collection only stores user_id (not organization_id).
+
+    Args:
+        session_id: The unique session identifier
+        user_id: Optional user ID (defaults to current authenticated user)
+        current_user: Authenticated user from token
+
+    Returns:
+        Dict with success status
+    """
+    try:
+        # Use provided user_id or fall back to authenticated user
+        effective_user_id = user_id or str(current_user["_id"])
+
+        logger.info(f"🗑️ Deleting chat session: {session_id} for user: {effective_user_id}")
+
+        mongodb = get_mongodb_client()
+
+        # Security: Ensure user owns this session (filter by user_id only)
+        query = {
+            "session_id": session_id,
+            "user_id": effective_user_id
+        }
+
+        deleted_count = await mongodb.async_delete_document(
+            collection="agent_sessions",
+            query=query
+        )
+
+        if deleted_count == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="Session not found or you don't have access to it"
+            )
+
+        logger.info(f"✅ Deleted chat session: {session_id}")
+
+        return {
+            "success": True,
+            "message": "Session deleted successfully",
+            "session_id": session_id
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to delete chat session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
+
+
+@router.put("/chat/sessions/{session_id}/name")
+async def rename_chat_session(
+    session_id: str,
+    new_name: str,
+    user_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Rename a chat session
+
+    Updates the session name to a custom value.
+    Only the owner can rename their sessions.
+
+    Note: agent_sessions collection only stores user_id (not organization_id).
+
+    Args:
+        session_id: The unique session identifier
+        new_name: The new name for the session
+        user_id: Optional user ID (defaults to current authenticated user)
+        current_user: Authenticated user from token
+
+    Returns:
+        Dict with success status
+    """
+    try:
+        # Use provided user_id or fall back to authenticated user
+        effective_user_id = user_id or str(current_user["_id"])
+
+        if not new_name or not new_name.strip():
+            raise HTTPException(status_code=400, detail="Session name cannot be empty")
+
+        logger.info(f"✏️ Renaming chat session: {session_id} to '{new_name}'")
+
+        mongodb = get_mongodb_client()
+
+        # Security: Ensure user owns this session (filter by user_id only)
+        query = {
+            "session_id": session_id,
+            "user_id": effective_user_id
+        }
+
+        # Update session name
+        modified_count = await mongodb.async_update_document(
+            collection="agent_sessions",
+            query=query,
+            update={"$set": {"session_data.session_name": new_name.strip()}}
+        )
+
+        if modified_count == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="Session not found or you don't have access to it"
+            )
+
+        logger.info(f"✅ Renamed chat session: {session_id}")
+
+        return {
+            "success": True,
+            "message": "Session renamed successfully",
+            "session_id": session_id,
+            "new_name": new_name.strip()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to rename chat session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to rename session: {str(e)}")
 
 
 @router.get("/health")

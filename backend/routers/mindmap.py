@@ -2,19 +2,20 @@
 Mind Map Router - API endpoints for mind map generation
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from bson import ObjectId
 
 from models.mindmap import MindMapRequest
 from services.mindmap_service import get_mindmap_service
 from app.logger import logger
+from auth.dependencies import get_current_user
 
 
 router = APIRouter(prefix="/mindmap", tags=["mindmap"])
 
 
 @router.post("/generate")
-async def generate_mindmap(request: MindMapRequest):
+async def generate_mindmap(request: MindMapRequest, current_user: dict = Depends(get_current_user)):
     """
     Generate mind map from multiple documents (like NotebookLM)
 
@@ -80,7 +81,7 @@ async def generate_mindmap(request: MindMapRequest):
 
 
 @router.get("/{mind_map_id}")
-async def get_mindmap(mind_map_id: str):
+async def get_mindmap(mind_map_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get mind map by ID
 
@@ -121,7 +122,8 @@ async def get_mindmap(mind_map_id: str):
 @router.get("/list")
 async def list_mindmaps(
     user_id: str,
-    organization_id: str
+    organization_id: str,
+    current_user: dict = Depends(get_current_user)
 ):
     """
     List all mind maps for a user and organization

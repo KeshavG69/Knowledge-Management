@@ -7,6 +7,7 @@ import { flashcardsApi, FlashcardData } from "@/lib/api/flashcards";
 import MindMapViewer from "./MindMapViewer";
 import ReportStudio from "./ReportStudio";
 import FlashcardViewer from "./FlashcardViewer";
+import PodcastGenerator from "../PodcastGenerator";
 
 interface WorkflowOption {
   id: string;
@@ -27,6 +28,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
   const [mindMapData, setMindMapData] = useState<MindMapResponse | null>(null);
   const [showReportStudio, setShowReportStudio] = useState(false);
   const [flashcardData, setFlashcardData] = useState<FlashcardData | null>(null);
+  const [showPodcastGenerator, setShowPodcastGenerator] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { selectedDocs, documents } = useDocumentStore();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -44,8 +46,8 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     {
       id: "audio-overview",
       title: "Audio Overview",
-      available: false,
-      description: "Generate an AI-powered audio discussion about your documents",
+      available: true,
+      description: "Generate an AI-powered podcast discussion about your documents",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -201,6 +203,11 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     if (workflow.id === "reports") {
       setShowReportStudio(true);
     }
+
+    // Handle audio overview workflow (podcast)
+    if (workflow.id === "audio-overview") {
+      setShowPodcastGenerator(true);
+    }
   };
 
   const handleCloseMindMap = () => {
@@ -215,6 +222,11 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
 
   const handleCloseReportStudio = () => {
     setShowReportStudio(false);
+    setSelectedWorkflow(null);
+  };
+
+  const handleClosePodcast = () => {
+    setShowPodcastGenerator(false);
     setSelectedWorkflow(null);
   };
 
@@ -410,6 +422,16 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
       {/* Report Studio Modal - Rendered outside of workflow panel */}
       {showReportStudio && (
         <ReportStudio onClose={handleCloseReportStudio} />
+      )}
+
+      {/* Podcast Generator Modal */}
+      {showPodcastGenerator && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <PodcastGenerator 
+            selectedDocumentIds={Array.from(selectedDocs)} 
+            onClose={handleClosePodcast}
+          />
+        </div>
       )}
     </div>
   );

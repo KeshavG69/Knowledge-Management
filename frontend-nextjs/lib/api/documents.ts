@@ -167,3 +167,63 @@ export const chatApi = {
     return response.body;
   },
 };
+
+// Chat Session Types
+export interface ChatSession {
+  session_id: string;
+  name: string;
+  message_preview: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  created_at: number;
+  model?: string;
+}
+
+export interface SessionHistory {
+  success: boolean;
+  session_id: string;
+  session_name: string | null;
+  messages: ChatMessage[];
+  created_at: number;
+  updated_at: number;
+}
+
+interface SessionsResponse {
+  success: boolean;
+  sessions: ChatSession[];
+  count: number;
+}
+
+// Chat Session Management API
+export const chatSessionsApi = {
+  // List all chat sessions for current user
+  listSessions: async (): Promise<ChatSession[]> => {
+    const response = await apiClient.get<SessionsResponse>('/chat/sessions');
+    return response.data.sessions;
+  },
+
+  // Get full history for a specific session
+  getSession: async (sessionId: string): Promise<SessionHistory> => {
+    const response = await apiClient.get<SessionHistory>(`/chat/sessions/${sessionId}`);
+    return response.data;
+  },
+
+  // Delete a chat session
+  deleteSession: async (sessionId: string): Promise<void> => {
+    await apiClient.delete(`/chat/sessions/${sessionId}`);
+  },
+
+  // Rename a chat session
+  renameSession: async (sessionId: string, newName: string): Promise<void> => {
+    await apiClient.put(`/chat/sessions/${sessionId}/name`, null, {
+      params: {
+        new_name: newName
+      }
+    });
+  },
+};

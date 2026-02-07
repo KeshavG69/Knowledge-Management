@@ -17,6 +17,7 @@ export default function ChatArea() {
     messages,
     sessionId,
     isLoading,
+    isLoadingSession,
     inputMessage,
     selectedModel,
     setInputMessage,
@@ -325,18 +326,15 @@ export default function ChatArea() {
       {/* Decorative corner bracket */}
       <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400/40 z-10"></div>
 
+      {/* Loading Session Overlay */}
+      {isLoadingSession && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="w-16 h-16 border-4 border-blue-400/20 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin"></div>
+        </div>
+      )}
+
       {/* Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center px-6 py-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <span className="text-xs font-semibold tracking-wider text-blue-600 dark:text-amber-400">CHAT</span>
-            </div>
-          </div>
-        </div>
 
         <div className="flex-1 overflow-y-auto p-6 tactical-scrollbar min-h-0">
         {messages.length === 0 ? (
