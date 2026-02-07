@@ -153,7 +153,11 @@ async def upload_documents(
         document_ids = []
         for file_info in file_data:
             safe_filename = sanitize_filename(file_info["filename"])
-            file_key = f"{folder_name.strip()}/{safe_filename}"
+            # Include organization_id in file_key for multi-tenant isolation
+            if organization_id:
+                file_key = f"{organization_id}/{folder_name.strip()}/{safe_filename}"
+            else:
+                file_key = f"{folder_name.strip()}/{safe_filename}"  # Backwards compatibility
             file_size_mb = get_file_size_mb(file_info["content"])
 
             # Create document record with status="processing"

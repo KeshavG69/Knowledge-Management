@@ -149,14 +149,19 @@ class VideoProcessorClient:
                         )
                         logger.info(f"✅ Batch extracted {len(color_frames)} color key frames")
 
-                        # Stage 5: Upload thumbnails
-                        logger.info("📤 Stage 5/7: Uploading key frame thumbnails")
-                        keyframe_file_keys = await self._upload_keyframe_thumbnails(
-                            color_frames,
-                            key_frames_data,
-                            video_id,
-                            folder_name
-                        )
+                        # Stage 5: Upload thumbnails (COMMENTED OUT - not needed)
+                        # logger.info("📤 Stage 5/7: Uploading key frame thumbnails")
+                        # keyframe_file_keys = await self._upload_keyframe_thumbnails(
+                        #     color_frames,
+                        #     key_frames_data,
+                        #     video_id,
+                        #     folder_name,
+                        #     organization_id
+                        # )
+
+                        # Skip thumbnail upload - return None for all keyframes
+                        keyframe_file_keys = [None] * len(key_frames_data)
+                        logger.info("⏭️ Skipping keyframe thumbnail upload")
 
                         return scenes, key_frames_data, color_frames, keyframe_file_keys
 
