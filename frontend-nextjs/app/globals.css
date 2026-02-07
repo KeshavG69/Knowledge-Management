@@ -228,6 +228,19 @@
   .data-load:nth-child(4) { animation-delay: 150ms; }
   .data-load:nth-child(5) { animation-delay: 200ms; }
 
+  /* Loading Progress Bar Animation */
+  @keyframes loading {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
   /* Tactical Scrollbar */
   .tactical-scrollbar::-webkit-scrollbar {
     width: 8px;

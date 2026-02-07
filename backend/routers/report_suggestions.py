@@ -2,19 +2,20 @@
 Report Suggestions Router - API endpoints for AI-powered format suggestions
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from bson import ObjectId
 
 from models.report_models import SuggestFormatsRequest
 from services.format_suggester import get_format_suggester_service
 from app.logger import logger
+from auth.dependencies import get_current_user
 
 
 router = APIRouter(prefix="/report-suggestions", tags=["report-suggestions"])
 
 
 @router.post("/suggest-formats")
-async def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks):
+async def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     """
     Trigger background task to generate format suggestions
 
@@ -100,7 +101,7 @@ async def suggest_formats(request: SuggestFormatsRequest, background_tasks: Back
 
 
 @router.post("/get-suggestions")
-async def get_suggestions(request: SuggestFormatsRequest):
+async def get_suggestions(request: SuggestFormatsRequest, current_user: dict = Depends(get_current_user)):
     """
     Get format suggestions for documents (frontend polling endpoint)
 

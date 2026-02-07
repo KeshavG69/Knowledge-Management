@@ -22,6 +22,7 @@ interface ChatState {
   messages: ChatMessage[];
   sessionId: string;
   isLoading: boolean;
+  isLoadingSession: boolean;
   inputMessage: string;
   selectedModel: string;
 
@@ -31,14 +32,17 @@ interface ChatState {
   addMessage: (message: ChatMessage) => void;
   updateLastMessage: (content: string, sources?: DocumentSource[]) => void;
   setLoading: (loading: boolean) => void;
+  setLoadingSession: (loading: boolean) => void;
   clearChat: () => void;
   startNewSession: () => void;
+  loadSession: (sessionId: string, messages: ChatMessage[]) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   sessionId: generateId(),
   isLoading: false,
+  isLoadingSession: false,
   inputMessage: '',
   selectedModel: 'anthropic/claude-sonnet-4.5', // Default model
 
@@ -64,7 +68,11 @@ export const useChatStore = create<ChatState>((set) => ({
 
   setLoading: (loading) => set({ isLoading: loading }),
 
+  setLoadingSession: (loading) => set({ isLoadingSession: loading }),
+
   clearChat: () => set({ messages: [] }),
 
   startNewSession: () => set({ messages: [], sessionId: generateId() }),
+
+  loadSession: (sessionId, messages) => set({ sessionId, messages }),
 }));
