@@ -160,7 +160,11 @@ class IngestionService:
 
         # Prepare for parallel operations
         safe_filename = sanitize_filename(file.filename)
-        file_key = f"{folder_name}/{safe_filename}"
+        # Include organization_id in file_key for multi-tenant isolation
+        if organization_id:
+            file_key = f"{organization_id}/{folder_name}/{safe_filename}"
+        else:
+            file_key = f"{folder_name}/{safe_filename}"  # Backwards compatibility
 
         # STEP 0: Create document record with status="processing" FIRST
         logger.info(f"📝 Creating document record with status='processing': {file.filename}")
@@ -436,7 +440,11 @@ class IngestionService:
 
         # Prepare for parallel operations
         safe_filename = sanitize_filename(file.filename)
-        file_key = f"{folder_name}/{safe_filename}"
+        # Include organization_id in file_key for multi-tenant isolation
+        if organization_id:
+            file_key = f"{organization_id}/{folder_name}/{safe_filename}"
+        else:
+            file_key = f"{folder_name}/{safe_filename}"  # Backwards compatibility
 
         try:
             # Step 1 & 2: Run in parallel - Upload to iDrive E2 + Extract content
