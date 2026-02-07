@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from services.podcast_service import get_podcast_service, PodcastService
 from app.logger import logger
-from models.podcast import PodcastEpisode
+
 from clients.mongodb_client import get_mongodb_client, MongoDBClient
 from bson import ObjectId
 from datetime import datetime
