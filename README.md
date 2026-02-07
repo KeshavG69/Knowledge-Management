@@ -1,0 +1,1 @@
+There are two forntend folders one by the name frontend and one by the name frontend-nextjs the frontend-nextjs folder is the one that is deployed and have all the apis integrated
