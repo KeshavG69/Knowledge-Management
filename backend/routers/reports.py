@@ -2,20 +2,21 @@
 Reports Router - API endpoints for report generation
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from bson import ObjectId
 
 from models.report_models import GenerateReportRequest
 from services.report_generator import get_report_generator_service
 from app.logger import logger
+from auth.dependencies import get_current_user
 
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 @router.post("/generate")
-async def generate_report(request: GenerateReportRequest):
+async def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user)):
     """
     Generate a report from documents using Map-Reduce with streaming
 

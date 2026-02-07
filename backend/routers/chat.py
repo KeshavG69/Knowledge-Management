@@ -3,7 +3,7 @@ Chat API Endpoints
 Handles conversational AI interactions with knowledge base using SSE streaming
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -11,6 +11,7 @@ from services.chat import create_chat_agent
 from services.agent_streaming import stream_agent_response
 from utils.streaming import create_sse_event_stream
 from app.logger import logger
+from auth.dependencies import get_current_user
 import uuid
 
 router = APIRouter(tags=["chat"])
@@ -27,7 +28,7 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """
     Send a message to the chat agent and get a streaming response
 

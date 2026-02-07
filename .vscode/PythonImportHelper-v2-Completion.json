@@ -184,23 +184,7 @@
         "documentation": {}
     },
     {
-        "label": "APIRouter",
-        "importPath": "fastapi",
-        "description": "fastapi",
-        "isExtraImport": true,
-        "detail": "fastapi",
-        "documentation": {}
-    },
-    {
-        "label": "HTTPException",
-        "importPath": "fastapi",
-        "description": "fastapi",
-        "isExtraImport": true,
-        "detail": "fastapi",
-        "documentation": {}
-    },
-    {
-        "label": "APIRouter",
+        "label": "Depends",
         "importPath": "fastapi",
         "description": "fastapi",
         "isExtraImport": true,
@@ -224,7 +208,87 @@
         "documentation": {}
     },
     {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "BackgroundTasks",
         "importPath": "fastapi",
         "description": "fastapi",
         "isExtraImport": true,
@@ -256,6 +320,14 @@
         "documentation": {}
     },
     {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "APIRouter",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -265,6 +337,14 @@
     },
     {
         "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
         "importPath": "fastapi",
         "description": "fastapi",
         "isExtraImport": true,
@@ -320,6 +400,14 @@
         "documentation": {}
     },
     {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "UploadFile",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -349,6 +437,22 @@
         "description": "starlette.responses",
         "isExtraImport": true,
         "detail": "starlette.responses",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
         "documentation": {}
     },
     {
@@ -817,6 +921,22 @@
         "documentation": {}
     },
     {
+        "label": "settings",
+        "importPath": "app.settings",
+        "description": "app.settings",
+        "isExtraImport": true,
+        "detail": "app.settings",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "app.settings",
+        "description": "app.settings",
+        "isExtraImport": true,
+        "detail": "app.settings",
+        "documentation": {}
+    },
+    {
         "label": "SecurityHeadersMiddleware",
         "importPath": "app.middleware",
         "description": "app.middleware",
@@ -890,6 +1010,14 @@
     },
     {
         "label": "flashcards",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
+        "label": "podcast",
         "importPath": "routers",
         "description": "routers",
         "isExtraImport": true,
@@ -1257,6 +1385,22 @@
         "documentation": {}
     },
     {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Optional",
         "importPath": "typing",
         "description": "typing",
@@ -1290,6 +1434,38 @@
     },
     {
         "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1482,6 +1658,38 @@
     },
     {
         "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1697,14 +1905,6 @@
         "documentation": {}
     },
     {
-        "label": "timezone",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -1729,6 +1929,22 @@
         "documentation": {}
     },
     {
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -1750,6 +1966,38 @@
         "description": "datetime",
         "isExtraImport": true,
         "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
         "documentation": {}
     },
     {
@@ -2074,6 +2322,38 @@
         "documentation": {}
     },
     {
+        "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
         "label": "bcrypt",
         "kind": 6,
         "isExtraImport": true,
@@ -2261,6 +2541,14 @@
         "documentation": {}
     },
     {
+        "label": "AudioSegment",
+        "importPath": "pydub",
+        "description": "pydub",
+        "isExtraImport": true,
+        "detail": "pydub",
+        "documentation": {}
+    },
+    {
         "label": "aioboto3",
         "kind": 6,
         "isExtraImport": true,
@@ -2304,6 +2592,14 @@
     },
     {
         "label": "get_llm_agno",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
         "importPath": "clients.ultimate_llm",
         "description": "clients.ultimate_llm",
         "isExtraImport": true,
@@ -2474,6 +2770,14 @@
         "documentation": {}
     },
     {
+        "label": "ChatPromptTemplate",
+        "importPath": "langchain_core.prompts",
+        "description": "langchain_core.prompts",
+        "isExtraImport": true,
+        "detail": "langchain_core.prompts",
+        "documentation": {}
+    },
+    {
         "label": "io",
         "kind": 6,
         "isExtraImport": true,
@@ -2528,6 +2832,14 @@
         "description": "clients.video_aligner",
         "isExtraImport": true,
         "detail": "clients.video_aligner",
+        "documentation": {}
+    },
+    {
+        "label": "get_idrivee2_client",
+        "importPath": "clients.idrivee2_client",
+        "description": "clients.idrivee2_client",
+        "isExtraImport": true,
+        "detail": "clients.idrivee2_client",
         "documentation": {}
     },
     {
@@ -2643,6 +2955,70 @@
         "documentation": {}
     },
     {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_current_user",
+        "importPath": "auth.dependencies",
+        "description": "auth.dependencies",
+        "isExtraImport": true,
+        "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
         "label": "create_chat_agent",
         "importPath": "services.chat",
         "description": "services.chat",
@@ -2732,6 +3108,150 @@
         "documentation": {}
     },
     {
+        "label": "get_podcast_service",
+        "importPath": "services.podcast_service",
+        "description": "services.podcast_service",
+        "isExtraImport": true,
+        "detail": "services.podcast_service",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastService",
+        "importPath": "services.podcast_service",
+        "description": "services.podcast_service",
+        "isExtraImport": true,
+        "detail": "services.podcast_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_podcast_service",
+        "importPath": "services.podcast_service",
+        "description": "services.podcast_service",
+        "isExtraImport": true,
+        "detail": "services.podcast_service",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastEpisode",
+        "importPath": "models.podcast",
+        "description": "models.podcast",
+        "isExtraImport": true,
+        "detail": "models.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastScript",
+        "importPath": "models.podcast",
+        "description": "models.podcast",
+        "isExtraImport": true,
+        "detail": "models.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastSegment",
+        "importPath": "models.podcast",
+        "description": "models.podcast",
+        "isExtraImport": true,
+        "detail": "models.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "MongoDBClient",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
         "label": "SuggestFormatsRequest",
         "importPath": "models.report_models",
         "description": "models.report_models",
@@ -2777,70 +3297,6 @@
         "description": "services.ingestion_service",
         "isExtraImport": true,
         "detail": "services.ingestion_service",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
-        "isExtraImport": true,
-        "detail": "clients.mongodb_client",
         "documentation": {}
     },
     {
@@ -4083,6 +4539,24 @@
         "documentation": {}
     },
     {
+        "label": "PodcastSegment",
+        "kind": 6,
+        "importPath": "backend.models.podcast",
+        "description": "backend.models.podcast",
+        "peekOfCode": "class PodcastSegment(BaseModel):\n    speaker: str = Field(description=\"Speaker label (e.g. 'Speaker 1', 'Speaker 2')\")\n    text: str = Field(description=\"The dialogue text spoken by the speaker\")\nclass PodcastScript(BaseModel):\n    title: str = Field(description=\"Title of the podcast episode\")\n    summary: str = Field(description=\"Brief summary of the episode content\")\n    segments: List[PodcastSegment] = Field(description=\"Ordered list of dialogue segments\")",
+        "detail": "backend.models.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastScript",
+        "kind": 6,
+        "importPath": "backend.models.podcast",
+        "description": "backend.models.podcast",
+        "peekOfCode": "class PodcastScript(BaseModel):\n    title: str = Field(description=\"Title of the podcast episode\")\n    summary: str = Field(description=\"Brief summary of the episode content\")\n    segments: List[PodcastSegment] = Field(description=\"Ordered list of dialogue segments\")",
+        "detail": "backend.models.podcast",
+        "documentation": {}
+    },
+    {
         "label": "SuggestFormatsRequest",
         "kind": 6,
         "importPath": "backend.models.report_models",
@@ -4114,7 +4588,7 @@
         "kind": 6,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")\nasync def chat(request: ChatRequest):",
+        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")\nasync def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -4132,7 +4606,7 @@
         "kind": 5,
         "importPath": "backend.routers.flashcards",
         "description": "backend.routers.flashcards",
-        "peekOfCode": "router = APIRouter(prefix=\"/flashcards\", tags=[\"flashcards\"])\n@router.post(\"/generate\")\nasync def generate_flashcards(request: GenerateFlashcardsRequest) -> Dict[str, Any]:\n    \"\"\"\n    Generate flashcards from documents using Map-Reduce\n    Args:\n        request: Flashcard generation request with document IDs\n    Returns:\n        Dict with flashcard data (title, cards, workflow_id)\n    \"\"\"",
+        "peekOfCode": "router = APIRouter(prefix=\"/flashcards\", tags=[\"flashcards\"])\n@router.post(\"/generate\")\nasync def generate_flashcards(request: GenerateFlashcardsRequest, current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:\n    \"\"\"\n    Generate flashcards from documents using Map-Reduce\n    Args:\n        request: Flashcard generation request with document IDs\n    Returns:\n        Dict with flashcard data (title, cards, workflow_id)\n    \"\"\"",
         "detail": "backend.routers.flashcards",
         "documentation": {}
     },
@@ -4150,7 +4624,7 @@
         "kind": 5,
         "importPath": "backend.routers.mindmap",
         "description": "backend.routers.mindmap",
-        "peekOfCode": "router = APIRouter(prefix=\"/mindmap\", tags=[\"mindmap\"])\n@router.post(\"/generate\")\nasync def generate_mindmap(request: MindMapRequest):\n    \"\"\"\n    Generate mind map from multiple documents (like NotebookLM)\n    Returns JSON data structure for frontend rendering\n    Args:\n        request: MindMapRequest with list of document_ids\n    Returns:\n        Mind map data with nodes and edges JSON",
+        "peekOfCode": "router = APIRouter(prefix=\"/mindmap\", tags=[\"mindmap\"])\n@router.post(\"/generate\")\nasync def generate_mindmap(request: MindMapRequest, current_user: dict = Depends(get_current_user)):\n    \"\"\"\n    Generate mind map from multiple documents (like NotebookLM)\n    Returns JSON data structure for frontend rendering\n    Args:\n        request: MindMapRequest with list of document_ids\n    Returns:\n        Mind map data with nodes and edges JSON",
         "detail": "backend.routers.mindmap",
         "documentation": {}
     },
@@ -4159,8 +4633,35 @@
         "kind": 5,
         "importPath": "backend.routers.models",
         "description": "backend.routers.models",
-        "peekOfCode": "router = APIRouter(tags=[\"models\"])\n@router.get(\"/models\")\nasync def list_models() -> dict:\n    \"\"\"\n    List all available AI models for chat (OpenRouter aliases)\n    Returns:\n        Dict with list of available models\n    \"\"\"\n    logger.info(\"Listing available models\")\n    models = [",
+        "peekOfCode": "router = APIRouter(tags=[\"models\"])\n@router.get(\"/models\")\nasync def list_models(current_user: dict = Depends(get_current_user)) -> dict:\n    \"\"\"\n    List all available AI models for chat (OpenRouter aliases)\n    Returns:\n        Dict with list of available models\n    \"\"\"\n    logger.info(\"Listing available models\")\n    models = [",
         "detail": "backend.routers.models",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastGenerateRequest",
+        "kind": 6,
+        "importPath": "backend.routers.podcast",
+        "description": "backend.routers.podcast",
+        "peekOfCode": "class PodcastGenerateRequest(BaseModel):\n    document_ids: List[str]\n    organization_id: str\nclass PodcastResponse(BaseModel):\n    episode_id: str\n    status: str\n    message: str\n@router.post(\"/generate\", summary=\"Start podcast generation (Background Task)\", response_model=PodcastResponse)\nasync def generate_podcast(\n    request: PodcastGenerateRequest,",
+        "detail": "backend.routers.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastResponse",
+        "kind": 6,
+        "importPath": "backend.routers.podcast",
+        "description": "backend.routers.podcast",
+        "peekOfCode": "class PodcastResponse(BaseModel):\n    episode_id: str\n    status: str\n    message: str\n@router.post(\"/generate\", summary=\"Start podcast generation (Background Task)\", response_model=PodcastResponse)\nasync def generate_podcast(\n    request: PodcastGenerateRequest,\n    background_tasks: BackgroundTasks,\n    service: PodcastService = Depends(get_podcast_service),\n    mongodb: MongoDBClient = Depends(get_mongodb_client),",
+        "detail": "backend.routers.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
+        "importPath": "backend.routers.podcast",
+        "description": "backend.routers.podcast",
+        "peekOfCode": "router = APIRouter(prefix=\"/podcasts\", tags=[\"Podcasts\"])\nclass PodcastGenerateRequest(BaseModel):\n    document_ids: List[str]\n    organization_id: str\nclass PodcastResponse(BaseModel):\n    episode_id: str\n    status: str\n    message: str\n@router.post(\"/generate\", summary=\"Start podcast generation (Background Task)\", response_model=PodcastResponse)\nasync def generate_podcast(",
+        "detail": "backend.routers.podcast",
         "documentation": {}
     },
     {
@@ -4168,7 +4669,7 @@
         "kind": 5,
         "importPath": "backend.routers.report_suggestions",
         "description": "backend.routers.report_suggestions",
-        "peekOfCode": "router = APIRouter(prefix=\"/report-suggestions\", tags=[\"report-suggestions\"])\n@router.post(\"/suggest-formats\")\nasync def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks):\n    \"\"\"\n    Trigger background task to generate format suggestions\n    This endpoint:\n    1. Checks if suggestions already exist for these documents\n    2. If yes, returns existing workflow_id\n    3. If no, creates new workflow and triggers background task\n    Frontend should poll /report-suggestions/get-suggestions with document_ids to check status",
+        "peekOfCode": "router = APIRouter(prefix=\"/report-suggestions\", tags=[\"report-suggestions\"])\n@router.post(\"/suggest-formats\")\nasync def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):\n    \"\"\"\n    Trigger background task to generate format suggestions\n    This endpoint:\n    1. Checks if suggestions already exist for these documents\n    2. If yes, returns existing workflow_id\n    3. If no, creates new workflow and triggers background task\n    Frontend should poll /report-suggestions/get-suggestions with document_ids to check status",
         "detail": "backend.routers.report_suggestions",
         "documentation": {}
     },
@@ -4177,7 +4678,7 @@
         "kind": 5,
         "importPath": "backend.routers.reports",
         "description": "backend.routers.reports",
-        "peekOfCode": "router = APIRouter(prefix=\"/reports\", tags=[\"reports\"])\n@router.post(\"/generate\")\nasync def generate_report(request: GenerateReportRequest):\n    \"\"\"\n    Generate a report from documents using Map-Reduce with streaming\n    This endpoint:\n    1. Takes document IDs and a prompt (from frontend)\n    2. Uses Map-Reduce to process documents in parallel\n    3. Streams progress updates via Server-Sent Events\n    4. Returns final report in markdown format",
+        "peekOfCode": "router = APIRouter(prefix=\"/reports\", tags=[\"reports\"])\n@router.post(\"/generate\")\nasync def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user)):\n    \"\"\"\n    Generate a report from documents using Map-Reduce with streaming\n    This endpoint:\n    1. Takes document IDs and a prompt (from frontend)\n    2. Uses Map-Reduce to process documents in parallel\n    3. Streams progress updates via Server-Sent Events\n    4. Returns final report in markdown format",
         "detail": "backend.routers.reports",
         "documentation": {}
     },
@@ -4344,6 +4845,33 @@
         "documentation": {}
     },
     {
+        "label": "PodcastService",
+        "kind": 6,
+        "importPath": "backend.services.podcast_service",
+        "description": "backend.services.podcast_service",
+        "peekOfCode": "class PodcastService:\n    \"\"\"Service for generating podcast scripts from documents\"\"\"\n    # Voice IDs (Defaults)\n    VOICE_SPEAKER_1 = \"21m00Tcm4TlvDq8ikWAM\"  # Rachel (Female)\n    VOICE_SPEAKER_2 = \"AZnzlk1XvdvUeBnXmlld\"  # Dombi (Male)\n    def __init__(self):\n        \"\"\"Initialize podcast service\"\"\"\n        self.llm_flash = get_llm(model=\"google/gemini-3-flash-preview\", provider=\"openrouter\")\n        # Structured output for final script (ensure valid JSON)\n        self.structured_llm = self.llm_flash.with_structured_output(PodcastScript)",
+        "detail": "backend.services.podcast_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_podcast_service",
+        "kind": 2,
+        "importPath": "backend.services.podcast_service",
+        "description": "backend.services.podcast_service",
+        "peekOfCode": "def get_podcast_service() -> PodcastService:\n    global _podcast_service\n    if _podcast_service is None:\n        _podcast_service = PodcastService()\n    return _podcast_service",
+        "detail": "backend.services.podcast_service",
+        "documentation": {}
+    },
+    {
+        "label": "_podcast_service",
+        "kind": 5,
+        "importPath": "backend.services.podcast_service",
+        "description": "backend.services.podcast_service",
+        "peekOfCode": "_podcast_service = None\ndef get_podcast_service() -> PodcastService:\n    global _podcast_service\n    if _podcast_service is None:\n        _podcast_service = PodcastService()\n    return _podcast_service",
+        "detail": "backend.services.podcast_service",
+        "documentation": {}
+    },
+    {
         "label": "ReportGeneratorService",
         "kind": 6,
         "importPath": "backend.services.report_generator",
@@ -4503,6 +5031,15 @@
         "description": "backend.test_pinecone_metadata",
         "peekOfCode": "def test_pinecone_metadata():\n    \"\"\"Query Pinecone and display metadata for video chunks\"\"\"\n    logger.info(\"=\" * 80)\n    logger.info(\"🔍 PINECONE METADATA TEST\")\n    logger.info(\"=\" * 80)\n    # Initialize Pinecone client\n    logger.info(\"\\n📌 Initializing Pinecone client...\")\n    pinecone_client = get_pinecone_client()\n    # From your ingestion logs:\n    DOCUMENT_ID = \"69822473b0da425b8515a25b\"",
         "detail": "backend.test_pinecone_metadata",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.test_podcast",
+        "description": "backend.test_podcast",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nasync def test_podcast_flow():\n    print(\"🚀 Starting Podcast Service Test (Persistence)...\")\n    service = get_podcast_service()\n    mongodb = get_mongodb_client()\n    # 1. Define inputs\n    # Use existing document IDs from previous tests if available, or fetch new ones\n    # For now, let's just query 3 random documents\n    docs = await mongodb.async_find_documents(\"documents\", {}, limit=3)\n    if not docs:",
+        "detail": "backend.test_podcast",
         "documentation": {}
     },
     {

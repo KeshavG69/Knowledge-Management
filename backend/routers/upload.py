@@ -5,11 +5,12 @@ Upload Router - Document ingestion endpoints
 import asyncio
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks, Depends
 from bson import ObjectId
 from services.ingestion_service import get_ingestion_service
 from clients.mongodb_client import get_mongodb_client
 from app.logger import logger
+from auth.dependencies import get_current_user
 
 
 router = APIRouter(prefix="/upload", tags=["upload"])
@@ -91,7 +92,8 @@ async def upload_documents(
     files: List[UploadFile] = File(..., description="Multiple files to upload"),
     folder_name: str = Form(..., description="Folder name for organization"),
     user_id: Optional[str] = Form(None, description="Optional user ID"),
-    organization_id: Optional[str] = Form(None, description="Optional organization ID")
+    organization_id: Optional[str] = Form(None, description="Optional organization ID"),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Upload multiple documents for ingestion (background processing)
@@ -203,7 +205,7 @@ async def upload_documents(
 
 
 @router.get("/documents/{document_id}")
-async def get_document(document_id: str):
+async def get_document(document_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get document by ID
 
@@ -242,7 +244,8 @@ async def list_documents(
     user_id: Optional[str] = None,
     organization_id: Optional[str] = None,
     limit: int = 100,
-    skip: int = 0
+    skip: int = 0,
+    current_user: dict = Depends(get_current_user)
 ):
     """
     List documents with optional filters
@@ -288,7 +291,8 @@ async def list_documents(
 @router.delete("/documents/{document_id}")
 async def delete_document(
     document_id: str,
-    delete_from_storage: bool = True
+    delete_from_storage: bool = True,
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Delete document and its chunks from all systems
@@ -327,7 +331,8 @@ async def delete_document(
 @router.get("/folders")
 async def list_folders(
     user_id: Optional[str] = None,
-    organization_id: Optional[str] = None
+    organization_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
 ):
     """
     List all unique folder names (knowledge bases)
@@ -369,7 +374,8 @@ async def delete_folder(
     folder_name: str,
     user_id: Optional[str] = None,
     organization_id: Optional[str] = None,
-    delete_from_storage: bool = True
+    delete_from_storage: bool = True,
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Delete entire folder and all its documents from all systems
@@ -416,7 +422,8 @@ async def rename_folder(
     folder_name: str,
     new_folder_name: str = Form(..., description="New folder name"),
     user_id: Optional[str] = Form(None, description="Optional user ID"),
-    organization_id: Optional[str] = Form(None, description="Optional organization ID")
+    organization_id: Optional[str] = Form(None, description="Optional organization ID"),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Rename folder across all systems
