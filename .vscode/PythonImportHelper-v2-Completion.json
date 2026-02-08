@@ -744,6 +744,22 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -798,14 +814,6 @@
         "description": "contextlib",
         "isExtraImport": true,
         "detail": "contextlib",
-        "documentation": {}
-    },
-    {
-        "label": "settings",
-        "importPath": "app.settings",
-        "description": "app.settings",
-        "isExtraImport": true,
-        "detail": "app.settings",
         "documentation": {}
     },
     {
@@ -1353,7 +1361,7 @@
         "documentation": {}
     },
     {
-        "label": "List",
+        "label": "Tuple",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1401,6 +1409,22 @@
         "documentation": {}
     },
     {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Optional",
         "importPath": "typing",
         "description": "typing",
@@ -1418,6 +1442,30 @@
     },
     {
         "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1905,14 +1953,6 @@
         "documentation": {}
     },
     {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
         "label": "timezone",
         "importPath": "datetime",
         "description": "datetime",
@@ -1945,14 +1985,6 @@
         "documentation": {}
     },
     {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
         "label": "timezone",
         "importPath": "datetime",
         "description": "datetime",
@@ -1977,11 +2009,19 @@
         "documentation": {}
     },
     {
-        "label": "ObjectId",
-        "importPath": "bson",
-        "description": "bson",
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
         "isExtraImport": true,
-        "detail": "bson",
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
         "documentation": {}
     },
     {
@@ -2347,6 +2387,14 @@
     },
     {
         "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
         "importPath": "pydantic",
         "description": "pydantic",
         "isExtraImport": true,
@@ -3043,116 +3091,11 @@
         "documentation": {}
     },
     {
-        "label": "uuid",
-        "kind": 6,
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
         "isExtraImport": true,
-        "importPath": "uuid",
-        "description": "uuid",
-        "detail": "uuid",
-        "documentation": {}
-    },
-    {
-        "label": "GenerateFlashcardsRequest",
-        "importPath": "models.flashcard_models",
-        "description": "models.flashcard_models",
-        "isExtraImport": true,
-        "detail": "models.flashcard_models",
-        "documentation": {}
-    },
-    {
-        "label": "get_flashcard_generator_service",
-        "importPath": "services.flashcard_generator",
-        "description": "services.flashcard_generator",
-        "isExtraImport": true,
-        "detail": "services.flashcard_generator",
-        "documentation": {}
-    },
-    {
-        "label": "HealthCheckResponse",
-        "importPath": "models.health",
-        "description": "models.health",
-        "isExtraImport": true,
-        "detail": "models.health",
-        "documentation": {}
-    },
-    {
-        "label": "MindMapRequest",
-        "importPath": "models.mindmap",
-        "description": "models.mindmap",
-        "isExtraImport": true,
-        "detail": "models.mindmap",
-        "documentation": {}
-    },
-    {
-        "label": "MindMap",
-        "importPath": "models.mindmap",
-        "description": "models.mindmap",
-        "isExtraImport": true,
-        "detail": "models.mindmap",
-        "documentation": {}
-    },
-    {
-        "label": "DocumentSummary",
-        "importPath": "models.mindmap",
-        "description": "models.mindmap",
-        "isExtraImport": true,
-        "detail": "models.mindmap",
-        "documentation": {}
-    },
-    {
-        "label": "get_mindmap_service",
-        "importPath": "services.mindmap_service",
-        "description": "services.mindmap_service",
-        "isExtraImport": true,
-        "detail": "services.mindmap_service",
-        "documentation": {}
-    },
-    {
-        "label": "get_podcast_service",
-        "importPath": "services.podcast_service",
-        "description": "services.podcast_service",
-        "isExtraImport": true,
-        "detail": "services.podcast_service",
-        "documentation": {}
-    },
-    {
-        "label": "PodcastService",
-        "importPath": "services.podcast_service",
-        "description": "services.podcast_service",
-        "isExtraImport": true,
-        "detail": "services.podcast_service",
-        "documentation": {}
-    },
-    {
-        "label": "get_podcast_service",
-        "importPath": "services.podcast_service",
-        "description": "services.podcast_service",
-        "isExtraImport": true,
-        "detail": "services.podcast_service",
-        "documentation": {}
-    },
-    {
-        "label": "PodcastEpisode",
-        "importPath": "models.podcast",
-        "description": "models.podcast",
-        "isExtraImport": true,
-        "detail": "models.podcast",
-        "documentation": {}
-    },
-    {
-        "label": "PodcastScript",
-        "importPath": "models.podcast",
-        "description": "models.podcast",
-        "isExtraImport": true,
-        "detail": "models.podcast",
-        "documentation": {}
-    },
-    {
-        "label": "PodcastSegment",
-        "importPath": "models.podcast",
-        "description": "models.podcast",
-        "isExtraImport": true,
-        "detail": "models.podcast",
+        "detail": "clients.mongodb_client",
         "documentation": {}
     },
     {
@@ -3244,11 +3187,84 @@
         "documentation": {}
     },
     {
-        "label": "get_mongodb_client",
-        "importPath": "clients.mongodb_client",
-        "description": "clients.mongodb_client",
+        "label": "uuid",
+        "kind": 6,
         "isExtraImport": true,
-        "detail": "clients.mongodb_client",
+        "importPath": "uuid",
+        "description": "uuid",
+        "detail": "uuid",
+        "documentation": {}
+    },
+    {
+        "label": "GenerateFlashcardsRequest",
+        "importPath": "models.flashcard_models",
+        "description": "models.flashcard_models",
+        "isExtraImport": true,
+        "detail": "models.flashcard_models",
+        "documentation": {}
+    },
+    {
+        "label": "get_flashcard_generator_service",
+        "importPath": "services.flashcard_generator",
+        "description": "services.flashcard_generator",
+        "isExtraImport": true,
+        "detail": "services.flashcard_generator",
+        "documentation": {}
+    },
+    {
+        "label": "HealthCheckResponse",
+        "importPath": "models.health",
+        "description": "models.health",
+        "isExtraImport": true,
+        "detail": "models.health",
+        "documentation": {}
+    },
+    {
+        "label": "MindMapRequest",
+        "importPath": "models.mindmap",
+        "description": "models.mindmap",
+        "isExtraImport": true,
+        "detail": "models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "MindMap",
+        "importPath": "models.mindmap",
+        "description": "models.mindmap",
+        "isExtraImport": true,
+        "detail": "models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "DocumentSummary",
+        "importPath": "models.mindmap",
+        "description": "models.mindmap",
+        "isExtraImport": true,
+        "detail": "models.mindmap",
+        "documentation": {}
+    },
+    {
+        "label": "get_mindmap_service",
+        "importPath": "services.mindmap_service",
+        "description": "services.mindmap_service",
+        "isExtraImport": true,
+        "detail": "services.mindmap_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_podcast_service",
+        "importPath": "services.podcast_service",
+        "description": "services.podcast_service",
+        "isExtraImport": true,
+        "detail": "services.podcast_service",
+        "documentation": {}
+    },
+    {
+        "label": "PodcastService",
+        "importPath": "services.podcast_service",
+        "description": "services.podcast_service",
+        "isExtraImport": true,
+        "detail": "services.podcast_service",
         "documentation": {}
     },
     {
@@ -3297,6 +3313,70 @@
         "description": "services.ingestion_service",
         "isExtraImport": true,
         "detail": "services.ingestion_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_youtube_downloader",
+        "importPath": "clients.youtube_downloader",
+        "description": "clients.youtube_downloader",
+        "isExtraImport": true,
+        "detail": "clients.youtube_downloader",
+        "documentation": {}
+    },
+    {
+        "label": "sanitize_filename",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_file_size_mb",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "extract_raw_data",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "validate_extracted_content",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "sanitize_filename",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_file_size_mb",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_file_extension",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
         "documentation": {}
     },
     {
@@ -3420,43 +3500,19 @@
         "documentation": {}
     },
     {
-        "label": "extract_raw_data",
-        "importPath": "utils.file_utils",
-        "description": "utils.file_utils",
+        "label": "PodcastScript",
+        "importPath": "models.podcast",
+        "description": "models.podcast",
         "isExtraImport": true,
-        "detail": "utils.file_utils",
+        "detail": "models.podcast",
         "documentation": {}
     },
     {
-        "label": "validate_extracted_content",
-        "importPath": "utils.file_utils",
-        "description": "utils.file_utils",
+        "label": "PodcastSegment",
+        "importPath": "models.podcast",
+        "description": "models.podcast",
         "isExtraImport": true,
-        "detail": "utils.file_utils",
-        "documentation": {}
-    },
-    {
-        "label": "sanitize_filename",
-        "importPath": "utils.file_utils",
-        "description": "utils.file_utils",
-        "isExtraImport": true,
-        "detail": "utils.file_utils",
-        "documentation": {}
-    },
-    {
-        "label": "get_file_size_mb",
-        "importPath": "utils.file_utils",
-        "description": "utils.file_utils",
-        "isExtraImport": true,
-        "detail": "utils.file_utils",
-        "documentation": {}
-    },
-    {
-        "label": "get_file_extension",
-        "importPath": "utils.file_utils",
-        "description": "utils.file_utils",
-        "isExtraImport": true,
-        "detail": "utils.file_utils",
+        "detail": "models.podcast",
         "documentation": {}
     },
     {
@@ -4467,6 +4523,24 @@
         "documentation": {}
     },
     {
+        "label": "YouTubeDownloader",
+        "kind": 6,
+        "importPath": "backend.clients.youtube_downloader",
+        "description": "backend.clients.youtube_downloader",
+        "peekOfCode": "class YouTubeDownloader:\n    \"\"\"YouTube video downloader using yt-dlp\"\"\"\n    def __init__(self):\n        \"\"\"Initialize YouTube downloader\"\"\"\n        self.ydl_opts = {\n            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',\n            'outtmpl': '%(id)s.%(ext)s',\n            'quiet': False,\n            'no_warnings': False,\n            'extract_flat': False,",
+        "detail": "backend.clients.youtube_downloader",
+        "documentation": {}
+    },
+    {
+        "label": "get_youtube_downloader",
+        "kind": 2,
+        "importPath": "backend.clients.youtube_downloader",
+        "description": "backend.clients.youtube_downloader",
+        "peekOfCode": "def get_youtube_downloader() -> YouTubeDownloader:\n    \"\"\"Get or create YouTube downloader singleton\"\"\"\n    global _youtube_downloader\n    if _youtube_downloader is None:\n        _youtube_downloader = YouTubeDownloader()\n    return _youtube_downloader",
+        "detail": "backend.clients.youtube_downloader",
+        "documentation": {}
+    },
+    {
         "label": "GenerateFlashcardsRequest",
         "kind": 6,
         "importPath": "backend.models.flashcard_models",
@@ -4680,6 +4754,15 @@
         "description": "backend.routers.reports",
         "peekOfCode": "router = APIRouter(prefix=\"/reports\", tags=[\"reports\"])\n@router.post(\"/generate\")\nasync def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user)):\n    \"\"\"\n    Generate a report from documents using Map-Reduce with streaming\n    This endpoint:\n    1. Takes document IDs and a prompt (from frontend)\n    2. Uses Map-Reduce to process documents in parallel\n    3. Streams progress updates via Server-Sent Events\n    4. Returns final report in markdown format",
         "detail": "backend.routers.reports",
+        "documentation": {}
+    },
+    {
+        "label": "YouTubeIngestionRequest",
+        "kind": 6,
+        "importPath": "backend.routers.upload",
+        "description": "backend.routers.upload",
+        "peekOfCode": "class YouTubeIngestionRequest(BaseModel):\n    \"\"\"Request model for YouTube URL ingestion\"\"\"\n    youtube_url: str\n    folder_name: str\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n@router.post(\"/youtube\")\nasync def ingest_youtube_video(\n    request: YouTubeIngestionRequest,\n    background_tasks: BackgroundTasks,",
+        "detail": "backend.routers.upload",
         "documentation": {}
     },
     {
@@ -5031,15 +5114,6 @@
         "description": "backend.test_pinecone_metadata",
         "peekOfCode": "def test_pinecone_metadata():\n    \"\"\"Query Pinecone and display metadata for video chunks\"\"\"\n    logger.info(\"=\" * 80)\n    logger.info(\"🔍 PINECONE METADATA TEST\")\n    logger.info(\"=\" * 80)\n    # Initialize Pinecone client\n    logger.info(\"\\n📌 Initializing Pinecone client...\")\n    pinecone_client = get_pinecone_client()\n    # From your ingestion logs:\n    DOCUMENT_ID = \"69822473b0da425b8515a25b\"",
         "detail": "backend.test_pinecone_metadata",
-        "documentation": {}
-    },
-    {
-        "label": "logger",
-        "kind": 5,
-        "importPath": "backend.test_podcast",
-        "description": "backend.test_podcast",
-        "peekOfCode": "logger = logging.getLogger(__name__)\nasync def test_podcast_flow():\n    print(\"🚀 Starting Podcast Service Test (Persistence)...\")\n    service = get_podcast_service()\n    mongodb = get_mongodb_client()\n    # 1. Define inputs\n    # Use existing document IDs from previous tests if available, or fetch new ones\n    # For now, let's just query 3 random documents\n    docs = await mongodb.async_find_documents(\"documents\", {}, limit=3)\n    if not docs:",
-        "detail": "backend.test_podcast",
         "documentation": {}
     },
     {

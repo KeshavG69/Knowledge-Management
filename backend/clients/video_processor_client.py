@@ -123,8 +123,39 @@ class VideoProcessorClient:
                             downscale=1  # Full resolution = catches subtle changes
                         )
 
+                        # Handle videos with no scene changes (static content)
                         if not scenes:
-                            raise Exception("No scenes detected in video")
+                            logger.warning("⚠️ No scenes detected - treating entire video as single scene")
+                            # Get video duration to create a single scene covering the entire video
+                            import tempfile
+                            extension = Path(filename).suffix.lower()
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+                                tmp_file.write(file_content)
+                                tmp_file_path = tmp_file.name
+
+                            try:
+                                cap = cv2.VideoCapture(tmp_file_path)
+                                fps = cap.get(cv2.CAP_PROP_FPS)
+                                frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                                duration_seconds = frame_count / fps if fps > 0 else 10.0  # Default 10s if can't determine
+                                cap.release()
+
+                                # Create single scene covering entire video
+                                scenes = [
+                                    {
+                                        'scene_id': 0,
+                                        'start_frame': 0,
+                                        'end_frame': frame_count - 1 if frame_count > 0 else 100,
+                                        'start_time': 0.0,
+                                        'end_time': duration_seconds,
+                                        'duration': duration_seconds
+                                    }
+                                ]
+                                logger.info(f"✅ Created single scene: 0.0s to {duration_seconds:.1f}s")
+                            finally:
+                                import os
+                                if os.path.exists(tmp_file_path):
+                                    os.unlink(tmp_file_path)
 
                         logger.info(f"✅ PySceneDetect complete: {len(scenes)} scenes detected")
 
