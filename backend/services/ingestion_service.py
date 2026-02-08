@@ -264,7 +264,9 @@ class IngestionService:
 
                 for chunk in video_chunks:
                     texts.append(chunk['blended_text'])
-                    metadatas.append({
+
+                    # Build metadata, excluding keyframe_file_key if None (Pinecone rejects null values)
+                    metadata = {
                         "document_id": document_id,
                         "file_name": file.filename,
                         "folder_name": folder_name,
@@ -276,10 +278,15 @@ class IngestionService:
                         "clip_end": chunk['clip_end'],
                         "duration": chunk['duration'],
                         "key_frame_timestamp": chunk['key_frame_timestamp'],
-                        "keyframe_file_key": chunk.get('keyframe_file_key'),  # iDrive E2 key for thumbnail
                         "scene_id": chunk.get('chunk_id'),
                         **(additional_metadata or {})
-                    })
+                    }
+
+                    # Only include keyframe_file_key if it's not None
+                    if chunk.get('keyframe_file_key') is not None:
+                        metadata["keyframe_file_key"] = chunk['keyframe_file_key']
+
+                    metadatas.append(metadata)
                     ids.append(f"{document_id}_{chunk['chunk_id']}")
 
                 # Add to Pinecone in thread pool
@@ -531,7 +538,9 @@ class IngestionService:
 
                 for chunk in video_chunks:
                     texts.append(chunk['blended_text'])
-                    metadatas.append({
+
+                    # Build metadata, excluding keyframe_file_key if None (Pinecone rejects null values)
+                    metadata = {
                         "document_id": document_id,
                         "file_name": file.filename,
                         "folder_name": folder_name,
@@ -543,10 +552,15 @@ class IngestionService:
                         "clip_end": chunk['clip_end'],
                         "duration": chunk['duration'],
                         "key_frame_timestamp": chunk['key_frame_timestamp'],
-                        "keyframe_file_key": chunk.get('keyframe_file_key'),
                         "scene_id": chunk.get('chunk_id'),
                         **(additional_metadata or {})
-                    })
+                    }
+
+                    # Only include keyframe_file_key if it's not None
+                    if chunk.get('keyframe_file_key') is not None:
+                        metadata["keyframe_file_key"] = chunk['keyframe_file_key']
+
+                    metadatas.append(metadata)
                     ids.append(f"{document_id}_{chunk['chunk_id']}")
 
                 # Add to Pinecone in thread pool

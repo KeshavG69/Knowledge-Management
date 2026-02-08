@@ -2,16 +2,16 @@
 Upload Router - Document ingestion endpoints
 """
 
-import asyncio
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks, Depends
+from pydantic import BaseModel
 from bson import ObjectId
 from services.ingestion_service import get_ingestion_service
-from clients.mongodb_client import get_mongodb_client
+from clients.youtube_downloader import get_youtube_downloader
 from app.logger import logger
 from auth.dependencies import get_current_user
-
+from utils.file_utils import sanitize_filename, get_file_size_mb
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -77,7 +77,7 @@ async def process_ingestion_in_background(
                     stage="failed",
                     stage_description=f"Processing failed: {str(e)}",
                     error=str(e),
-                    failed_at=datetime.utcnow()
+                    failed_at=datetime.now(timezone.utc)
                 )
 
         logger.info(f"✅ Background ingestion completed for all files")
@@ -150,7 +150,7 @@ async def upload_documents(
 
         # Create document records with status="processing" FIRST (before background task)
         ingestion_service = get_ingestion_service()
-        from utils.file_utils import sanitize_filename, get_file_size_mb, get_file_extension
+        
 
         document_ids = []
         for file_info in file_data:
@@ -202,6 +202,147 @@ async def upload_documents(
     except Exception as e:
         logger.error(f"❌ Upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+class YouTubeIngestionRequest(BaseModel):
+    """Request model for YouTube URL ingestion"""
+    youtube_url: str
+    folder_name: str
+    user_id: Optional[str] = None
+    organization_id: Optional[str] = None
+
+
+@router.post("/youtube")
+async def ingest_youtube_video(
+    request: YouTubeIngestionRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Ingest YouTube video by URL (background processing)
+
+    This endpoint:
+    1. Validates YouTube URL
+    2. Downloads video from YouTube
+    3. Processes it like a regular video file upload:
+       - Creates document record with status="processing"
+       - Uploads to iDrive E2
+       - Extracts frames and transcription
+       - Stores in MongoDB
+       - Chunks content semantically
+       - Stores chunks in Pinecone
+       - Updates status to "completed" or "failed"
+
+    Args:
+        request: YouTubeIngestionRequest with URL and metadata
+        background_tasks: FastAPI background tasks
+        current_user: Authenticated user
+
+    Returns:
+        Document ID and status
+    """
+    try:
+        # Validate input
+        if not request.youtube_url or not request.youtube_url.strip():
+            raise HTTPException(status_code=400, detail="YouTube URL is required")
+
+        if not request.folder_name or not request.folder_name.strip():
+            raise HTTPException(status_code=400, detail="Folder name is required")
+
+        # Validate ObjectIds
+        if request.user_id and not ObjectId.is_valid(request.user_id):
+            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {request.user_id}")
+
+        if request.organization_id and not ObjectId.is_valid(request.organization_id):
+            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {request.organization_id}")
+
+        # Validate YouTube URL
+        youtube_downloader = get_youtube_downloader()
+        if not youtube_downloader.validate_youtube_url(request.youtube_url):
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+
+        logger.info(f"📺 YouTube ingestion request: {request.youtube_url}, folder={request.folder_name}")
+
+        # Download YouTube video (this happens in foreground to validate URL works)
+        try:
+            video_bytes, filename, metadata = youtube_downloader.download_video(request.youtube_url)
+        except Exception as e:
+            logger.error(f"❌ Failed to download YouTube video: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Failed to download YouTube video: {str(e)}")
+
+        # Create file_data structure like regular upload
+        file_data = [{
+            "content": video_bytes,
+            "filename": filename,
+            "content_type": "video/mp4"
+        }]
+
+        # Create document record with status="processing"
+        ingestion_service = get_ingestion_service()
+        
+
+        safe_filename = sanitize_filename(filename)
+        # Include organization_id in file_key for multi-tenant isolation
+        if request.organization_id:
+            file_key = f"{request.organization_id}/{request.folder_name.strip()}/{safe_filename}"
+        else:
+            file_key = f"{request.folder_name.strip()}/{safe_filename}"
+        file_size_mb = get_file_size_mb(video_bytes)
+
+        # Add YouTube metadata to additional_metadata
+        additional_metadata = {
+            "source": "youtube",
+            "youtube_url": request.youtube_url,
+            "youtube_video_id": metadata.get("video_id"),
+            "youtube_title": metadata.get("title"),
+            "youtube_uploader": metadata.get("uploader"),
+            "youtube_duration": metadata.get("duration"),
+            "youtube_upload_date": metadata.get("upload_date"),
+            "youtube_description": metadata.get("description"),
+        }
+
+        # Create document record
+        document_id = await ingestion_service._create_document_with_status(
+            file_name=filename,
+            folder_name=request.folder_name.strip(),
+            file_key=file_key,
+            file_size_mb=file_size_mb,
+            user_id=request.user_id,
+            organization_id=request.organization_id,
+            additional_metadata=additional_metadata
+        )
+
+        logger.info(f"📝 Created document record: {document_id} for YouTube video: {filename}")
+
+        # Add background task for processing
+        background_tasks.add_task(
+            process_ingestion_in_background,
+            document_ids=[document_id],
+            file_data=file_data,
+            folder_name=request.folder_name.strip(),
+            user_id=request.user_id,
+            organization_id=request.organization_id
+        )
+
+        logger.info(f"✅ YouTube video queued for background processing: {filename}")
+
+        return {
+            "success": True,
+            "message": f"YouTube video ingestion started: {metadata.get('title')}",
+            "data": {
+                "document_id": document_id,
+                "file_name": filename,
+                "folder_name": request.folder_name.strip(),
+                "status": "processing",
+                "youtube_metadata": metadata
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ YouTube ingestion failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"YouTube ingestion failed: {str(e)}")
 
 
 @router.get("/documents/{document_id}")
