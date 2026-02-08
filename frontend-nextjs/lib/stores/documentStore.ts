@@ -137,6 +137,7 @@ interface DocumentState {
   fetchDocuments: () => Promise<void>;
   fetchKnowledgeBases: () => Promise<void>;
   uploadDocuments: (files: File[], folderName: string) => Promise<void>;
+  uploadYouTubeVideo: (youtubeUrl: string, folderName: string) => Promise<void>;
   deleteDocument: (docId: string) => Promise<void>;
   deleteKnowledgeBase: (folderName: string) => Promise<void>;
   setSelectedKB: (kb: string | null) => void;
@@ -236,6 +237,46 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       startBackgroundPolling(uploadedDocIds, maxFileSizeMB, get, set);
 
       // Function returns here - modal can close while polling continues in background
+
+    } catch (error: any) {
+      set({ error: error.message, uploadStatus: 'failed', uploadProgress: null });
+      throw error;
+    }
+  },
+
+  uploadYouTubeVideo: async (youtubeUrl: string, folderName: string) => {
+    try {
+      set({ error: null, uploadStatus: 'uploading', uploadProgress: { current: 0, total: 1 } });
+
+      // Optimistic update: Add placeholder document
+      const existingDocs = get().documents;
+      const placeholderDoc = {
+        _id: `temp_yt_${Date.now()}`,
+        file_name: 'YouTube Video',
+        folder_name: folderName,
+        user_id: '',
+        organization_id: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'processing' as const,
+        processing_stage: 'downloading',
+        processing_stage_description: 'Downloading YouTube video...',
+      };
+
+      set({ documents: [placeholderDoc, ...existingDocs] });
+
+      // Upload YouTube video
+      const result = await documentsApi.uploadYouTubeVideo(youtubeUrl, folderName);
+
+      // Fetch documents to get the real document
+      await get().fetchDocuments();
+      await get().fetchKnowledgeBases();
+
+      // Set to processing status
+      set({ uploadStatus: 'processing' });
+
+      // Start background polling with longer interval for videos (videos take longer to process)
+      startBackgroundPolling([result.document_id], 50, get, set); // Assume 50MB for polling interval
 
     } catch (error: any) {
       set({ error: error.message, uploadStatus: 'failed', uploadProgress: null });
