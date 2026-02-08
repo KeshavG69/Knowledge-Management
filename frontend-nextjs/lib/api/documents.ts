@@ -77,6 +77,30 @@ export const documentsApi = {
     return response.data.data;
   },
 
+  // Upload YouTube video by URL
+  uploadYouTubeVideo: async (youtubeUrl: string, folderName: string): Promise<{ document_id: string; youtube_metadata: any }> => {
+    const userParams = getUserParams();
+    if (!userParams) {
+      throw new Error('User not authenticated');
+    }
+
+    if (!folderName || !folderName.trim()) {
+      throw new Error('Folder name is required');
+    }
+
+    if (!youtubeUrl || !youtubeUrl.trim()) {
+      throw new Error('YouTube URL is required');
+    }
+
+    const response = await apiClient.post<ApiResponse<{ document_id: string; youtube_metadata: any }>>('/upload/youtube', {
+      youtube_url: youtubeUrl.trim(),
+      folder_name: folderName.trim(),
+      user_id: userParams.user_id,
+      organization_id: userParams.organisation_id,
+    });
+    return response.data.data;
+  },
+
   // Get specific document by ID (for polling status)
   getDocument: async (docId: string): Promise<Document> => {
     const response = await apiClient.get<ApiResponse<Document>>(`/upload/documents/${encodeURIComponent(docId)}`);
