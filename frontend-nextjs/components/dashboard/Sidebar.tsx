@@ -17,6 +17,7 @@ export default function Sidebar() {
     selectFolderDocs,
     deselectFolderDocs,
     uploadDocuments,
+    uploadYouTubeVideo,
     deleteDocument,
     deleteKnowledgeBase,
   } = useDocumentStore();
@@ -26,6 +27,8 @@ export default function Sidebar() {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
+  const [uploadMode, setUploadMode] = useState<"files" | "youtube">("files");
+  const [youtubeUrl, setYoutubeUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
@@ -79,8 +82,53 @@ export default function Sidebar() {
       alert("Please enter a folder name");
       return;
     }
-    // Don't close modal - wait for file selection
-    fileInputRef.current?.click();
+
+    if (uploadMode === "youtube") {
+      handleYouTubeUpload();
+    } else {
+      // Don't close modal - wait for file selection
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleYouTubeUpload = async () => {
+    if (!youtubeUrl || !youtubeUrl.trim()) {
+      alert("Please enter a YouTube URL");
+      return;
+    }
+
+    if (!selectedFolderName || !selectedFolderName.trim()) {
+      alert("Please enter a folder name");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadingFiles([youtubeUrl]);
+
+    try {
+      const targetFolder = selectedFolderName.trim();
+
+      // Auto-expand the folder
+      setExpandedFolders(prev => {
+        const next = new Set(prev);
+        next.add(targetFolder);
+        return next;
+      });
+
+      await uploadYouTubeVideo(youtubeUrl.trim(), targetFolder);
+
+      // Upload successful, close modal and reset
+      setShowUploadModal(false);
+      setSelectedFolderName("");
+      setYoutubeUrl("");
+      setUploadMode("files");
+    } catch (error: any) {
+      console.error("YouTube upload failed:", error);
+      alert(`YouTube upload failed: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+      setUploadingFiles([]);
+    }
   };
 
   const handleDeleteKB = async (folderName: string) => {
@@ -437,6 +485,8 @@ export default function Sidebar() {
               if (!isUploading) {
                 setShowUploadModal(false);
                 setSelectedFolderName("");
+                setYoutubeUrl("");
+                setUploadMode("files");
               }
             }}
           />
@@ -457,7 +507,7 @@ export default function Sidebar() {
                       <div className="w-5 h-5 border-2 border-amber-400/20 border-t-amber-400 rounded-full animate-spin flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="text-sm text-slate-200 font-semibold">
-                          Uploading {uploadingFiles.length} file{uploadingFiles.length !== 1 ? 's' : ''}...
+                          {uploadMode === "youtube" ? "Downloading YouTube video..." : `Uploading ${uploadingFiles.length} file${uploadingFiles.length !== 1 ? 's' : ''}...`}
                         </div>
                         <div className="text-xs text-slate-500 mt-0.5">
                           To: {selectedFolderName}
@@ -465,7 +515,7 @@ export default function Sidebar() {
                       </div>
                     </div>
 
-                    {/* File list */}
+                    {/* File/URL list */}
                     <div className="max-h-48 overflow-y-auto tactical-scrollbar space-y-1">
                       {uploadingFiles.map((fileName, idx) => (
                         <div key={idx} className="text-xs text-slate-400 py-1 px-2 bg-slate-800/30 border border-slate-700/30 flex items-center gap-2">
@@ -476,12 +526,37 @@ export default function Sidebar() {
                     </div>
 
                     <div className="text-xs text-slate-600 text-center">
-                      Please wait while files are being uploaded...
+                      {uploadMode === "youtube" ? "Please wait while the video is being downloaded and processed..." : "Please wait while files are being uploaded..."}
                     </div>
                   </div>
                 ) : (
-                  // Folder selection state
+                  // Upload mode selection state
                   <div className="space-y-4">
+                    {/* Mode Tabs */}
+                    <div className="flex gap-2 p-1 bg-slate-800/50 border border-slate-700/50">
+                      <button
+                        onClick={() => setUploadMode("files")}
+                        className={`flex-1 py-2 px-3 text-xs font-semibold tracking-wider transition-all ${
+                          uploadMode === "files"
+                            ? "bg-amber-400 text-slate-900"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        FILES
+                      </button>
+                      <button
+                        onClick={() => setUploadMode("youtube")}
+                        className={`flex-1 py-2 px-3 text-xs font-semibold tracking-wider transition-all ${
+                          uploadMode === "youtube"
+                            ? "bg-amber-400 text-slate-900"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        YOUTUBE
+                      </button>
+                    </div>
+
+                    {/* Folder Name Input */}
                     <div>
                       <label className="block text-xs text-slate-500 tracking-widest mb-2 uppercase">
                         Folder Name (New or Existing)
@@ -493,7 +568,7 @@ export default function Sidebar() {
                         onChange={(e) => setSelectedFolderName(e.target.value)}
                         placeholder="e.g., CSS VSAT"
                         className="tactical-input"
-                        autoFocus
+                        autoFocus={uploadMode === "files"}
                       />
                       {folderList.length > 0 && (
                         <datalist id="existing-folders">
@@ -511,12 +586,32 @@ export default function Sidebar() {
                       </div>
                     </div>
 
+                    {/* YouTube URL Input (only show in YouTube mode) */}
+                    {uploadMode === "youtube" && (
+                      <div>
+                        <label className="block text-xs text-slate-500 tracking-widest mb-2 uppercase">
+                          YouTube URL
+                        </label>
+                        <input
+                          type="url"
+                          value={youtubeUrl}
+                          onChange={(e) => setYoutubeUrl(e.target.value)}
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          className="tactical-input"
+                          autoFocus={uploadMode === "youtube"}
+                        />
+                        <div className="text-[10px] text-slate-600 mt-2">
+                          Paste a YouTube video URL to download and process
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       onClick={handleProceedWithUpload}
-                      disabled={!selectedFolderName.trim()}
+                      disabled={!selectedFolderName.trim() || (uploadMode === "youtube" && !youtubeUrl.trim())}
                       className="tactical-btn tactical-btn-primary w-full disabled:opacity-50"
                     >
-                      PROCEED WITH UPLOAD
+                      {uploadMode === "youtube" ? "DOWNLOAD & PROCESS VIDEO" : "PROCEED WITH UPLOAD"}
                     </button>
                   </div>
                 )}
@@ -527,6 +622,8 @@ export default function Sidebar() {
                       onClick={() => {
                         setShowUploadModal(false);
                         setSelectedFolderName("");
+                        setYoutubeUrl("");
+                        setUploadMode("files");
                       }}
                       className="tactical-btn flex-1"
                     >
