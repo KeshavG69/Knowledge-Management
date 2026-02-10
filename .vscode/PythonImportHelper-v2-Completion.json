@@ -2775,6 +2775,14 @@
         "documentation": {}
     },
     {
+        "label": "RecursiveChunker",
+        "importPath": "chonkie",
+        "description": "chonkie",
+        "isExtraImport": true,
+        "detail": "chonkie",
+        "documentation": {}
+    },
+    {
         "label": "OpenAIEmbeddings",
         "importPath": "chonkie.embeddings.openai",
         "description": "chonkie.embeddings.openai",
@@ -4622,7 +4630,7 @@
         "kind": 6,
         "importPath": "backend.clients.chunker_client",
         "description": "backend.clients.chunker_client",
-        "peekOfCode": "class ChunkerClient:\n    \"\"\"Thread-safe chunker client for semantic document chunking\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:\n                    cls._instance = super().__new__(cls)",
+        "peekOfCode": "class ChunkerClient:\n    \"\"\"Thread-safe chunker client for semantic document chunking\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    _chunking_semaphore = None  # Global semaphore shared across all operations\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:",
         "detail": "backend.clients.chunker_client",
         "documentation": {}
     },
@@ -4641,6 +4649,15 @@
         "importPath": "backend.clients.chunker_client",
         "description": "backend.clients.chunker_client",
         "peekOfCode": "def get_semantic_chunker(\n    embedding_model: str = \"text-embedding-3-small\",\n    threshold: Union[str, float, int] = DEFAULT_THRESHOLD,\n    chunk_size: int = DEFAULT_CHUNK_SIZE,\n    similarity_window: int = DEFAULT_SIMILARITY_WINDOW,\n    min_sentences_per_chunk: int = DEFAULT_MIN_SENTENCES_PER_CHUNK,\n    min_characters_per_sentence: int = DEFAULT_MIN_CHARACTERS_PER_SENTENCE,\n    delim: Union[str, List[str]] = None,\n    include_delim: Union[Literal['prev', 'next'], None] = DEFAULT_INCLUDE_DELIM,\n    **kwargs: Any",
+        "detail": "backend.clients.chunker_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_recursive_chunker",
+        "kind": 2,
+        "importPath": "backend.clients.chunker_client",
+        "description": "backend.clients.chunker_client",
+        "peekOfCode": "def get_recursive_chunker(\n    chunk_size: int = DEFAULT_CHUNK_SIZE,\n    **kwargs: Any\n) -> RecursiveChunker:\n    \"\"\"\n    Get cached recursive chunker instance (no embeddings needed - fast and thread-safe)\n    Perfect for structured data like Excel/CSV where embeddings aren't needed.\n    Args:\n        chunk_size: Maximum tokens allowed per chunk\n        **kwargs: Additional keyword arguments",
         "detail": "backend.clients.chunker_client",
         "documentation": {}
     },
