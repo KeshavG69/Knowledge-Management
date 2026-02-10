@@ -106,14 +106,14 @@ def process_single_document_task(
     try:
         logger.info(f"🚀 Worker processing: {filename} (doc_id: {document_id})")
 
-        # Decode base64 file content (no UploadFile needed!)
+        # Decode base64 file content
         file_content = base64.b64decode(content_b64)
 
         # Create ingestion service
         ingestion_service = IngestionService()
 
-        # Use sync wrapper - avoids event loop conflicts and threading
-        result = ingestion_service.process_document_with_bytes_sync(
+        # Use fully synchronous method - no event loop needed
+        result = ingestion_service.process_single_document_sync(
             document_id=document_id,
             file_content=file_content,
             filename=filename,
