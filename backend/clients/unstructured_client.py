@@ -10,6 +10,7 @@ from typing import Optional
 from pathlib import Path
 from unstructured_client import UnstructuredClient as UnstructuredAPIClient
 from unstructured_client.models import shared
+import httpx
 from app.logger import logger
 from app.settings import settings
 
@@ -37,15 +38,25 @@ class UnstructuredClient:
             if not self.api_key:
                 raise ValueError("UNSTRUCTURED_API_KEY not configured in settings")
 
-            # Initialize client
+            # Create custom HTTP client with connection limits (prevents threading issues in Celery)
+            self._http_client = httpx.Client(
+                timeout=httpx.Timeout(300.0),  # 5 minute timeout
+                limits=httpx.Limits(
+                    max_keepalive_connections=0,  # Disable keep-alive to prevent stale connections in Celery
+                    max_connections=5,  # Limit concurrent connections
+                ),
+            )
+
+            # Initialize client with custom HTTP client
             self.client = UnstructuredAPIClient(
                 api_key_auth=self.api_key,
-                server_url=self.api_url if self.api_url else None
+                server_url=self.api_url if self.api_url else None,
+                client=self._http_client  # Pass custom HTTP client
             )
 
             self._extraction_lock = threading.Lock()
             self._initialized = True
-            logger.info("✅ Unstructured API client initialized")
+            logger.info("✅ Unstructured API client initialized with custom HTTP client")
 
     def extract_content(self, file_content: bytes, filename: str) -> str:
         """

@@ -80,7 +80,7 @@ def process_document_ids_task(
     }
 
 
-@celery_app.task(bind=True)
+@celery_app.task(bind=True, rate_limit="5/m")
 def process_single_document_task(
     self,
     document_id: str,
