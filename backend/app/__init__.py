@@ -1,14 +1,13 @@
 """
-Application initialization
-CRITICAL: Pinecone SDK uses multiprocessing internally for batch operations
-Must initialize multiprocessing BEFORE any Pinecone imports
+SoldierIQ Backend Application
 """
-import multiprocessing
 
-# Pinecone SDK imports multiprocessing.pool.ApplyResult and uses Pool for parallel ops
-# Use 'spawn' method for Railway/cloud environments (safer than 'fork')
+# Fix multiprocessing context BEFORE any other imports
+# This prevents "DummyProcess has no attribute 'terminate'" errors
+import multiprocessing
 try:
-    multiprocessing.set_start_method('spawn', force=True)
+    multiprocessing.set_start_method('fork', force=True)
 except RuntimeError:
-    # Already set - this is fine
-    pass
+    pass  # Already set
+
+__version__ = "0.1.0"

@@ -31,15 +31,10 @@ from utils.file_utils import (
 )
 from app.logger import logger
 from app.settings import settings
-from app.thread_pool import get_thread_pool
 
 
 class IngestionService:
     """Service for handling document ingestion pipeline"""
-
-    # GLOBAL semaphore shared across ALL users and ALL instances
-    # Allow up to MAX_THREAD_WORKERS concurrent ingestions to prevent thread exhaustion
-    _global_ingestion_semaphore = asyncio.Semaphore(settings.MAX_THREAD_WORKERS)
 
     def __init__(self):
         """Initialize service with all required clients"""
@@ -47,10 +42,6 @@ class IngestionService:
         self.mongodb_client = get_mongodb_client()
         self.pinecone_client = get_pinecone_client()
         self.chunker_client = get_chunker_client()
-
-        # Use global thread pool (shared across entire application)
-        self.thread_pool = get_thread_pool()
-        logger.info(f"🔧 IngestionService initialized - using GLOBAL semaphore (max {settings.MAX_THREAD_WORKERS} concurrent files)")
 
     async def ingest_documents(
         self,
@@ -91,31 +82,26 @@ class IngestionService:
 
         start_time = datetime.utcnow()
 
-        # Process files with global concurrency limit (max MAX_THREAD_WORKERS at a time)
-        logger.info(f"🚀 Processing {len(files)} files (max {settings.MAX_THREAD_WORKERS} concurrent)")
+        # Process all files in parallel for faster uploads
+        logger.info(f"🚀 Processing {len(files)} files in parallel")
 
         async def process_file_with_error_handling(file):
-            """Wrapper to handle errors for each file independently with concurrency control"""
-            # GLOBAL SEMAPHORE: Max MAX_THREAD_WORKERS files can be processed across ALL users at the same time
-            async with IngestionService._global_ingestion_semaphore:
-                logger.info(f"🔒 Acquired semaphore slot for {file.filename} - processing now")
-                try:
-                    result = await self._process_single_document(
-                        file=file,
-                        folder_name=folder_name,
-                        user_id=user_id,
-                        organization_id=organization_id,
-                        additional_metadata=additional_metadata
-                    )
-                    logger.info(f"✅ Successfully processed: {file.filename}")
-                    return {"success": True, "result": result, "filename": file.filename}
-                except Exception as e:
-                    logger.error(f"❌ Failed to process {file.filename}: {str(e)}")
-                    return {"success": False, "error": str(e), "filename": file.filename}
-                finally:
-                    logger.info(f"🔓 Released semaphore slot for {file.filename}")
+            """Wrapper to handle errors for each file independently"""
+            try:
+                result = await self._process_single_document(
+                    file=file,
+                    folder_name=folder_name,
+                    user_id=user_id,
+                    organization_id=organization_id,
+                    additional_metadata=additional_metadata
+                )
+                logger.info(f"✅ Successfully processed: {file.filename}")
+                return {"success": True, "result": result, "filename": file.filename}
+            except Exception as e:
+                logger.error(f"❌ Failed to process {file.filename}: {str(e)}")
+                return {"success": False, "error": str(e), "filename": file.filename}
 
-        # Submit all files - global semaphore limits concurrency to MAX_THREAD_WORKERS
+        # Process all files concurrently
         file_results = await asyncio.gather(*[process_file_with_error_handling(file) for file in files])
 
         # Aggregate results
@@ -204,17 +190,18 @@ class IngestionService:
                 stage_description="Uploading to storage and extracting content"
             )
 
-            # Upload file (synchronous - no parallelism)
-            await self.idrivee2_client.upload_file(
+            upload_task = self.idrivee2_client.upload_file(
                 file_obj=io.BytesIO(file_content),
                 object_name=file_key,
                 content_type=file.content_type
             )
 
-            # Extract content (synchronous - no thread pool to avoid thread exhaustion)
-            raw_content = extract_raw_data(file_content, file.filename, folder_name)
+            extraction_task = asyncio.to_thread(extract_raw_data, file_content, file.filename, folder_name)
 
-            logger.info(f"✅ Sequential processing complete for {file.filename}")
+            # Wait for both to complete
+            _, raw_content = await asyncio.gather(upload_task, extraction_task)
+
+            logger.info(f"✅ Parallel processing complete for {file.filename}")
 
             # Check if this is a video file (special handling)
             is_video = isinstance(raw_content, dict) and raw_content.get('type') == 'video'
@@ -235,8 +222,8 @@ class IngestionService:
                 if not validate_extracted_content(raw_content):
                     raise ValueError(f"Extracted content is invalid or empty for: {file.filename}")
 
-                # Validate content for embeddings (synchronous)
-                validation_result = validate_content_for_embeddings(raw_content)
+                # Validate content for embeddings (check token limits - run in thread pool)
+                validation_result = await asyncio.to_thread(validate_content_for_embeddings, raw_content)
                 logger.info(
                     f"📊 Content validation: {validation_result['token_count']} tokens, "
                     f"needs_chunking={validation_result['needs_chunking']}"
@@ -307,12 +294,12 @@ class IngestionService:
                 logger.info(f"   - Namespace: {organization_id}")
                 logger.info(f"   - First text preview: {texts[0][:100]}..." if texts else "   - No texts")
 
-                # Add to Pinecone (synchronous)
-                self.pinecone_client.add_documents(
-                    texts=texts,
-                    metadatas=metadatas,
-                    ids=ids,
-                    namespace=organization_id
+                await asyncio.to_thread(
+                self.pinecone_client.add_documents,
+                texts=texts,
+                metadatas=metadatas,
+                ids=ids,
+                namespace=organization_id
                 )
 
                 total_chunks = len(video_chunks)
@@ -330,8 +317,12 @@ class IngestionService:
                     **(additional_metadata or {})
                 }
 
-                # This handles token-based pre-chunking if content > 200k tokens (synchronous)
-                prepared_documents = prepare_content_for_vectorization(content=raw_content, metadata=base_metadata)
+                # This handles token-based pre-chunking if content > 200k tokens (run in thread pool)
+                prepared_documents = await asyncio.to_thread(
+                    prepare_content_for_vectorization,
+                    content=raw_content,
+                    metadata=base_metadata
+                )
 
                 # Apply semantic chunking to each prepared document and store in Pinecone
                 logger.info(
@@ -348,8 +339,9 @@ class IngestionService:
                         f"for {file.filename}..."
                     )
 
-                    # Apply semantic chunking to this pre-chunk (synchronous)
-                    chunks = self.chunker_client.chunk_with_metadata(
+                    # Apply semantic chunking to this pre-chunk (run in thread pool)
+                    chunks = await asyncio.to_thread(
+                        self.chunker_client.chunk_with_metadata,
                         text=pre_chunk_content,
                         base_metadata=pre_chunk_metadata,
                         chunker_type="default"
@@ -366,8 +358,9 @@ class IngestionService:
                         for i in range(len(chunks))
                     ]
 
-                    # Add to Pinecone (synchronous)
-                    self.pinecone_client.add_documents(
+                    # Add to Pinecone in thread pool (embedding + upload is blocking)
+                    await asyncio.to_thread(
+                        self.pinecone_client.add_documents,
                         texts=texts,
                         metadatas=metadatas,
                         ids=ids,
@@ -471,17 +464,18 @@ class IngestionService:
                 stage_description="Uploading to storage and extracting content"
             )
 
-            # Upload file (synchronous - no parallelism)
-            await self.idrivee2_client.upload_file(
+            upload_task = self.idrivee2_client.upload_file(
                 file_obj=io.BytesIO(file_content),
                 object_name=file_key,
                 content_type=file.content_type
             )
 
-            # Extract content (synchronous - no thread pool to avoid thread exhaustion)
-            raw_content = extract_raw_data(file_content, file.filename, folder_name)
+            extraction_task = asyncio.to_thread(extract_raw_data, file_content, file.filename, folder_name)
 
-            logger.info(f"✅ Sequential processing complete for {file.filename}")
+            # Wait for both to complete
+            _, raw_content = await asyncio.gather(upload_task, extraction_task)
+
+            logger.info(f"✅ Parallel processing complete for {file.filename}")
 
             # Check if this is a video file (special handling)
             is_video = isinstance(raw_content, dict) and raw_content.get('type') == 'video'
@@ -502,8 +496,8 @@ class IngestionService:
                 if not validate_extracted_content(raw_content):
                     raise ValueError(f"Extracted content is invalid or empty for: {file.filename}")
 
-                # Validate content for embeddings (synchronous)
-                validation_result = validate_content_for_embeddings(raw_content)
+                # Validate content for embeddings (check token limits - run in thread pool)
+                validation_result = await asyncio.to_thread(validate_content_for_embeddings, raw_content)
                 logger.info(
                     f"📊 Content validation: {validation_result['token_count']} tokens, "
                     f"needs_chunking={validation_result['needs_chunking']}"
@@ -573,8 +567,8 @@ class IngestionService:
                 logger.info(f"🔄 Starting Pinecone storage for {len(texts)} video chunks...")
                 logger.info(f"   - Namespace: {organization_id}")
 
-                # Add to Pinecone (synchronous)
-                self.pinecone_client.add_documents(
+                await asyncio.to_thread(
+                    self.pinecone_client.add_documents,
                     texts=texts,
                     metadatas=metadatas,
                     ids=ids,
@@ -596,8 +590,12 @@ class IngestionService:
                     **(additional_metadata or {})
                 }
 
-                # This handles token-based pre-chunking if content > 200k tokens (synchronous)
-                prepared_documents = prepare_content_for_vectorization(content=raw_content, metadata=base_metadata)
+                # This handles token-based pre-chunking if content > 200k tokens
+                prepared_documents = await asyncio.to_thread(
+                    prepare_content_for_vectorization,
+                    content=raw_content,
+                    metadata=base_metadata
+                )
 
                 # Apply semantic chunking
                 logger.info(
@@ -614,8 +612,9 @@ class IngestionService:
                         f"for {file.filename}..."
                     )
 
-                    # Apply semantic chunking to this pre-chunk (synchronous)
-                    chunks = self.chunker_client.chunk_with_metadata(
+                    # Apply semantic chunking to this pre-chunk
+                    chunks = await asyncio.to_thread(
+                        self.chunker_client.chunk_with_metadata,
                         text=pre_chunk_content,
                         base_metadata=pre_chunk_metadata,
                         chunker_type="default"
@@ -632,8 +631,9 @@ class IngestionService:
                         for i in range(len(chunks))
                     ]
 
-                    # Add to Pinecone (synchronous)
-                    self.pinecone_client.add_documents(
+                    # Add to Pinecone in thread pool
+                    await asyncio.to_thread(
+                        self.pinecone_client.add_documents,
                         texts=texts,
                         metadatas=metadatas,
                         ids=ids,
@@ -925,8 +925,9 @@ class IngestionService:
         try:
             # organization_id is stored as ObjectId in MongoDB, convert to string for Pinecone namespace
             organization_id = str(document.get("organization_id")) if document.get("organization_id") else None
-            # Delete all chunks for this document (synchronous)
-            self.pinecone_client.delete_documents(
+            # Delete all chunks for this document (run in thread pool)
+            await asyncio.to_thread(
+                self.pinecone_client.delete_documents,
                 filter={"document_id": document_id},
                 namespace=organization_id
             )
@@ -1241,8 +1242,8 @@ class IngestionService:
         org_namespace = str(organization_id) if organization_id else None
 
         try:
-            # Update Pinecone metadata (synchronous)
-            pinecone_updated = self.pinecone_client.update_metadata_by_filter(
+            pinecone_updated = await asyncio.to_thread(
+                self.pinecone_client.update_metadata_by_filter,
                 filter=pinecone_filter,
                 new_metadata={"folder_name": new_folder_name},
                 namespace=org_namespace

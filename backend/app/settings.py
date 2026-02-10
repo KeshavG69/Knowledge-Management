@@ -46,9 +46,14 @@ class Settings(BaseSettings):
     # File Storage
     PRESIGNED_URL_EXPIRATION: int = 604800  # 7 days in seconds (maximum)
 
-    # Concurrency Settings - SIMPLIFIED for Railway resource limits
-    MAX_CONCURRENT_FILES: int = 4  # Process ONE file at a time (sequential)
-    MAX_THREAD_WORKERS: int = 5    # Absolutely minimal threading
+    # Redis Configuration (for Celery)
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = ""
+
+    # Celery Configuration
+    CELERY_BROKER_URL: str = ""  # Will be set from REDIS_HOST/PORT
+    CELERY_RESULT_BACKEND: str = ""  # Will be set from REDIS_HOST/PORT
 
     # Observability
 
