@@ -2,12 +2,8 @@
 Document Ingestion Celery Tasks
 Processes documents using existing MongoDB document IDs
 """
-import asyncio
 import base64
-import io
-import nest_asyncio
 from typing import Dict, Any, List
-from fastapi import UploadFile
 from app.worker import celery_app
 from services.ingestion_service import IngestionService
 from app.logger import logger
@@ -110,32 +106,22 @@ def process_single_document_task(
     try:
         logger.info(f"🚀 Worker processing: {filename} (doc_id: {document_id})")
 
-        # Apply nest_asyncio to allow nested event loops in Celery workers
-        nest_asyncio.apply()
-
-        # Decode base64 file content
+        # Decode base64 file content (no UploadFile needed!)
         file_content = base64.b64decode(content_b64)
-
-        # Reconstruct UploadFile object
-        file = UploadFile(
-            file=io.BytesIO(file_content),
-            filename=filename,
-            headers={"content-type": content_type}
-        )
 
         # Create ingestion service
         ingestion_service = IngestionService()
 
-        # Run async processing
-        result = asyncio.run(
-            ingestion_service._process_single_document_with_existing_id(
-                document_id=document_id,
-                file=file,
-                folder_name=folder_name,
-                user_id=user_id,
-                organization_id=organization_id,
-                additional_metadata=None
-            )
+        # Use sync wrapper - avoids event loop conflicts and threading
+        result = ingestion_service.process_document_with_bytes_sync(
+            document_id=document_id,
+            file_content=file_content,
+            filename=filename,
+            content_type=content_type,
+            folder_name=folder_name,
+            user_id=user_id,
+            organization_id=organization_id,
+            additional_metadata=None
         )
 
         logger.info(f"✅ Worker completed: {filename}")
