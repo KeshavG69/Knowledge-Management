@@ -47,8 +47,8 @@ class Settings(BaseSettings):
     PRESIGNED_URL_EXPIRATION: int = 604800  # 7 days in seconds (maximum)
 
     # Concurrency Settings - SIMPLIFIED for Railway resource limits
-    MAX_CONCURRENT_FILES: int = 2  # Process ONE file at a time (sequential)
-    MAX_THREAD_WORKERS: int = 4    # Minimal threading (reduced from 4)
+    MAX_CONCURRENT_FILES: int = 1  # Process ONE file at a time (sequential)
+    MAX_THREAD_WORKERS: int = 1    # Absolutely minimal threading
 
     # Observability
 
