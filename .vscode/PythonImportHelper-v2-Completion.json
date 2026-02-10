@@ -4957,7 +4957,7 @@
         "kind": 6,
         "importPath": "backend.clients.pinecone_client",
         "description": "backend.clients.pinecone_client",
-        "peekOfCode": "class PineconeClient:\n    \"\"\"Client for Pinecone vector database operations using LangChain\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Pinecone client with LangChain\"\"\"\n        self.api_key = settings.PINECONE_API_KEY\n        self.index_name = settings.PINECONE_INDEX_NAME\n        self.embedding_model = settings.OPENAI_API_KEY\n        if not self.api_key:\n            raise ValueError(\"PINECONE_API_KEY not configured\")\n        if not self.index_name:",
+        "peekOfCode": "class PineconeClient:\n    \"\"\"Client for Pinecone vector database operations using LangChain\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Pinecone client with LangChain\"\"\"\n        import os\n        self.api_key = settings.PINECONE_API_KEY\n        self.index_name = settings.PINECONE_INDEX_NAME\n        self.embedding_model = settings.OPENAI_API_KEY\n        if not self.api_key:\n            raise ValueError(\"PINECONE_API_KEY not configured\")",
         "detail": "backend.clients.pinecone_client",
         "documentation": {}
     },

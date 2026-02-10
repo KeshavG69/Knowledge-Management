@@ -17,6 +17,7 @@ class PineconeClient:
 
     def __init__(self):
         """Initialize Pinecone client with LangChain"""
+        import os
         self.api_key = settings.PINECONE_API_KEY
         self.index_name = settings.PINECONE_INDEX_NAME
         self.embedding_model = settings.OPENAI_API_KEY
@@ -28,14 +29,25 @@ class PineconeClient:
         if not self.embedding_model:
             raise ValueError("OPENAI_API_KEY not configured for embeddings")
 
-        # Initialize Pinecone without thread pool (avoids multiprocessing issues in Celery)
+        # CRITICAL: Disable gRPC and threading to prevent thread pool creation in Celery
+        os.environ['PINECONE_GRPC_ENABLED'] = 'false'
+        os.environ['OPENAI_NO_HTTPX_POOL'] = '1'  # Disable OpenAI's httpx connection pool
+
+        # Initialize Pinecone with minimal threading (REST API only)
         self.pc = Pinecone(api_key=self.api_key, pool_threads=1, source_tag="celery-worker")
 
-        # Initialize OpenAI embeddings
+        # Initialize OpenAI embeddings with sync HTTP client (no thread pools)
+        import httpx
+        sync_http_client = httpx.Client(
+            timeout=httpx.Timeout(60.0),
+            limits=httpx.Limits(max_connections=1, max_keepalive_connections=0)
+        )
         self.embeddings = OpenAIEmbeddings(
             openai_api_key=self.embedding_model,
-            model="text-embedding-3-small"  # Efficient embedding model
+            model="text-embedding-3-small",  # Efficient embedding model
+            http_client=sync_http_client  # Use sync client, no thread pools
         )
+        self._embedding_http_client = sync_http_client  # Store for cleanup
 
         # Check if index exists, create if not
         self._ensure_index_exists()
@@ -51,6 +63,9 @@ class PineconeClient:
     def cleanup(self):
         """Clean up Pinecone client resources and thread pools"""
         try:
+            # Close the OpenAI embeddings HTTP client
+            if hasattr(self, '_embedding_http_client') and self._embedding_http_client:
+                self._embedding_http_client.close()
             # Close the Pinecone client's thread pool
             if hasattr(self.pc, '_pool') and self.pc._pool:
                 self.pc._pool.close()
@@ -125,8 +140,8 @@ class PineconeClient:
             else:
                 vector_store = self.vector_store
 
-            # Process in small batches to avoid multiprocessing pool issues in Celery
-            batch_size = 50  # Smaller batches to avoid threading
+            # Process in very small batches to avoid multiprocessing pool issues in Celery
+            batch_size = 10  # Very small batches to minimize threading
             all_doc_ids = []
 
             for i in range(0, len(documents), batch_size):

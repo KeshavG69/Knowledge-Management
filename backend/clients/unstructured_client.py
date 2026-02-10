@@ -28,8 +28,8 @@ class UnstructuredClient:
         self._http_client = httpx.Client(
             timeout=httpx.Timeout(300.0),  # 5 minute timeout
             limits=httpx.Limits(
-                max_keepalive_connections=0,  # Disable keep-alive to prevent stale connections in Celery
-                max_connections=5,  # Limit concurrent connections
+                max_keepalive_connections=0,  # Disable keep-alive
+                max_connections=1,  # Only 1 connection to prevent thread pool
             ),
         )
 
@@ -88,6 +88,9 @@ class UnstructuredClient:
                             },
                             "strategy": shared.Strategy.FAST,  # Fast strategy for speed
                             "languages": ["eng"],
+                            "split_pdf_page": False,  # Disable PDF splitting to avoid threading
+                            "split_pdf_allow_failed": False,  # Don't use split PDF hook
+                            "split_pdf_concurrency_level": 1,  # Minimal concurrency
                         }
                     }
 
