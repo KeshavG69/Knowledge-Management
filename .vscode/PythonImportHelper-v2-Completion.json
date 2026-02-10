@@ -640,22 +640,6 @@
         "documentation": {}
     },
     {
-        "label": "Dict",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "Any",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
         "label": "Any",
         "importPath": "typing",
         "description": "typing",
@@ -881,6 +865,30 @@
     },
     {
         "label": "AsyncGenerator",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1492,7 +1500,7 @@
         "documentation": {}
     },
     {
-        "label": "BackgroundTasks",
+        "label": "Depends",
         "importPath": "fastapi",
         "description": "fastapi",
         "isExtraImport": true,
@@ -1500,7 +1508,7 @@
         "documentation": {}
     },
     {
-        "label": "Depends",
+        "label": "UploadFile",
         "importPath": "fastapi",
         "description": "fastapi",
         "isExtraImport": true,
@@ -2173,11 +2181,28 @@
         "documentation": {}
     },
     {
-        "label": "ThreadPoolExecutor",
-        "importPath": "concurrent.futures",
-        "description": "concurrent.futures",
+        "label": "Celery",
+        "importPath": "celery",
+        "description": "celery",
         "isExtraImport": true,
-        "detail": "concurrent.futures",
+        "detail": "celery",
+        "documentation": {}
+    },
+    {
+        "label": "tasks.ingestion_tasks",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "tasks.ingestion_tasks",
+        "description": "tasks.ingestion_tasks",
+        "detail": "tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
+        "label": "process_document_ids_task",
+        "importPath": "tasks.ingestion_tasks",
+        "description": "tasks.ingestion_tasks",
+        "isExtraImport": true,
+        "detail": "tasks.ingestion_tasks",
         "documentation": {}
     },
     {
@@ -2254,22 +2279,6 @@
     },
     {
         "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "timezone",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -2752,14 +2761,6 @@
     },
     {
         "label": "lru_cache",
-        "importPath": "functools",
-        "description": "functools",
-        "isExtraImport": true,
-        "detail": "functools",
-        "documentation": {}
-    },
-    {
-        "label": "partial",
         "importPath": "functools",
         "description": "functools",
         "isExtraImport": true,
@@ -3408,22 +3409,6 @@
         "documentation": {}
     },
     {
-        "label": "get_thread_pool",
-        "importPath": "app.thread_pool",
-        "description": "app.thread_pool",
-        "isExtraImport": true,
-        "detail": "app.thread_pool",
-        "documentation": {}
-    },
-    {
-        "label": "get_thread_pool",
-        "importPath": "app.thread_pool",
-        "description": "app.thread_pool",
-        "isExtraImport": true,
-        "detail": "app.thread_pool",
-        "documentation": {}
-    },
-    {
         "label": "create_chat_agent",
         "importPath": "services.chat",
         "description": "services.chat",
@@ -3665,6 +3650,14 @@
         "documentation": {}
     },
     {
+        "label": "IngestionService",
+        "importPath": "services.ingestion_service",
+        "description": "services.ingestion_service",
+        "isExtraImport": true,
+        "detail": "services.ingestion_service",
+        "documentation": {}
+    },
+    {
         "label": "get_ingestion_service",
         "importPath": "services.ingestion_service",
         "description": "services.ingestion_service",
@@ -3870,6 +3863,23 @@
         "description": "models.podcast",
         "isExtraImport": true,
         "detail": "models.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "nest_asyncio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "nest_asyncio",
+        "description": "nest_asyncio",
+        "detail": "nest_asyncio",
+        "documentation": {}
+    },
+    {
+        "label": "celery_app",
+        "importPath": "app.worker",
+        "description": "app.worker",
+        "isExtraImport": true,
+        "detail": "app.worker",
         "documentation": {}
     },
     {
@@ -4347,21 +4357,21 @@
         "documentation": {}
     },
     {
-        "label": "get_thread_pool",
+        "label": "build_redis_url",
         "kind": 2,
-        "importPath": "backend.app.thread_pool",
-        "description": "backend.app.thread_pool",
-        "peekOfCode": "def get_thread_pool() -> ThreadPoolExecutor:\n    \"\"\"\n    Get or create the global thread pool executor.\n    This thread pool is shared across the entire application to prevent\n    thread exhaustion from unlimited thread creation.\n    Returns:\n        ThreadPoolExecutor: Shared thread pool with limited workers\n    \"\"\"\n    global _thread_pool\n    if _thread_pool is None:",
-        "detail": "backend.app.thread_pool",
+        "importPath": "backend.app.worker",
+        "description": "backend.app.worker",
+        "peekOfCode": "def build_redis_url(db: int) -> str:\n    \"\"\"Build Redis URL with optional authentication\"\"\"\n    if settings.REDIS_PASSWORD:\n        # Include password in URL (format: redis://:password@host:port/db)\n        return f\"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{db}\"\n    else:\n        # No password (local development)\n        return f\"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{db}\"\n# Initialize Celery app\ncelery_app = Celery(",
+        "detail": "backend.app.worker",
         "documentation": {}
     },
     {
-        "label": "shutdown_thread_pool",
-        "kind": 2,
-        "importPath": "backend.app.thread_pool",
-        "description": "backend.app.thread_pool",
-        "peekOfCode": "def shutdown_thread_pool(wait: bool = True):\n    \"\"\"\n    Shutdown the global thread pool.\n    Args:\n        wait: If True, wait for all threads to complete before returning\n    \"\"\"\n    global _thread_pool\n    if _thread_pool is not None:\n        _thread_pool.shutdown(wait=wait)\n        _thread_pool = None",
-        "detail": "backend.app.thread_pool",
+        "label": "celery_app",
+        "kind": 5,
+        "importPath": "backend.app.worker",
+        "description": "backend.app.worker",
+        "peekOfCode": "celery_app = Celery(\n    \"soldieriq_worker\",\n    broker=build_redis_url(0),\n    backend=build_redis_url(1),\n)\n# Import task modules to register them with Celery\n# This must happen after celery_app is created\nimport tasks.ingestion_tasks  # noqa: E402, F401\n# Celery configuration\ncelery_app.conf.update(",
+        "detail": "backend.app.worker",
         "documentation": {}
     },
     {
@@ -4630,7 +4640,7 @@
         "kind": 6,
         "importPath": "backend.clients.chunker_client",
         "description": "backend.clients.chunker_client",
-        "peekOfCode": "class ChunkerClient:\n    \"\"\"Thread-safe chunker client for semantic document chunking\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    _chunking_semaphore = None  # Global semaphore shared across all operations\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:",
+        "peekOfCode": "class ChunkerClient:\n    \"\"\"Thread-safe chunker client for semantic document chunking\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:\n                    cls._instance = super().__new__(cls)",
         "detail": "backend.clients.chunker_client",
         "documentation": {}
     },
@@ -5377,7 +5387,7 @@
         "kind": 6,
         "importPath": "backend.routers.upload",
         "description": "backend.routers.upload",
-        "peekOfCode": "class YouTubeIngestionRequest(BaseModel):\n    \"\"\"Request model for YouTube URL ingestion\"\"\"\n    youtube_url: str\n    folder_name: str\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n@router.post(\"/youtube\")\nasync def ingest_youtube_video(\n    request: YouTubeIngestionRequest,\n    background_tasks: BackgroundTasks,",
+        "peekOfCode": "class YouTubeIngestionRequest(BaseModel):\n    \"\"\"Request model for YouTube URL ingestion\"\"\"\n    youtube_url: str\n    folder_name: str\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n@router.post(\"/youtube\")\nasync def ingest_youtube_video(\n    request: YouTubeIngestionRequest,\n    current_user: dict = Depends(get_current_user)",
         "detail": "backend.routers.upload",
         "documentation": {}
     },
@@ -5386,7 +5396,7 @@
         "kind": 5,
         "importPath": "backend.routers.upload",
         "description": "backend.routers.upload",
-        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\nasync def process_ingestion_in_background(\n    document_ids: List[str],\n    file_data: List[Dict[str, Any]],\n    folder_name: str,\n    user_id: Optional[str],\n    organization_id: Optional[str]\n):\n    \"\"\"\n    Background task for document ingestion",
+        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\n@router.post(\"/documents\")\nasync def upload_documents(\n    files: List[UploadFile] = File(..., description=\"Multiple files to upload\"),\n    folder_name: str = Form(..., description=\"Folder name for organization\"),\n    user_id: Optional[str] = Form(None, description=\"Optional user ID\"),\n    organization_id: Optional[str] = Form(None, description=\"Optional organization ID\"),\n    current_user: dict = Depends(get_current_user)\n):\n    \"\"\"",
         "detail": "backend.routers.upload",
         "documentation": {}
     },
@@ -5494,7 +5504,7 @@
         "kind": 6,
         "importPath": "backend.services.ingestion_service",
         "description": "backend.services.ingestion_service",
-        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    # GLOBAL semaphore shared across ALL users and ALL instances\n    # Allow up to MAX_THREAD_WORKERS concurrent ingestions to prevent thread exhaustion\n    _global_ingestion_semaphore = asyncio.Semaphore(settings.MAX_THREAD_WORKERS)\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()",
+        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()\n        self.chunker_client = get_chunker_client()\n    async def ingest_documents(\n        self,",
         "detail": "backend.services.ingestion_service",
         "documentation": {}
     },
@@ -5595,6 +5605,24 @@
         "description": "backend.services.report_generator",
         "peekOfCode": "_report_generator_service = None\ndef get_report_generator_service() -> ReportGeneratorService:\n    \"\"\"Get or create ReportGeneratorService singleton\"\"\"\n    global _report_generator_service\n    if _report_generator_service is None:\n        _report_generator_service = ReportGeneratorService()\n    return _report_generator_service",
         "detail": "backend.services.report_generator",
+        "documentation": {}
+    },
+    {
+        "label": "process_document_ids_task",
+        "kind": 2,
+        "importPath": "backend.tasks.ingestion_tasks",
+        "description": "backend.tasks.ingestion_tasks",
+        "peekOfCode": "def process_document_ids_task(\n    documents_data: List[Dict[str, Any]],\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:\n    \"\"\"\n    Main Celery task - creates individual tasks for each document\n    Args:\n        documents_data: List of dicts with:",
+        "detail": "backend.tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
+        "label": "process_single_document_task",
+        "kind": 2,
+        "importPath": "backend.tasks.ingestion_tasks",
+        "description": "backend.tasks.ingestion_tasks",
+        "peekOfCode": "def process_single_document_task(\n    self,\n    document_id: str,\n    content_b64: str,\n    filename: str,\n    content_type: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:",
+        "detail": "backend.tasks.ingestion_tasks",
         "documentation": {}
     },
     {

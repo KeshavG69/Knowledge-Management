@@ -39,7 +39,7 @@ class VideoProcessorClient:
         if not hasattr(self, '_initialized'):
             self._processing_lock = threading.Lock()
             self._initialized = True
-            logger.info("✅ Video processor initialized (sequential mode)")
+            logger.info("✅ Video processor initialized")
 
     def process_video(
         self,
@@ -88,80 +88,133 @@ class VideoProcessorClient:
                 video_id = self._sanitize_video_id(filename)
                 video_name = filename
 
-                logger.info("🔄 SEQUENTIAL PROCESSING: Simplified to prevent thread exhaustion")
+                logger.info("🚀 PARALLEL PROCESSING: Audio transcription + Video frame processing")
 
-                # STAGE 1: Audio transcription (synchronous)
-                logger.info("📝 Stage 1/7: Audio transcription (timestamped)")
-                transcript_segments = self._extract_and_transcribe_audio(file_content, filename)
+                # Run Stage 1 (audio) in PARALLEL with Stages 2-5 (video frames)
+                # This saves 5-10 minutes since transcription doesn't block video processing!
+                import asyncio
 
-                # STAGE 2-4: Video frame processing (synchronous)
-                logger.info("🎬 Stages 2-4/7: Video frame processing")
-                scene_detector = get_video_scene_detector()
-                frame_extractor = get_video_frame_extractor()
+                async def process_audio_and_video_parallel():
+                    """Process audio and video in parallel for maximum throughput"""
 
-                # Stage 2: PySceneDetect scene detection
-                logger.info("🎬 Stage 2/7: PySceneDetect scene detection")
-                scenes, entropy_cache = scene_detector.detect_scenes_from_video(
-                    file_content,
-                    filename,
-                    threshold=18.0,
-                    downscale=1
-                )
+                    # Task 1: Audio transcription (runs in thread pool)
+                    async def transcribe_audio():
+                        logger.info("📝 Stage 1/7: Audio transcription (timestamped) - PARALLEL")
+                        return await asyncio.to_thread(
+                            self._extract_and_transcribe_audio,
+                            file_content,
+                            filename
+                        )
 
-                # Handle videos with no scene changes (static content)
-                if not scenes:
-                    logger.warning("⚠️ No scenes detected - treating entire video as single scene")
-                    import tempfile
-                    import os
-                    extension = Path(filename).suffix.lower()
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
-                        tmp_file.write(file_content)
-                        tmp_file_path = tmp_file.name
+                    # Task 2: Video frame processing (runs in thread pool)
+                    async def process_video_frames():
+                        logger.info("🎬 Stages 2-4/7: Video frame processing (PySceneDetect) - PARALLEL")
 
-                    try:
-                        cap = cv2.VideoCapture(tmp_file_path)
-                        fps = cap.get(cv2.CAP_PROP_FPS)
-                        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                        duration_seconds = frame_count / fps if fps > 0 else 10.0
-                        cap.release()
+                        scene_detector = get_video_scene_detector()
+                        frame_extractor = get_video_frame_extractor()
 
-                        scenes = [{
-                            'scene_id': 0,
-                            'start_frame': 0,
-                            'end_frame': frame_count - 1 if frame_count > 0 else 100,
-                            'start_time': 0.0,
-                            'end_time': duration_seconds,
-                            'duration': duration_seconds
-                        }]
-                        logger.info(f"✅ Created single scene: 0.0s to {duration_seconds:.1f}s")
-                    finally:
-                        if os.path.exists(tmp_file_path):
-                            os.unlink(tmp_file_path)
+                        # Stage 2: PySceneDetect scene detection (full resolution for accuracy)
+                        logger.info("🎬 Stage 2/7: PySceneDetect scene detection (full resolution)")
+                        scenes, entropy_cache = await asyncio.to_thread(
+                            scene_detector.detect_scenes_from_video,
+                            file_content,
+                            filename,
+                            threshold=18.0,  # Lower threshold = more sensitive (detects more scenes)
+                            downscale=1  # Full resolution = catches subtle changes
+                        )
 
-                logger.info(f"✅ PySceneDetect complete: {len(scenes)} scenes detected")
+                        # Handle videos with no scene changes (static content)
+                        if not scenes:
+                            logger.warning("⚠️ No scenes detected - treating entire video as single scene")
+                            # Get video duration to create a single scene covering the entire video
+                            import tempfile
+                            extension = Path(filename).suffix.lower()
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+                                tmp_file.write(file_content)
+                                tmp_file_path = tmp_file.name
 
-                # Stage 3: Select key frames
-                logger.info("🔑 Stage 3/7: Selecting key frames from scenes")
-                key_frames_data = scene_detector.select_key_frames_from_video(
-                    file_content,
-                    filename,
-                    scenes
-                )
-                logger.info(f"✅ Selected {len(key_frames_data)} key frames")
+                            try:
+                                cap = cv2.VideoCapture(tmp_file_path)
+                                fps = cap.get(cv2.CAP_PROP_FPS)
+                                frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                                duration_seconds = frame_count / fps if fps > 0 else 10.0  # Default 10s if can't determine
+                                cap.release()
 
-                # Stage 4: Extract color frames
-                logger.info("🖼️ Stage 4/7: Color frame extraction (batch mode)")
-                frame_numbers = [kf['frame_number'] for kf in key_frames_data]
-                color_frames = frame_extractor.extract_color_frames_batch(
-                    file_content,
-                    filename,
-                    frame_numbers
-                )
-                logger.info(f"✅ Batch extracted {len(color_frames)} color key frames")
+                                # Create single scene covering entire video
+                                scenes = [
+                                    {
+                                        'scene_id': 0,
+                                        'start_frame': 0,
+                                        'end_frame': frame_count - 1 if frame_count > 0 else 100,
+                                        'start_time': 0.0,
+                                        'end_time': duration_seconds,
+                                        'duration': duration_seconds
+                                    }
+                                ]
+                                logger.info(f"✅ Created single scene: 0.0s to {duration_seconds:.1f}s")
+                            finally:
+                                import os
+                                if os.path.exists(tmp_file_path):
+                                    os.unlink(tmp_file_path)
 
-                # Stage 5: Skip thumbnail upload
-                keyframe_file_keys = [None] * len(key_frames_data)
-                logger.info("⏭️ Skipping keyframe thumbnail upload")
+                        logger.info(f"✅ PySceneDetect complete: {len(scenes)} scenes detected")
+
+                        # Stage 3: Select key frames (uses middle frame + entropy)
+                        logger.info("🔑 Stage 3/7: Selecting key frames from scenes")
+                        key_frames_data = await asyncio.to_thread(
+                            scene_detector.select_key_frames_from_video,
+                            file_content,
+                            filename,
+                            scenes
+                        )
+                        logger.info(f"✅ Selected {len(key_frames_data)} key frames")
+
+                        # Stage 4: Extract color frames (BATCH - 10-20x faster!)
+                        logger.info("🖼️ Stage 4/7: Color frame extraction (batch mode)")
+                        frame_numbers = [kf['frame_number'] for kf in key_frames_data]
+                        color_frames = await asyncio.to_thread(
+                            frame_extractor.extract_color_frames_batch,
+                            file_content,
+                            filename,
+                            frame_numbers
+                        )
+                        logger.info(f"✅ Batch extracted {len(color_frames)} color key frames")
+
+                        # Stage 5: Upload thumbnails (COMMENTED OUT - not needed)
+                        # logger.info("📤 Stage 5/7: Uploading key frame thumbnails")
+                        # keyframe_file_keys = await self._upload_keyframe_thumbnails(
+                        #     color_frames,
+                        #     key_frames_data,
+                        #     video_id,
+                        #     folder_name,
+                        #     organization_id
+                        # )
+
+                        # Skip thumbnail upload - return None for all keyframes
+                        keyframe_file_keys = [None] * len(key_frames_data)
+                        logger.info("⏭️ Skipping keyframe thumbnail upload")
+
+                        return scenes, key_frames_data, color_frames, keyframe_file_keys
+
+                    # Run both tasks in parallel and wait for completion
+                    transcript_segments, (scenes, key_frames_data, color_frames, keyframe_file_keys) = await asyncio.gather(
+                        transcribe_audio(),
+                        process_video_frames()
+                    )
+
+                    logger.info("✅ PARALLEL PROCESSING complete: Audio + Video ready for alignment")
+
+                    return transcript_segments, scenes, key_frames_data, color_frames, keyframe_file_keys
+
+                # Run parallel processing
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    transcript_segments, scenes, key_frames_data, color_frames, keyframe_file_keys = loop.run_until_complete(
+                        process_audio_and_video_parallel()
+                    )
+                finally:
+                    loop.close()
 
                 # Stage 6: Align and blend (includes VLM description)
                 logger.info("🔗 Stage 6/7: Alignment and multimodal blending")

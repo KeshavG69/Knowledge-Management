@@ -2,13 +2,14 @@
 Upload Router - Document ingestion endpoints
 """
 
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timezone
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks, Depends
+from typing import List, Optional
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from pydantic import BaseModel
 from bson import ObjectId
+import base64
 from services.ingestion_service import get_ingestion_service
 from clients.youtube_downloader import get_youtube_downloader
+from tasks.ingestion_tasks import process_document_ids_task
 from app.logger import logger
 from auth.dependencies import get_current_user
 from utils.file_utils import sanitize_filename, get_file_size_mb
@@ -16,79 +17,8 @@ from utils.file_utils import sanitize_filename, get_file_size_mb
 router = APIRouter(prefix="/upload", tags=["upload"])
 
 
-async def process_ingestion_in_background(
-    document_ids: List[str],
-    file_data: List[Dict[str, Any]],
-    folder_name: str,
-    user_id: Optional[str],
-    organization_id: Optional[str]
-):
-    """
-    Background task for document ingestion
-
-    Documents already exist with status="processing" (created in upload endpoint).
-    This function updates those existing documents throughout the pipeline.
-
-    Args:
-        document_ids: List of pre-created document IDs
-        file_data: List of dicts with 'content', 'filename', 'content_type'
-        folder_name: Folder name for organization
-        user_id: Optional user ID
-        organization_id: Optional organization ID
-    """
-    ingestion_service = get_ingestion_service()
-
-    try:
-        logger.info(f"🚀 Background ingestion started for {len(file_data)} files")
-
-        # Process each file individually with its document ID
-        from io import BytesIO
-        from fastapi import UploadFile
-
-        for i, (document_id, file_info) in enumerate(zip(document_ids, file_data)):
-            try:
-                logger.info(f"📄 Processing file {i+1}/{len(file_data)}: {file_info['filename']}")
-
-                # Reconstruct UploadFile object
-                file_obj = BytesIO(file_info["content"])
-                upload_file = UploadFile(
-                    file=file_obj,
-                    filename=file_info["filename"],
-                    headers={"content-type": file_info["content_type"]}
-                )
-
-                # Process this single file (will update existing document)
-                await ingestion_service._process_single_document_with_existing_id(
-                    document_id=document_id,
-                    file=upload_file,
-                    folder_name=folder_name,
-                    user_id=user_id,
-                    organization_id=organization_id
-                )
-
-                logger.info(f"✅ Completed processing: {file_info['filename']}")
-
-            except Exception as e:
-                logger.error(f"❌ Failed to process {file_info['filename']}: {str(e)}")
-                # Mark this document as failed
-                await ingestion_service._update_document_status(
-                    document_id=document_id,
-                    status="failed",
-                    stage="failed",
-                    stage_description=f"Processing failed: {str(e)}",
-                    error=str(e),
-                    failed_at=datetime.now(timezone.utc)
-                )
-
-        logger.info(f"✅ Background ingestion completed for all files")
-
-    except Exception as e:
-        logger.error(f"❌ Background ingestion failed: {str(e)}")
-
-
 @router.post("/documents")
 async def upload_documents(
-    background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(..., description="Multiple files to upload"),
     folder_name: str = Form(..., description="Folder name for organization"),
     user_id: Optional[str] = Form(None, description="Optional user ID"),
@@ -96,13 +26,13 @@ async def upload_documents(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Upload multiple documents for ingestion (background processing)
+    Upload multiple documents for ingestion (Celery background processing)
 
     This endpoint:
     1. Validates input
-    2. Returns immediately with file list
-    3. Processes ingestion in background:
-       - Creates document records with status="processing"
+    2. Creates document records with status="processing" in MongoDB
+    3. Returns immediately with document_ids for frontend tracking
+    4. Dispatches Celery tasks to process each document:
        - Uploads files to iDrive E2
        - Extracts raw content
        - Stores in MongoDB
@@ -111,14 +41,13 @@ async def upload_documents(
        - Updates status to "completed" or "failed"
 
     Args:
-        background_tasks: FastAPI background tasks
         files: List of files to upload
         folder_name: Folder name for organization and filtering
         user_id: Optional user ID for tracking
         organization_id: Optional organization ID for tracking
 
     Returns:
-        List of filenames that will be processed
+        Document IDs and Celery task ID for tracking
     """
     try:
         # Validate input
@@ -137,34 +66,28 @@ async def upload_documents(
 
         logger.info(f"📤 Upload request: {len(files)} files, folder={folder_name}")
 
-        # Read file contents into memory (UploadFile streams won't be available in background task)
-        file_data = []
-        for file in files:
-            content = await file.read()
-            file_data.append({
-                "content": content,
-                "filename": file.filename,
-                "content_type": file.content_type
-            })
-            await file.seek(0)  # Reset file pointer
-
-        # Create document records with status="processing" FIRST (before background task)
+        # Create document records with status="processing" FIRST (before Celery task)
         ingestion_service = get_ingestion_service()
-        
 
-        document_ids = []
-        for file_info in file_data:
-            safe_filename = sanitize_filename(file_info["filename"])
+        documents_data = []
+        for file in files:
+            # Read file content
+            content = await file.read()
+
+            # Encode to base64 for Celery JSON serialization
+            content_b64 = base64.b64encode(content).decode('utf-8')
+
+            safe_filename = sanitize_filename(file.filename)
             # Include organization_id in file_key for multi-tenant isolation
             if organization_id:
                 file_key = f"{organization_id}/{folder_name.strip()}/{safe_filename}"
             else:
                 file_key = f"{folder_name.strip()}/{safe_filename}"  # Backwards compatibility
-            file_size_mb = get_file_size_mb(file_info["content"])
+            file_size_mb = get_file_size_mb(content)
 
             # Create document record with status="processing"
             document_id = await ingestion_service._create_document_with_status(
-                file_name=file_info["filename"],
+                file_name=file.filename,
                 folder_name=folder_name.strip(),
                 file_key=file_key,
                 file_size_mb=file_size_mb,
@@ -172,29 +95,35 @@ async def upload_documents(
                 organization_id=organization_id,
                 additional_metadata=None
             )
-            document_ids.append(document_id)
-            logger.info(f"📝 Created document record: {document_id} for {file_info['filename']}")
 
-        # Add background task (will update existing documents)
-        background_tasks.add_task(
-            process_ingestion_in_background,
-            document_ids=document_ids,
-            file_data=file_data,
+            documents_data.append({
+                "document_id": document_id,
+                "content_b64": content_b64,
+                "filename": file.filename,
+                "content_type": file.content_type
+            })
+
+            logger.info(f"📝 Created document record: {document_id} for {file.filename}")
+
+        # Dispatch Celery task (will create individual worker tasks for each document)
+        task = process_document_ids_task.delay(
+            documents_data=documents_data,
             folder_name=folder_name.strip(),
             user_id=user_id,
             organization_id=organization_id
         )
 
-        logger.info(f"✅ Created {len(document_ids)} document records and queued for background processing")
+        logger.info(f"✅ Created {len(documents_data)} document records and dispatched Celery task: {task.id}")
 
         return {
             "success": True,
             "message": f"Ingestion started for {len(files)} files",
             "data": {
                 "total_files": len(files),
-                "document_ids": document_ids,
-                "file_names": [f["filename"] for f in file_data],
+                "document_ids": [doc["document_id"] for doc in documents_data],
+                "file_names": [doc["filename"] for doc in documents_data],
                 "folder_name": folder_name.strip(),
+                "task_id": task.id,
                 "status": "processing"
             }
         }
@@ -215,17 +144,17 @@ class YouTubeIngestionRequest(BaseModel):
 @router.post("/youtube")
 async def ingest_youtube_video(
     request: YouTubeIngestionRequest,
-    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Ingest YouTube video by URL (background processing)
+    Ingest YouTube video by URL (Celery background processing)
 
     This endpoint:
     1. Validates YouTube URL
     2. Downloads video from YouTube
-    3. Processes it like a regular video file upload:
-       - Creates document record with status="processing"
+    3. Creates document record with status="processing" in MongoDB
+    4. Returns immediately with document_id for frontend tracking
+    5. Dispatches Celery task to process the video:
        - Uploads to iDrive E2
        - Extracts frames and transcription
        - Stores in MongoDB
@@ -235,11 +164,10 @@ async def ingest_youtube_video(
 
     Args:
         request: YouTubeIngestionRequest with URL and metadata
-        background_tasks: FastAPI background tasks
         current_user: Authenticated user
 
     Returns:
-        Document ID and status
+        Document ID and Celery task ID for tracking
     """
     try:
         # Validate input
@@ -270,16 +198,11 @@ async def ingest_youtube_video(
             logger.error(f"❌ Failed to download YouTube video: {str(e)}")
             raise HTTPException(status_code=400, detail=f"Failed to download YouTube video: {str(e)}")
 
-        # Create file_data structure like regular upload
-        file_data = [{
-            "content": video_bytes,
-            "filename": filename,
-            "content_type": "video/mp4"
-        }]
+        # Encode to base64 for Celery JSON serialization
+        content_b64 = base64.b64encode(video_bytes).decode('utf-8')
 
         # Create document record with status="processing"
         ingestion_service = get_ingestion_service()
-        
 
         safe_filename = sanitize_filename(filename)
         # Include organization_id in file_key for multi-tenant isolation
@@ -314,17 +237,22 @@ async def ingest_youtube_video(
 
         logger.info(f"📝 Created document record: {document_id} for YouTube video: {filename}")
 
-        # Add background task for processing
-        background_tasks.add_task(
-            process_ingestion_in_background,
-            document_ids=[document_id],
-            file_data=file_data,
+        # Dispatch Celery task
+        documents_data = [{
+            "document_id": document_id,
+            "content_b64": content_b64,
+            "filename": filename,
+            "content_type": "video/mp4"
+        }]
+
+        task = process_document_ids_task.delay(
+            documents_data=documents_data,
             folder_name=request.folder_name.strip(),
             user_id=request.user_id,
             organization_id=request.organization_id
         )
 
-        logger.info(f"✅ YouTube video queued for background processing: {filename}")
+        logger.info(f"✅ YouTube video dispatched to Celery: {filename} (task_id: {task.id})")
 
         return {
             "success": True,
@@ -333,6 +261,7 @@ async def ingest_youtube_video(
                 "document_id": document_id,
                 "file_name": filename,
                 "folder_name": request.folder_name.strip(),
+                "task_id": task.id,
                 "status": "processing",
                 "youtube_metadata": metadata
             }

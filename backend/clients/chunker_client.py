@@ -333,7 +333,6 @@ class ChunkerClient:
 
     _instance = None
     _lock = threading.Lock()
-    _chunking_semaphore = None  # Global semaphore shared across all operations
 
     def __new__(cls):
         """Singleton pattern with thread locking"""
@@ -346,12 +345,9 @@ class ChunkerClient:
     def __init__(self):
         """Initialize chunker client"""
         if not hasattr(self, '_initialized'):
-            # Create a semaphore to limit concurrent chunking operations globally
-            # This prevents thread exhaustion when multiple background tasks chunk simultaneously
-            if ChunkerClient._chunking_semaphore is None:
-                ChunkerClient._chunking_semaphore = threading.Semaphore(1)  # Only 1 chunking operation at a time
+            self._chunking_lock = threading.Lock()
             self._initialized = True
-            logger.info("✅ Chunker client initialized with global semaphore (max 1 concurrent)")
+            logger.info("✅ Chunker client initialized")
 
     def chunk_text(
         self,
@@ -370,9 +366,7 @@ class ChunkerClient:
         Returns:
             List of chunks (Chonkie Chunk objects)
         """
-        # Use global semaphore to limit concurrent chunking operations
-        # This prevents thread exhaustion from OpenAI SDK when multiple files chunk simultaneously
-        with ChunkerClient._chunking_semaphore:
+        with self._chunking_lock:
             try:
                 # Get appropriate chunker based on type
                 if chunker_type == "recursive":
