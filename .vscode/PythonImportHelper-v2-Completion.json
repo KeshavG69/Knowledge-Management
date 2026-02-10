@@ -2767,14 +2767,6 @@
         "documentation": {}
     },
     {
-        "label": "partial",
-        "importPath": "functools",
-        "description": "functools",
-        "isExtraImport": true,
-        "detail": "functools",
-        "documentation": {}
-    },
-    {
         "label": "SemanticChunker",
         "importPath": "chonkie",
         "description": "chonkie",
