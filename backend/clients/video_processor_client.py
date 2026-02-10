@@ -10,6 +10,8 @@ import io
 import cv2
 from typing import Dict, List, Optional
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from moviepy import VideoFileClip
 from clients.groq_whisper_client import get_groq_whisper_client
 from clients.video_frame_extractor import get_video_frame_extractor
@@ -38,8 +40,16 @@ class VideoProcessorClient:
         """Initialize video processor"""
         if not hasattr(self, '_initialized'):
             self._processing_lock = threading.Lock()
+
+            # Create thread pool with limited workers for blocking video operations
+            # Video processing is CPU intensive, so we limit to 4 workers
+            self.thread_pool = ThreadPoolExecutor(
+                max_workers=settings.MAX_THREAD_WORKERS,
+                thread_name_prefix="video_worker"
+            )
+
             self._initialized = True
-            logger.info("✅ Video processor initialized")
+            logger.info(f"✅ Video processor initialized (max workers: {settings.MAX_THREAD_WORKERS})")
 
     def process_video(
         self,
@@ -100,10 +110,14 @@ class VideoProcessorClient:
                     # Task 1: Audio transcription (runs in thread pool)
                     async def transcribe_audio():
                         logger.info("📝 Stage 1/7: Audio transcription (timestamped) - PARALLEL")
-                        return await asyncio.to_thread(
-                            self._extract_and_transcribe_audio,
-                            file_content,
-                            filename
+                        loop = asyncio.get_event_loop()
+                        return await loop.run_in_executor(
+                            self.thread_pool,
+                            partial(
+                                self._extract_and_transcribe_audio,
+                                file_content,
+                                filename
+                            )
                         )
 
                     # Task 2: Video frame processing (runs in thread pool)
@@ -115,12 +129,16 @@ class VideoProcessorClient:
 
                         # Stage 2: PySceneDetect scene detection (full resolution for accuracy)
                         logger.info("🎬 Stage 2/7: PySceneDetect scene detection (full resolution)")
-                        scenes, entropy_cache = await asyncio.to_thread(
-                            scene_detector.detect_scenes_from_video,
-                            file_content,
-                            filename,
-                            threshold=18.0,  # Lower threshold = more sensitive (detects more scenes)
-                            downscale=1  # Full resolution = catches subtle changes
+                        loop = asyncio.get_event_loop()
+                        scenes, entropy_cache = await loop.run_in_executor(
+                            self.thread_pool,
+                            partial(
+                                scene_detector.detect_scenes_from_video,
+                                file_content,
+                                filename,
+                                threshold=18.0,  # Lower threshold = more sensitive (detects more scenes)
+                                downscale=1  # Full resolution = catches subtle changes
+                            )
                         )
 
                         # Handle videos with no scene changes (static content)
@@ -161,22 +179,30 @@ class VideoProcessorClient:
 
                         # Stage 3: Select key frames (uses middle frame + entropy)
                         logger.info("🔑 Stage 3/7: Selecting key frames from scenes")
-                        key_frames_data = await asyncio.to_thread(
-                            scene_detector.select_key_frames_from_video,
-                            file_content,
-                            filename,
-                            scenes
+                        loop = asyncio.get_event_loop()
+                        key_frames_data = await loop.run_in_executor(
+                            self.thread_pool,
+                            partial(
+                                scene_detector.select_key_frames_from_video,
+                                file_content,
+                                filename,
+                                scenes
+                            )
                         )
                         logger.info(f"✅ Selected {len(key_frames_data)} key frames")
 
                         # Stage 4: Extract color frames (BATCH - 10-20x faster!)
                         logger.info("🖼️ Stage 4/7: Color frame extraction (batch mode)")
                         frame_numbers = [kf['frame_number'] for kf in key_frames_data]
-                        color_frames = await asyncio.to_thread(
-                            frame_extractor.extract_color_frames_batch,
-                            file_content,
-                            filename,
-                            frame_numbers
+                        loop = asyncio.get_event_loop()
+                        color_frames = await loop.run_in_executor(
+                            self.thread_pool,
+                            partial(
+                                frame_extractor.extract_color_frames_batch,
+                                file_content,
+                                filename,
+                                frame_numbers
+                            )
                         )
                         logger.info(f"✅ Batch extracted {len(color_frames)} color key frames")
 
