@@ -37,6 +37,10 @@ from app.thread_pool import get_thread_pool
 class IngestionService:
     """Service for handling document ingestion pipeline"""
 
+    # GLOBAL semaphore shared across ALL users and ALL instances
+    # Allow up to MAX_THREAD_WORKERS concurrent ingestions to prevent thread exhaustion
+    _global_ingestion_semaphore = asyncio.Semaphore(settings.MAX_THREAD_WORKERS)
+
     def __init__(self):
         """Initialize service with all required clients"""
         self.idrivee2_client = get_idrivee2_client()
@@ -44,15 +48,9 @@ class IngestionService:
         self.pinecone_client = get_pinecone_client()
         self.chunker_client = get_chunker_client()
 
-        # Get concurrency limits from settings (configurable via environment variables)
-        self.max_concurrent_files = settings.MAX_CONCURRENT_FILES
-
-        # Create semaphore for file-level concurrency control
-        self.file_semaphore = asyncio.Semaphore(self.max_concurrent_files)
-
         # Use global thread pool (shared across entire application)
         self.thread_pool = get_thread_pool()
-        logger.info(f"🔧 Concurrency limits: {self.max_concurrent_files} concurrent files")
+        logger.info(f"🔧 IngestionService initialized - using GLOBAL semaphore (max {settings.MAX_THREAD_WORKERS} concurrent files)")
 
     async def ingest_documents(
         self,
@@ -93,12 +91,14 @@ class IngestionService:
 
         start_time = datetime.utcnow()
 
-        # Process all files in parallel for faster uploads
-        logger.info(f"🚀 Processing {len(files)} files in parallel")
+        # Process files with global concurrency limit (max MAX_THREAD_WORKERS at a time)
+        logger.info(f"🚀 Processing {len(files)} files (max {settings.MAX_THREAD_WORKERS} concurrent)")
 
         async def process_file_with_error_handling(file):
             """Wrapper to handle errors for each file independently with concurrency control"""
-            async with self.file_semaphore:  # Limit concurrent file processing
+            # GLOBAL SEMAPHORE: Max MAX_THREAD_WORKERS files can be processed across ALL users at the same time
+            async with IngestionService._global_ingestion_semaphore:
+                logger.info(f"🔒 Acquired semaphore slot for {file.filename} - processing now")
                 try:
                     result = await self._process_single_document(
                         file=file,
@@ -112,8 +112,10 @@ class IngestionService:
                 except Exception as e:
                     logger.error(f"❌ Failed to process {file.filename}: {str(e)}")
                     return {"success": False, "error": str(e), "filename": file.filename}
+                finally:
+                    logger.info(f"🔓 Released semaphore slot for {file.filename}")
 
-        # Process all files concurrently
+        # Submit all files - global semaphore limits concurrency to MAX_THREAD_WORKERS
         file_results = await asyncio.gather(*[process_file_with_error_handling(file) for file in files])
 
         # Aggregate results
