@@ -6,7 +6,7 @@ Thread-safe singleton with cached chunker instances for optimal performance
 import threading
 from functools import lru_cache
 from typing import List, Literal, Any, Union, Dict
-from chonkie import SemanticChunker
+from chonkie import SemanticChunker, RecursiveChunker
 from chonkie.embeddings.openai import OpenAIEmbeddings
 import tiktoken
 from app.logger import logger
@@ -106,6 +106,38 @@ def get_semantic_chunker(
     except Exception as e:
         logger.error(f"Failed to create semantic chunker: {e}")
         raise RuntimeError(f"Failed to create semantic chunker: {e}")
+
+
+@lru_cache(maxsize=4, typed=True)
+def get_recursive_chunker(
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    **kwargs: Any
+) -> RecursiveChunker:
+    """
+    Get cached recursive chunker instance (no embeddings needed - fast and thread-safe)
+
+    Perfect for structured data like Excel/CSV where embeddings aren't needed.
+
+    Args:
+        chunk_size: Maximum tokens allowed per chunk
+        **kwargs: Additional keyword arguments
+
+    Returns:
+        Cached RecursiveChunker instance
+    """
+    try:
+        # RecursiveChunker uses default delimiters optimized for text
+        chunker = RecursiveChunker(
+            chunk_size=chunk_size,
+            **kwargs
+        )
+
+        logger.info(f"Created recursive chunker: chunk_size={chunk_size} (no embeddings - fast!)")
+        return chunker
+
+    except Exception as e:
+        logger.error(f"Failed to create recursive chunker: {e}")
+        raise RuntimeError(f"Failed to create recursive chunker: {e}")
 
 
 @lru_cache(maxsize=4)
@@ -301,6 +333,7 @@ class ChunkerClient:
 
     _instance = None
     _lock = threading.Lock()
+    _chunking_semaphore = None  # Global semaphore shared across all operations
 
     def __new__(cls):
         """Singleton pattern with thread locking"""
@@ -313,9 +346,12 @@ class ChunkerClient:
     def __init__(self):
         """Initialize chunker client"""
         if not hasattr(self, '_initialized'):
-            self._chunking_lock = threading.Lock()
+            # Create a semaphore to limit concurrent chunking operations globally
+            # This prevents thread exhaustion when multiple background tasks chunk simultaneously
+            if ChunkerClient._chunking_semaphore is None:
+                ChunkerClient._chunking_semaphore = threading.Semaphore(1)  # Only 1 chunking operation at a time
             self._initialized = True
-            logger.info("✅ Chunker client initialized")
+            logger.info("✅ Chunker client initialized with global semaphore (max 1 concurrent)")
 
     def chunk_text(
         self,
@@ -334,44 +370,50 @@ class ChunkerClient:
         Returns:
             List of chunks (Chonkie Chunk objects)
         """
-        # REMOVED LOCK: Concurrency is controlled by global thread pool
-        # The lock was causing deadlocks when multiple files chunked simultaneously
-        try:
-            # Get appropriate chunker based on type
-            if chunker_type == "large_chunk":
-                chunker = get_semantic_chunker(
-                    chunk_size=3000,
-                    min_sentences_per_chunk=3,
-                    threshold=0.4,
-                    **kwargs
-                )
-            elif chunker_type == "precise":
-                chunker = get_semantic_chunker(
-                    chunk_size=300,
-                    min_sentences_per_chunk=2,
-                    threshold=0.7,
-                    similarity_window=2,
-                    **kwargs
-                )
-            elif chunker_type == "fast":
-                chunker = get_semantic_chunker(
-                    chunk_size=800,
-                    threshold=0.8,
-                    similarity_window=1,
-                    **kwargs
-                )
-            else:  # default
-                chunker = get_semantic_chunker(**kwargs)
+        # Use global semaphore to limit concurrent chunking operations
+        # This prevents thread exhaustion from OpenAI SDK when multiple files chunk simultaneously
+        with ChunkerClient._chunking_semaphore:
+            try:
+                # Get appropriate chunker based on type
+                if chunker_type == "recursive":
+                    # RecursiveChunker: No embeddings, no threads, perfect for Excel/CSV
+                    chunker = get_recursive_chunker(
+                        chunk_size=kwargs.get('chunk_size', DEFAULT_CHUNK_SIZE)
+                    )
+                elif chunker_type == "large_chunk":
+                    chunker = get_semantic_chunker(
+                        chunk_size=3000,
+                        min_sentences_per_chunk=3,
+                        threshold=0.4,
+                        **kwargs
+                    )
+                elif chunker_type == "precise":
+                    chunker = get_semantic_chunker(
+                        chunk_size=300,
+                        min_sentences_per_chunk=2,
+                        threshold=0.7,
+                        similarity_window=2,
+                        **kwargs
+                    )
+                elif chunker_type == "fast":
+                    chunker = get_semantic_chunker(
+                        chunk_size=800,
+                        threshold=0.8,
+                        similarity_window=1,
+                        **kwargs
+                    )
+                else:  # default
+                    chunker = get_semantic_chunker(**kwargs)
 
-            # Perform chunking
-            chunks = chunker.chunk(text)
+                # Perform chunking
+                chunks = chunker.chunk(text)
 
-            logger.info(f"Chunked text into {len(chunks)} semantic chunks using {chunker_type} chunker")
-            return chunks
+                logger.info(f"Chunked text into {len(chunks)} semantic chunks using {chunker_type} chunker")
+                return chunks
 
-        except Exception as e:
-            logger.error(f"Chunking failed: {str(e)}")
-            raise Exception(f"Chunking failed: {str(e)}")
+            except Exception as e:
+                logger.error(f"Chunking failed: {str(e)}")
+                raise Exception(f"Chunking failed: {str(e)}")
 
     def chunk_with_metadata(
         self,
@@ -386,12 +428,18 @@ class ChunkerClient:
         Args:
             text: Text content to chunk
             base_metadata: Base metadata to attach to all chunks
-            chunker_type: Type of chunker to use
+            chunker_type: Type of chunker to use (default, recursive, large_chunk, precise, fast)
             **kwargs: Additional parameters for chunker
 
         Returns:
             List of dicts with 'text' and 'metadata' keys
         """
+        # Auto-detect Excel/CSV files and use recursive chunker (no embeddings, no threads)
+        file_name = base_metadata.get("file_name", "")
+        if file_name.lower().endswith(('.xlsx', '.xls', '.csv')) and chunker_type == "default":
+            chunker_type = "recursive"
+            logger.info(f"📊 Detected tabular file ({file_name}), using RecursiveChunker (no embeddings)")
+
         chunks = self.chunk_text(text, chunker_type, **kwargs)
 
         result = []
@@ -412,23 +460,32 @@ class ChunkerClient:
         return result
 
     def clear_cache(self) -> None:
-        """Clear chunker and embeddings caches"""
+        """Clear all chunker and embeddings caches"""
         get_semantic_chunker.cache_clear()
+        get_recursive_chunker.cache_clear()
         get_chonkie_embeddings.cache_clear()
-        logger.info("Cleared chunker and embeddings caches")
+        logger.info("Cleared all chunker and embeddings caches")
 
     def get_cache_info(self) -> Dict[str, Any]:
-        """Get information about the chunker and embeddings caches"""
-        chunker_cache = get_semantic_chunker.cache_info()
+        """Get information about all chunker and embeddings caches"""
+        semantic_cache = get_semantic_chunker.cache_info()
+        recursive_cache = get_recursive_chunker.cache_info()
         embeddings_cache = get_chonkie_embeddings.cache_info()
 
         return {
-            "chunker_cache": {
-                "hits": chunker_cache.hits,
-                "misses": chunker_cache.misses,
-                "maxsize": chunker_cache.maxsize,
-                "currsize": chunker_cache.currsize,
-                "hit_rate": chunker_cache.hits / (chunker_cache.hits + chunker_cache.misses) if (chunker_cache.hits + chunker_cache.misses) > 0 else 0.0
+            "semantic_chunker_cache": {
+                "hits": semantic_cache.hits,
+                "misses": semantic_cache.misses,
+                "maxsize": semantic_cache.maxsize,
+                "currsize": semantic_cache.currsize,
+                "hit_rate": semantic_cache.hits / (semantic_cache.hits + semantic_cache.misses) if (semantic_cache.hits + semantic_cache.misses) > 0 else 0.0
+            },
+            "recursive_chunker_cache": {
+                "hits": recursive_cache.hits,
+                "misses": recursive_cache.misses,
+                "maxsize": recursive_cache.maxsize,
+                "currsize": recursive_cache.currsize,
+                "hit_rate": recursive_cache.hits / (recursive_cache.hits + recursive_cache.misses) if (recursive_cache.hits + recursive_cache.misses) > 0 else 0.0
             },
             "embeddings_cache": {
                 "hits": embeddings_cache.hits,
