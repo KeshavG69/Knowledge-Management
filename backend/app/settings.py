@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     # Concurrency Settings - SIMPLIFIED for Railway resource limits
     MAX_CONCURRENT_FILES: int = 4  # Process ONE file at a time (sequential)
-    MAX_THREAD_WORKERS: int = 4    # Absolutely minimal threading
+    MAX_THREAD_WORKERS: int = 5    # Absolutely minimal threading
 
     # Observability
 
