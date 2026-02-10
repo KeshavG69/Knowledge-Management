@@ -34,7 +34,7 @@ dependencies = [
     "pypdfium2>=4.30.0",
     "pypdf>=5.9.0",
     "aiofiles>=24.1.0",
-    "markitdown>=0.0.1a2",
+    "markitdown[all]>=0.0.1a2",
     "unstructured-client>=0.29.0",
     "tiktoken>=0.8.0",
     # Web Scraping & YouTube
