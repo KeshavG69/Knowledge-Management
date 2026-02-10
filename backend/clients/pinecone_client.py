@@ -28,8 +28,8 @@ class PineconeClient:
         if not self.embedding_model:
             raise ValueError("OPENAI_API_KEY not configured for embeddings")
 
-        # Initialize Pinecone
-        self.pc = Pinecone(api_key=self.api_key)
+        # Initialize Pinecone with single-threaded pool (avoids thread exhaustion on Railway)
+        self.pc = Pinecone(api_key=self.api_key, pool_threads=1)
 
         # Initialize OpenAI embeddings
         self.embeddings = OpenAIEmbeddings(
