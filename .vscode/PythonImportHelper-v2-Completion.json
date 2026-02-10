@@ -5496,7 +5496,7 @@
         "kind": 6,
         "importPath": "backend.services.ingestion_service",
         "description": "backend.services.ingestion_service",
-        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()\n        self.chunker_client = get_chunker_client()\n    def process_document_with_bytes_sync(\n        self,",
+        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()\n        self.chunker_client = get_chunker_client()\n    def process_single_document_sync(\n        self,",
         "detail": "backend.services.ingestion_service",
         "documentation": {}
     },
