@@ -334,43 +334,44 @@ class ChunkerClient:
         Returns:
             List of chunks (Chonkie Chunk objects)
         """
-        with self._chunking_lock:
-            try:
-                # Get appropriate chunker based on type
-                if chunker_type == "large_chunk":
-                    chunker = get_semantic_chunker(
-                        chunk_size=3000,
-                        min_sentences_per_chunk=3,
-                        threshold=0.4,
-                        **kwargs
-                    )
-                elif chunker_type == "precise":
-                    chunker = get_semantic_chunker(
-                        chunk_size=300,
-                        min_sentences_per_chunk=2,
-                        threshold=0.7,
-                        similarity_window=2,
-                        **kwargs
-                    )
-                elif chunker_type == "fast":
-                    chunker = get_semantic_chunker(
-                        chunk_size=800,
-                        threshold=0.8,
-                        similarity_window=1,
-                        **kwargs
-                    )
-                else:  # default
-                    chunker = get_semantic_chunker(**kwargs)
+        # REMOVED LOCK: Concurrency is controlled by global thread pool
+        # The lock was causing deadlocks when multiple files chunked simultaneously
+        try:
+            # Get appropriate chunker based on type
+            if chunker_type == "large_chunk":
+                chunker = get_semantic_chunker(
+                    chunk_size=3000,
+                    min_sentences_per_chunk=3,
+                    threshold=0.4,
+                    **kwargs
+                )
+            elif chunker_type == "precise":
+                chunker = get_semantic_chunker(
+                    chunk_size=300,
+                    min_sentences_per_chunk=2,
+                    threshold=0.7,
+                    similarity_window=2,
+                    **kwargs
+                )
+            elif chunker_type == "fast":
+                chunker = get_semantic_chunker(
+                    chunk_size=800,
+                    threshold=0.8,
+                    similarity_window=1,
+                    **kwargs
+                )
+            else:  # default
+                chunker = get_semantic_chunker(**kwargs)
 
-                # Perform chunking
-                chunks = chunker.chunk(text)
+            # Perform chunking
+            chunks = chunker.chunk(text)
 
-                logger.info(f"Chunked text into {len(chunks)} semantic chunks using {chunker_type} chunker")
-                return chunks
+            logger.info(f"Chunked text into {len(chunks)} semantic chunks using {chunker_type} chunker")
+            return chunks
 
-            except Exception as e:
-                logger.error(f"Chunking failed: {str(e)}")
-                raise Exception(f"Chunking failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"Chunking failed: {str(e)}")
+            raise Exception(f"Chunking failed: {str(e)}")
 
     def chunk_with_metadata(
         self,
