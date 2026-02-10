@@ -97,11 +97,10 @@ class VideoProcessorClient:
                 async def process_audio_and_video_parallel():
                     """Process audio and video in parallel for maximum throughput"""
 
-                    # Task 1: Audio transcription (runs in thread pool)
+                    # Task 1: Audio transcription (blocking call, no threading)
                     async def transcribe_audio():
                         logger.info("📝 Stage 1/7: Audio transcription (timestamped) - PARALLEL")
-                        return await asyncio.to_thread(
-                            self._extract_and_transcribe_audio,
+                        return self._extract_and_transcribe_audio(
                             file_content,
                             filename
                         )
@@ -115,8 +114,7 @@ class VideoProcessorClient:
 
                         # Stage 2: PySceneDetect scene detection (full resolution for accuracy)
                         logger.info("🎬 Stage 2/7: PySceneDetect scene detection (full resolution)")
-                        scenes, entropy_cache = await asyncio.to_thread(
-                            scene_detector.detect_scenes_from_video,
+                        scenes, entropy_cache = scene_detector.detect_scenes_from_video(
                             file_content,
                             filename,
                             threshold=18.0,  # Lower threshold = more sensitive (detects more scenes)
@@ -161,8 +159,7 @@ class VideoProcessorClient:
 
                         # Stage 3: Select key frames (uses middle frame + entropy)
                         logger.info("🔑 Stage 3/7: Selecting key frames from scenes")
-                        key_frames_data = await asyncio.to_thread(
-                            scene_detector.select_key_frames_from_video,
+                        key_frames_data = scene_detector.select_key_frames_from_video(
                             file_content,
                             filename,
                             scenes
@@ -172,8 +169,7 @@ class VideoProcessorClient:
                         # Stage 4: Extract color frames (BATCH - 10-20x faster!)
                         logger.info("🖼️ Stage 4/7: Color frame extraction (batch mode)")
                         frame_numbers = [kf['frame_number'] for kf in key_frames_data]
-                        color_frames = await asyncio.to_thread(
-                            frame_extractor.extract_color_frames_batch,
+                        color_frames = frame_extractor.extract_color_frames_batch(
                             file_content,
                             filename,
                             frame_numbers
