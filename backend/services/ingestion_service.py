@@ -43,6 +43,52 @@ class IngestionService:
         self.pinecone_client = get_pinecone_client()
         self.chunker_client = get_chunker_client()
 
+    def process_document_with_bytes_sync(
+        self,
+        document_id: str,
+        file_content: bytes,
+        filename: str,
+        content_type: str,
+        folder_name: str,
+        user_id: str = None,
+        organization_id: str = None,
+        additional_metadata: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Synchronous wrapper for Celery tasks - avoids event loop conflicts
+
+        Instead of asyncio.run(), this uses the existing event loop or creates one properly
+        """
+        try:
+            # Try to get existing event loop
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If loop is already running (shouldn't happen in Celery), create new one
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+        except RuntimeError:
+            # No event loop exists, create one
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        try:
+            # Run the async method in the event loop
+            return loop.run_until_complete(
+                self._process_document_with_bytes(
+                    document_id=document_id,
+                    file_content=file_content,
+                    filename=filename,
+                    content_type=content_type,
+                    folder_name=folder_name,
+                    user_id=user_id,
+                    organization_id=organization_id,
+                    additional_metadata=additional_metadata
+                )
+            )
+        finally:
+            # Don't close the loop as it might be reused
+            pass
+
     async def ingest_documents(
         self,
         files: List[UploadFile],
@@ -180,8 +226,8 @@ class IngestionService:
         logger.info(f"✅ Document record created: {document_id}")
 
         try:
-            # Step 1 & 2: Run in parallel - Upload to iDrive E2 + Extract content
-            logger.info(f"🚀 Starting parallel processing: Upload to E2 + Content extraction for {file.filename}")
+            # Step 1 & 2: Upload to iDrive E2 + Extract content (sequential, no threading)
+            logger.info(f"🚀 Starting processing: Upload to E2 + Content extraction for {file.filename}")
 
             # Update status to indicate we're uploading + extracting
             await self._update_document_status(
@@ -200,7 +246,7 @@ class IngestionService:
             # Extract content (blocking call, no threading)
             raw_content = extract_raw_data(file_content, file.filename, folder_name)
 
-            logger.info(f"✅ Parallel processing complete for {file.filename}")
+            logger.info(f"✅ Upload and extraction complete for {file.filename}")
 
             # Check if this is a video file (special handling)
             is_video = isinstance(raw_content, dict) and raw_content.get('type') == 'video'
@@ -449,8 +495,8 @@ class IngestionService:
             file_key = f"{folder_name}/{safe_filename}"  # Backwards compatibility
 
         try:
-            # Step 1 & 2: Run in parallel - Upload to iDrive E2 + Extract content
-            logger.info(f"🚀 Starting parallel processing: Upload to E2 + Content extraction for {file.filename}")
+            # Step 1 & 2: Upload to iDrive E2 + Extract content (sequential, no threading)
+            logger.info(f"🚀 Starting processing: Upload to E2 + Content extraction for {file.filename}")
 
             # Update status to indicate we're uploading + extracting
             await self._update_document_status(
@@ -469,7 +515,7 @@ class IngestionService:
             # Extract content (blocking call, no threading)
             raw_content = extract_raw_data(file_content, file.filename, folder_name)
 
-            logger.info(f"✅ Parallel processing complete for {file.filename}")
+            logger.info(f"✅ Upload and extraction complete for {file.filename}")
 
             # Check if this is a video file (special handling)
             is_video = isinstance(raw_content, dict) and raw_content.get('type') == 'video'
