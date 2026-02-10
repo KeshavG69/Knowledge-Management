@@ -149,9 +149,9 @@ class VideoAligner:
                 transcript_texts.append(transcript_text)
             logger.info(f"✅ Prepared {num_scenes} transcript texts")
 
-            # Step 2: Batch all VLM descriptions (25 concurrent)
-            logger.info(f"🎨 Step 2/3: Processing {num_scenes} VLM descriptions (25 concurrent)...")
-            semaphore_vlm = asyncio.Semaphore(25)
+            # Step 2: Batch all VLM descriptions (5 concurrent to match MAX_THREAD_WORKERS)
+            logger.info(f"🎨 Step 2/3: Processing {num_scenes} VLM descriptions (5 concurrent)...")
+            semaphore_vlm = asyncio.Semaphore(5)
 
             async def describe_one_frame(i: int):
                 async with semaphore_vlm:
