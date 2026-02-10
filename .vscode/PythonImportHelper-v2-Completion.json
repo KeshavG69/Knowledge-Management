@@ -2931,6 +2931,15 @@
         "documentation": {}
     },
     {
+        "label": "boto3",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "boto3",
+        "description": "boto3",
+        "detail": "boto3",
+        "documentation": {}
+    },
+    {
         "label": "ClientError",
         "importPath": "botocore.exceptions",
         "description": "botocore.exceptions",
@@ -4857,7 +4866,7 @@
         "kind": 6,
         "importPath": "backend.clients.idrivee2_client",
         "description": "backend.clients.idrivee2_client",
-        "peekOfCode": "class IDriveE2Client:\n    \"\"\"Client for iDrive E2 cloud storage operations\"\"\"\n    def __init__(self):\n        \"\"\"Initialize iDrive E2 client with aioboto3\"\"\"\n        self.endpoint_url = settings.IDRIVEE2_ENDPOINT_URL\n        self.access_key = settings.IDRIVEE2_ACCESS_KEY_ID\n        self.secret_key = settings.IDRIVEE2_SECRET_ACCESS_KEY\n        self.bucket_name = settings.IDRIVEE2_BUCKET_NAME\n        # Configure for iDrive E2 compatibility (disable checksums)\n        from botocore.config import Config",
+        "peekOfCode": "class IDriveE2Client:\n    \"\"\"Client for iDrive E2 cloud storage operations\"\"\"\n    def __init__(self):\n        \"\"\"Initialize iDrive E2 client with aioboto3 and boto3\"\"\"\n        self.endpoint_url = settings.IDRIVEE2_ENDPOINT_URL\n        self.access_key = settings.IDRIVEE2_ACCESS_KEY_ID\n        self.secret_key = settings.IDRIVEE2_SECRET_ACCESS_KEY\n        self.bucket_name = settings.IDRIVEE2_BUCKET_NAME\n        # Configure for iDrive E2 compatibility (disable checksums)\n        from botocore.config import Config",
         "detail": "backend.clients.idrivee2_client",
         "documentation": {}
     },

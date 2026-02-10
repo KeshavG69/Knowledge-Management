@@ -75,11 +75,11 @@ class IngestionService:
             self.mongodb_client.update_document(
                 collection="documents",
                 query={"_id": ObjectId(document_id)},
-                update={"$set": {
+                update={
                     "processing_stage": "uploading_extracting",
                     "processing_stage_description": "Uploading to storage and extracting content",
                     "updated_at": datetime.utcnow()
-                }}
+                }
             )
 
             # Step 2: Upload to E2 (sync)
@@ -121,12 +121,12 @@ class IngestionService:
             self.mongodb_client.update_document(
                 collection="documents",
                 query={"_id": ObjectId(document_id)},
-                update={"$set": {
+                update={
                     "raw_content": content_for_mongodb,
                     "processing_stage": "content_extracted",
                     "processing_stage_description": "Content extraction completed",
                     "updated_at": datetime.utcnow()
-                }}
+                }
             )
 
             # Step 5: Chunking and Pinecone storage
@@ -238,13 +238,13 @@ class IngestionService:
             self.mongodb_client.update_document(
                 collection="documents",
                 query={"_id": ObjectId(document_id)},
-                update={"$set": {
+                update={
                     "status": "completed",
                     "processing_stage": "completed",
                     "processing_stage_description": f"Successfully processed {total_chunks} chunks",
                     "completed_at": datetime.utcnow(),
                     "updated_at": datetime.utcnow()
-                }}
+                }
             )
             logger.info(f"✅ Document marked as completed: {document_id}")
 
@@ -267,14 +267,14 @@ class IngestionService:
             self.mongodb_client.update_document(
                 collection="documents",
                 query={"_id": ObjectId(document_id)},
-                update={"$set": {
+                update={
                     "status": "failed",
                     "processing_stage": "failed",
                     "processing_stage_description": f"Processing failed: {str(e)}",
                     "error": str(e),
                     "failed_at": datetime.utcnow(),
                     "updated_at": datetime.utcnow()
-                }}
+                }
             )
             raise
 
