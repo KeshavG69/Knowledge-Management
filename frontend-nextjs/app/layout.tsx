@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import AuthInitializer from "@/components/auth/AuthInitializer";
 import ThemeProvider from "@/components/ThemeProvider";
+import ZendeskWidget from "@/components/ZendeskWidget";
 
 export const metadata: Metadata = {
   title: "SoldierIQ - Knowledge Management",
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <AuthInitializer />
+          <ZendeskWidget />
           {children}
         </ThemeProvider>
         <Script

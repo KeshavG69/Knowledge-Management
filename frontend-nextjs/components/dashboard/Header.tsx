@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useChatStore } from "@/lib/stores/chatStore";
@@ -29,17 +29,38 @@ export default function Header() {
     }
   };
 
+  const [isZendeskOpen, setIsZendeskOpen] = useState(false);
+
+  const toggleZendeskTicket = () => {
+    if (typeof window !== 'undefined' && window.zE) {
+      if (isZendeskOpen) {
+        // If open, close it
+        window.zE('messenger', 'close');
+        setIsZendeskOpen(false);
+      } else {
+        // If closed, open it
+        window.zE('messenger', 'open');
+        setIsZendeskOpen(true);
+      }
+    } else {
+      console.warn('Zendesk widget not loaded yet');
+    }
+  };
+
+  // Listen to Zendesk events to keep state in sync
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.zE) {
+      window.zE('messenger:on', 'open', () => {
+        setIsZendeskOpen(true);
+      });
+      window.zE('messenger:on', 'close', () => {
+        setIsZendeskOpen(false);
+      });
+    }
+  }, []);
+
   // Check if user has sent any messages in the current session
   const hasUserMessages = messages.some((msg) => msg.role === "user");
-
-  const getCurrentDate = () => {
-    const now = new Date();
-    return now.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit'
-    }).toUpperCase();
-  };
 
   return (
     <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-amber-400/20 flex items-center justify-between px-6 relative z-30">
@@ -87,10 +108,7 @@ export default function Header() {
       <div className="flex items-center gap-3">
         {/* Create Ticket Button */}
         <button
-          onClick={() => {
-            // TODO: Implement service desk ticket creation
-            console.log('Create ticket clicked');
-          }}
+          onClick={toggleZendeskTicket}
           className="px-3 py-2 border border-blue-400/50 dark:border-amber-400/50 bg-blue-500/10 dark:bg-amber-500/10 hover:bg-blue-500/20 dark:hover:bg-amber-500/20 text-blue-600 dark:text-amber-400 font-semibold text-xs tracking-wider transition-all duration-200"
           style={{
             clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
