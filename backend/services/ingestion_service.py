@@ -455,6 +455,274 @@ class IngestionService:
             )
             raise  # Re-raise the exception
 
+    async def _process_document_with_bytes(
+        self,
+        document_id: str,
+        file_content: bytes,
+        filename: str,
+        content_type: str,
+        folder_name: str,
+        user_id: str = None,
+        organization_id: str = None,
+        additional_metadata: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Process a single document using bytes (for Celery tasks)
+
+        Args:
+            document_id: Existing document ID from MongoDB
+            file_content: File content as bytes
+            filename: Original filename
+            content_type: MIME content type
+            folder_name: Folder name for organization
+            user_id: Optional user ID
+            organization_id: Optional organization ID
+            additional_metadata: Optional additional metadata
+
+        Returns:
+            Dict with processing results
+        """
+        logger.info(f"📄 Processing document with bytes {document_id}: {filename}")
+
+        file_size_mb = get_file_size_mb(file_content)
+
+        # Prepare for parallel operations
+        safe_filename = sanitize_filename(filename)
+        # Include organization_id in file_key for multi-tenant isolation
+        if organization_id:
+            file_key = f"{organization_id}/{folder_name}/{safe_filename}"
+        else:
+            file_key = f"{folder_name}/{safe_filename}"  # Backwards compatibility
+
+        try:
+            # Step 1 & 2: Upload to iDrive E2 + Extract content (sequential, no threading)
+            logger.info(f"🚀 Starting processing: Upload to E2 + Content extraction for {filename}")
+
+            # Update status to indicate we're uploading + extracting
+            await self._update_document_status(
+                document_id=document_id,
+                stage="uploading_extracting",
+                stage_description="Uploading to storage and extracting content"
+            )
+
+            # Upload to E2 first
+            await self.idrivee2_client.upload_file(
+                file_obj=io.BytesIO(file_content),
+                object_name=file_key,
+                content_type=content_type
+            )
+
+            # Extract content (blocking call, no threading)
+            raw_content = extract_raw_data(file_content, filename, folder_name)
+
+            logger.info(f"✅ Upload and extraction complete for {filename}")
+
+            # Check if this is a video file (special handling)
+            is_video = isinstance(raw_content, dict) and raw_content.get('type') == 'video'
+
+            if is_video:
+                # For videos: extract components
+                combined_text = raw_content['combined_text']
+                video_chunks = raw_content['chunks']
+                logger.info(f"🎬 Video extracted: {len(video_chunks)} scene chunks created")
+
+                # Validate video chunks exist
+                if not combined_text or not video_chunks:
+                    raise ValueError(f"Video processing failed for: {filename}")
+
+                content_for_mongodb = combined_text
+            else:
+                # Normal files: validate and check token limits
+                if not validate_extracted_content(raw_content):
+                    raise ValueError(f"Extracted content is invalid or empty for: {filename}")
+
+                # Validate content for embeddings (check token limits)
+                validation_result = validate_content_for_embeddings(raw_content)
+                logger.info(
+                    f"📊 Content validation: {validation_result['token_count']} tokens, "
+                    f"needs_chunking={validation_result['needs_chunking']}"
+                )
+
+                content_for_mongodb = raw_content
+
+            # Step 3: Update MongoDB with extracted content
+            logger.info(f"💾 Updating document with extracted content: {filename}")
+            await self._update_document_content(
+                document_id=document_id,
+                raw_content=content_for_mongodb,
+                stage="content_extracted",
+                stage_description="Content extraction completed"
+            )
+            logger.info(f"✅ MongoDB content updated. Document ID: {document_id}")
+
+            # Step 4 & 5: Chunking and Pinecone storage
+            total_chunks = 0
+
+            if is_video:
+                # For videos: use pre-made scene chunks directly (skip semantic chunking)
+                logger.info(f"📦 Storing video scene chunks in Pinecone: {filename}")
+
+                # Update status to embedding
+                await self._update_document_status(
+                    document_id=document_id,
+                    stage="embedding",
+                    stage_description=f"Creating embeddings for {len(video_chunks)} video chunks",
+                    progress_current=0,
+                    progress_total=len(video_chunks)
+                )
+
+                # Prepare metadata and texts for Pinecone
+                texts = []
+                metadatas = []
+                ids = []
+
+                for chunk in video_chunks:
+                    texts.append(chunk['blended_text'])
+
+                    # Build metadata, excluding keyframe_file_key if None (Pinecone rejects null values)
+                    metadata = {
+                        "document_id": document_id,
+                        "file_name": filename,
+                        "folder_name": folder_name,
+                        "file_key": file_key,
+                        "user_id": user_id,
+                        "video_id": chunk['video_id'],
+                        "video_name": chunk['video_name'],
+                        "clip_start": chunk['clip_start'],
+                        "clip_end": chunk['clip_end'],
+                        "duration": chunk['duration'],
+                        "key_frame_timestamp": chunk['key_frame_timestamp'],
+                        "scene_id": chunk.get('chunk_id'),
+                        **(additional_metadata or {})
+                    }
+
+                    # Only include keyframe_file_key if it's not None
+                    if chunk.get('keyframe_file_key') is not None:
+                        metadata["keyframe_file_key"] = chunk['keyframe_file_key']
+
+                    metadatas.append(metadata)
+                    ids.append(f"{document_id}_{chunk['chunk_id']}")
+
+                # Add to Pinecone (blocking call, no threading)
+                logger.info(f"🔄 Starting Pinecone storage for {len(texts)} video chunks...")
+                logger.info(f"   - Namespace: {organization_id}")
+
+                self.pinecone_client.add_documents(
+                    texts=texts,
+                    metadatas=metadatas,
+                    ids=ids,
+                    namespace=organization_id
+                )
+
+                total_chunks = len(video_chunks)
+                logger.info(f"✅ Stored {total_chunks} video scene chunks in Pinecone for: {filename}")
+
+            else:
+                # Normal files: do semantic chunking
+                logger.info(f"📦 Preparing content for vectorization: {filename}")
+                base_metadata = {
+                    "document_id": document_id,
+                    "file_name": filename,
+                    "folder_name": folder_name,
+                    "file_key": file_key,
+                    "user_id": user_id,
+                    **(additional_metadata or {})
+                }
+
+                # This handles token-based pre-chunking if content > 200k tokens
+                prepared_documents = prepare_content_for_vectorization(
+                    content=raw_content,
+                    metadata=base_metadata
+                )
+
+                # Apply semantic chunking
+                logger.info(
+                    f"✂️ Semantic chunking and storing in Pinecone: {filename} "
+                    f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
+                )
+
+                for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
+                    pre_chunk_content = pre_chunk_doc["content"]
+                    pre_chunk_metadata = pre_chunk_doc["metadata"]
+
+                    logger.info(
+                        f"📝 Processing pre-chunk {idx}/{len(prepared_documents)} "
+                        f"for {filename}..."
+                    )
+
+                    # Apply semantic chunking to this pre-chunk
+                    chunks = self.chunker_client.chunk_with_metadata(
+                        text=pre_chunk_content,
+                        base_metadata=pre_chunk_metadata,
+                        chunker_type="default"
+                    )
+
+                    # Store chunks in Pinecone
+                    texts = [chunk["text"] for chunk in chunks]
+                    metadatas = [chunk["metadata"] for chunk in chunks]
+
+                    # Generate unique IDs for chunks
+                    pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
+                    ids = [
+                        f"{document_id}_pre{pre_chunk_index}_chunk{i}"
+                        for i in range(len(chunks))
+                    ]
+
+                    # Add to Pinecone (blocking call, no threading)
+                    self.pinecone_client.add_documents(
+                        texts=texts,
+                        metadatas=metadatas,
+                        ids=ids,
+                        namespace=organization_id
+                    )
+
+                    total_chunks += len(chunks)
+                    logger.info(
+                        f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
+                        f"{len(chunks)} chunks stored in Pinecone"
+                    )
+
+                logger.info(f"✅ Stored {total_chunks} chunks in Pinecone for: {filename}")
+
+            # Mark as completed
+            await self._update_document_status(
+                document_id=document_id,
+                status="completed",
+                stage="completed",
+                stage_description=f"Successfully processed {total_chunks} chunks",
+                completed_at=datetime.utcnow()
+            )
+            logger.info(f"✅ Document marked as completed: {document_id}")
+
+            # Return results
+            result = {
+                "document_id": document_id,
+                "file_name": filename,
+                "folder_name": folder_name,
+                "file_key": file_key,
+                "file_size_mb": file_size_mb,
+                "total_chunks": total_chunks
+            }
+
+            # Add token_count only for non-video files
+            if not is_video:
+                result["token_count"] = validation_result['token_count']
+
+            return result
+
+        except Exception as e:
+            # Mark document as failed
+            logger.error(f"❌ Processing failed for {filename}: {str(e)}")
+            await self._update_document_status(
+                document_id=document_id,
+                status="failed",
+                stage="failed",
+                stage_description=f"Processing failed: {str(e)}",
+                error=str(e),
+                failed_at=datetime.utcnow()
+            )
+            raise  # Re-raise the exception
+
     async def _process_single_document_with_existing_id(
         self,
         document_id: str,
