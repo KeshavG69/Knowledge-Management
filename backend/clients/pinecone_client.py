@@ -36,6 +36,9 @@ class PineconeClient:
         # Initialize Pinecone with minimal threading (REST API only)
         self.pc = Pinecone(api_key=self.api_key, pool_threads=1, source_tag="celery-worker")
 
+        # CRITICAL: Monkey-patch to prevent thread pool creation in ApiClient
+        self._patch_pinecone_no_threading()
+
         # Initialize OpenAI embeddings with sync HTTP client (no thread pools)
         import httpx
         sync_http_client = httpx.Client(
@@ -52,6 +55,15 @@ class PineconeClient:
         # Check if index exists, create if not
         self._ensure_index_exists()
 
+        # Cache index host for direct REST API calls (avoid describe_index in hot path)
+        try:
+            index_info = self.pc.describe_index(self.index_name)
+            self.index_host = index_info.host
+            logger.info(f"✅ Cached index host: {self.index_host}")
+        except Exception as e:
+            logger.warning(f"Could not cache index host: {str(e)}")
+            self.index_host = None
+
         # Initialize LangChain vector store
         self.vector_store = PineconeVectorStore(
             index_name=self.index_name,
@@ -59,6 +71,48 @@ class PineconeClient:
         )
 
         logger.info(f"✅ Pinecone client initialized with index: {self.index_name}")
+
+    def _patch_pinecone_no_threading(self):
+        """
+        Monkey-patch Pinecone's ApiClient to prevent thread pool creation
+
+        This prevents the ApiClient from creating ThreadPools which cause
+        "can't start new thread" errors in Celery workers.
+        """
+        try:
+            from pinecone.openapi_support import api_client
+
+            # Store original call_api method
+            original_call_api = api_client.ApiClient.call_api
+
+            # Create patched version that doesn't use thread pools
+            def patched_call_api(self, *args, **kwargs):
+                # Override async behavior - force synchronous
+                kwargs['_preload_content'] = True
+                kwargs['async_req'] = False
+
+                # Temporarily bypass pool property by calling REST directly
+                # This avoids ThreadPool creation
+                if hasattr(self, '_pool'):
+                    saved_pool = self._pool
+                else:
+                    saved_pool = None
+
+                self._pool = None  # Prevent pool access
+
+                try:
+                    # Make synchronous REST call
+                    return original_call_api(self, *args, **kwargs)
+                finally:
+                    if saved_pool is not None:
+                        self._pool = saved_pool
+
+            # Apply monkey patch
+            api_client.ApiClient.call_api = patched_call_api
+            logger.info("✅ Applied Pinecone no-threading patch")
+
+        except Exception as e:
+            logger.warning(f"Could not apply Pinecone threading patch: {str(e)}")
 
     def cleanup(self):
         """Clean up Pinecone client resources and thread pools"""
@@ -101,7 +155,7 @@ class PineconeClient:
             logger.error(f"❌ Failed to ensure index exists: {str(e)}")
             raise
 
-    def add_documents(
+    def add_documents_sync(
         self,
         texts: List[str],
         metadatas: List[Dict[str, Any]],
@@ -109,7 +163,10 @@ class PineconeClient:
         namespace: Optional[str] = None
     ) -> List[str]:
         """
-        Add documents to Pinecone vector store in small batches to avoid threading issues
+        Add documents to Pinecone using direct REST API (NO thread pools)
+
+        This method bypasses Pinecone SDK entirely and uses direct HTTP requests
+        to avoid thread pool creation in Celery workers.
 
         Args:
             texts: List of text chunks to embed and store
@@ -124,45 +181,99 @@ class PineconeClient:
             Exception: If adding documents fails
         """
         try:
-            # Create LangChain Document objects
-            documents = [
-                Document(page_content=text, metadata=metadata)
-                for text, metadata in zip(texts, metadatas)
-            ]
+            import openai
+            import requests
+            import time
 
-            # Create vector store with namespace if provided
-            if namespace:
-                vector_store = PineconeVectorStore(
-                    index_name=self.index_name,
-                    embedding=self.embeddings,
-                    namespace=namespace
-                )
-            else:
-                vector_store = self.vector_store
+            if not ids:
+                ids = [f"doc_{i}_{int(time.time())}" for i in range(len(texts))]
 
-            # Process in very small batches to avoid multiprocessing pool issues in Celery
-            batch_size = 10  # Very small batches to minimize threading
+            # Use cached index host (set during init to avoid thread pool in describe_index)
+            if not self.index_host:
+                raise Exception("Index host not cached - cannot perform sync upsert")
+            index_host = self.index_host
+
+            # Process in small batches (REST API can handle this without threading)
+            batch_size = 25  # Reasonable batch size for REST API
             all_doc_ids = []
 
-            for i in range(0, len(documents), batch_size):
-                batch_docs = documents[i:i + batch_size]
-                batch_ids = ids[i:i + batch_size] if ids else None
+            # Create OpenAI client without connection pooling
+            client = openai.OpenAI(
+                api_key=self.embedding_model,
+                max_retries=2,
+                timeout=60.0
+            )
 
-                # Add batch to vector store
-                if batch_ids:
-                    doc_ids = vector_store.add_documents(batch_docs, ids=batch_ids)
-                else:
-                    doc_ids = vector_store.add_documents(batch_docs)
+            # Create requests session (no connection pooling)
+            session = requests.Session()
+            session.headers.update({
+                "Api-Key": self.api_key,
+                "Content-Type": "application/json"
+            })
 
-                all_doc_ids.extend(doc_ids)
-                logger.info(f"✅ Added batch {i//batch_size + 1} ({len(doc_ids)} docs) to Pinecone")
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i + batch_size]
+                batch_metadatas = metadatas[i:i + batch_size]
+                batch_ids = ids[i:i + batch_size]
 
-            logger.info(f"✅ Added {len(all_doc_ids)} total documents to Pinecone (namespace: {namespace or 'default'})")
+                # Generate embeddings synchronously
+                try:
+                    response = client.embeddings.create(
+                        input=batch_texts,
+                        model="text-embedding-3-small"
+                    )
+                    embeddings = [item.embedding for item in response.data]
+                except Exception as e:
+                    logger.error(f"❌ Failed to generate embeddings: {str(e)}")
+                    raise
+
+                # Prepare vectors for upsert
+                vectors = []
+                for vec_id, embedding, metadata in zip(batch_ids, embeddings, batch_metadatas):
+                    vectors.append({
+                        "id": vec_id,
+                        "values": embedding,
+                        "metadata": metadata
+                    })
+
+                # Direct REST API upsert (no SDK, no thread pools)
+                try:
+                    url = f"https://{index_host}/vectors/upsert"
+                    payload = {"vectors": vectors}
+                    if namespace:
+                        payload["namespace"] = namespace
+
+                    resp = session.post(url, json=payload, timeout=30)
+                    resp.raise_for_status()
+
+                    all_doc_ids.extend(batch_ids)
+
+                    if (i // batch_size + 1) % 10 == 0:
+                        logger.info(f"✅ Processed {i + batch_size}/{len(texts)} documents")
+
+                except Exception as e:
+                    logger.error(f"❌ Pinecone REST upsert failed: {str(e)}")
+                    raise
+
+            session.close()
+            logger.info(f"✅ Added {len(all_doc_ids)} documents to Pinecone (namespace: {namespace or 'default'})")
             return all_doc_ids
 
         except Exception as e:
             logger.error(f"❌ Failed to add documents to Pinecone: {str(e)}")
             raise Exception(f"Failed to add documents: {str(e)}")
+
+    def add_documents(
+        self,
+        texts: List[str],
+        metadatas: List[Dict[str, Any]],
+        ids: Optional[List[str]] = None,
+        namespace: Optional[str] = None
+    ) -> List[str]:
+        """
+        Add documents to Pinecone - delegates to sync method for Celery compatibility
+        """
+        return self.add_documents_sync(texts, metadatas, ids, namespace)
 
     def similarity_search(
         self,
