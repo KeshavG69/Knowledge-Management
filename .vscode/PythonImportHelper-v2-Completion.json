@@ -2775,14 +2775,6 @@
         "documentation": {}
     },
     {
-        "label": "partial",
-        "importPath": "functools",
-        "description": "functools",
-        "isExtraImport": true,
-        "detail": "functools",
-        "documentation": {}
-    },
-    {
         "label": "SemanticChunker",
         "importPath": "chonkie",
         "description": "chonkie",
@@ -3247,30 +3239,6 @@
         "documentation": {}
     },
     {
-        "label": "get_thread_pool",
-        "importPath": "app.thread_pool",
-        "description": "app.thread_pool",
-        "isExtraImport": true,
-        "detail": "app.thread_pool",
-        "documentation": {}
-    },
-    {
-        "label": "get_thread_pool",
-        "importPath": "app.thread_pool",
-        "description": "app.thread_pool",
-        "isExtraImport": true,
-        "detail": "app.thread_pool",
-        "documentation": {}
-    },
-    {
-        "label": "get_thread_pool",
-        "importPath": "app.thread_pool",
-        "description": "app.thread_pool",
-        "isExtraImport": true,
-        "detail": "app.thread_pool",
-        "documentation": {}
-    },
-    {
         "label": "detect",
         "importPath": "scenedetect",
         "description": "scenedetect",
@@ -3437,6 +3405,22 @@
         "description": "auth.dependencies",
         "isExtraImport": true,
         "detail": "auth.dependencies",
+        "documentation": {}
+    },
+    {
+        "label": "get_thread_pool",
+        "importPath": "app.thread_pool",
+        "description": "app.thread_pool",
+        "isExtraImport": true,
+        "detail": "app.thread_pool",
+        "documentation": {}
+    },
+    {
+        "label": "get_thread_pool",
+        "importPath": "app.thread_pool",
+        "description": "app.thread_pool",
+        "isExtraImport": true,
+        "detail": "app.thread_pool",
         "documentation": {}
     },
     {
