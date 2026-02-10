@@ -630,12 +630,16 @@ class IngestionService:
                 logger.info(f"🔄 Starting Pinecone storage for {len(texts)} video chunks...")
                 logger.info(f"   - Namespace: {organization_id}")
 
-                await asyncio.to_thread(
-                    self.pinecone_client.add_documents,
-                    texts=texts,
-                    metadatas=metadatas,
-                    ids=ids,
-                    namespace=organization_id
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(
+                    self.thread_pool,
+                    partial(
+                        self.pinecone_client.add_documents,
+                        texts=texts,
+                        metadatas=metadatas,
+                        ids=ids,
+                        namespace=organization_id
+                    )
                 )
 
                 total_chunks = len(video_chunks)
@@ -654,10 +658,10 @@ class IngestionService:
                 }
 
                 # This handles token-based pre-chunking if content > 200k tokens
-                prepared_documents = await asyncio.to_thread(
-                    prepare_content_for_vectorization,
-                    content=raw_content,
-                    metadata=base_metadata
+                loop = asyncio.get_event_loop()
+                prepared_documents = await loop.run_in_executor(
+                    self.thread_pool,
+                    partial(prepare_content_for_vectorization, content=raw_content, metadata=base_metadata)
                 )
 
                 # Apply semantic chunking
@@ -676,11 +680,15 @@ class IngestionService:
                     )
 
                     # Apply semantic chunking to this pre-chunk
-                    chunks = await asyncio.to_thread(
-                        self.chunker_client.chunk_with_metadata,
-                        text=pre_chunk_content,
-                        base_metadata=pre_chunk_metadata,
-                        chunker_type="default"
+                    loop = asyncio.get_event_loop()
+                    chunks = await loop.run_in_executor(
+                        self.thread_pool,
+                        partial(
+                            self.chunker_client.chunk_with_metadata,
+                            text=pre_chunk_content,
+                            base_metadata=pre_chunk_metadata,
+                            chunker_type="default"
+                        )
                     )
 
                     # Store chunks in Pinecone
@@ -695,12 +703,16 @@ class IngestionService:
                     ]
 
                     # Add to Pinecone in thread pool
-                    await asyncio.to_thread(
-                        self.pinecone_client.add_documents,
-                        texts=texts,
-                        metadatas=metadatas,
-                        ids=ids,
-                        namespace=organization_id
+                    loop = asyncio.get_event_loop()
+                    await loop.run_in_executor(
+                        self.thread_pool,
+                        partial(
+                            self.pinecone_client.add_documents,
+                            texts=texts,
+                            metadatas=metadatas,
+                            ids=ids,
+                            namespace=organization_id
+                        )
                     )
 
                     total_chunks += len(chunks)
