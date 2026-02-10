@@ -10,7 +10,6 @@ import io
 import cv2
 from typing import Dict, List, Optional
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from moviepy import VideoFileClip
 from clients.groq_whisper_client import get_groq_whisper_client
@@ -20,6 +19,7 @@ from clients.video_aligner import get_video_aligner
 from clients.idrivee2_client import get_idrivee2_client
 from app.logger import logger
 from app.settings import settings
+from app.thread_pool import get_thread_pool
 
 
 class VideoProcessorClient:
@@ -41,15 +41,11 @@ class VideoProcessorClient:
         if not hasattr(self, '_initialized'):
             self._processing_lock = threading.Lock()
 
-            # Create thread pool with limited workers for blocking video operations
-            # Video processing is CPU intensive, so we limit to 4 workers
-            self.thread_pool = ThreadPoolExecutor(
-                max_workers=settings.MAX_THREAD_WORKERS,
-                thread_name_prefix="video_worker"
-            )
+            # Use global thread pool (shared across entire application)
+            self.thread_pool = get_thread_pool()
 
             self._initialized = True
-            logger.info(f"✅ Video processor initialized (max workers: {settings.MAX_THREAD_WORKERS})")
+            logger.info("✅ Video processor initialized (using global thread pool)")
 
     def process_video(
         self,

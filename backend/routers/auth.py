@@ -3,6 +3,8 @@ Authentication router for user management endpoints.
 Provides signup, login, and user info endpoints.
 """
 
+import asyncio
+from functools import partial
 from fastapi import APIRouter, HTTPException, Depends, status
 from datetime import timedelta
 
@@ -11,6 +13,7 @@ from auth.models import UserSignup, UserLogin, UserResponse, Token
 from auth.crud import UserCRUD
 from auth.utils import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from auth.dependencies import get_current_user
+from app.thread_pool import get_thread_pool
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -27,7 +30,12 @@ async def signup(user_data: UserSignup):
         UserResponse: Created user information
     """
     try:
-        user = UserCRUD.create_user(user_data)
+        # Run blocking bcrypt operations in thread pool to prevent thread exhaustion
+        loop = asyncio.get_event_loop()
+        user = await loop.run_in_executor(
+            get_thread_pool(),
+            partial(UserCRUD.create_user, user_data)
+        )
         return user
     except ValueError as e:
         raise HTTPException(
@@ -53,7 +61,13 @@ async def login(user_data: UserLogin):
         Dict with access token and user info
     """
     try:
-        user = UserCRUD.authenticate_user(user_data.email, user_data.password)
+        # Run blocking bcrypt password verification in thread pool
+        loop = asyncio.get_event_loop()
+        user = await loop.run_in_executor(
+            get_thread_pool(),
+            partial(UserCRUD.authenticate_user, user_data.email, user_data.password)
+        )
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
