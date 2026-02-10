@@ -61,6 +61,16 @@ class IDriveE2Client:
 
         logger.info(f"✅ iDrive E2 client initialized for bucket: {self.bucket_name}")
 
+    def cleanup(self):
+        """Clean up boto3 client resources and thread pools"""
+        try:
+            if hasattr(self, 'sync_client') and self.sync_client:
+                # Close the boto3 client's connection pool
+                self.sync_client.close()
+                logger.info("✅ Closed boto3 sync client")
+        except Exception as e:
+            logger.warning(f"Error cleaning up IDriveE2 client: {str(e)}")
+
     async def upload_file(
         self,
         file_obj: BinaryIO,
