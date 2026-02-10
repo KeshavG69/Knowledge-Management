@@ -27,6 +27,7 @@ dependencies = [
     # AI & LLM
     "openai>=1.99.0",
     "anthropic>=0.60.0",
+    "elevenlabs>=1.0.0",  # Text-to-speech for podcast generation
     # Vector Database
     "pinecone[grpc]>=5.0.0",  # gRPC avoids threading issues in Celery
     "langchain>=0.2.7",
