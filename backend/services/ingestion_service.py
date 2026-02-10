@@ -57,22 +57,25 @@ class IngestionService:
         """
         Synchronous wrapper for Celery tasks - avoids event loop conflicts
 
-        Instead of asyncio.run(), this uses the existing event loop or creates one properly
+        Creates a fresh event loop for this task to avoid conflicts with Celery's event loop management
         """
+        # Close any existing event loop in this thread
         try:
-            # Try to get existing event loop
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                # If loop is already running (shouldn't happen in Celery), create new one
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+                loop = None
+            elif not loop.is_closed():
+                loop.close()
+                loop = None
         except RuntimeError:
-            # No event loop exists, create one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            loop = None
+
+        # Create a fresh event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
         try:
-            # Run the async method in the event loop
+            # Run the async method
             return loop.run_until_complete(
                 self._process_document_with_bytes(
                     document_id=document_id,
@@ -86,8 +89,11 @@ class IngestionService:
                 )
             )
         finally:
-            # Don't close the loop as it might be reused
-            pass
+            # Clean up the loop
+            try:
+                loop.close()
+            except Exception:
+                pass
 
     async def ingest_documents(
         self,
