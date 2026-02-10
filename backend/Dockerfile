@@ -45,5 +45,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Run both FastAPI and Celery worker in same container
-# & runs them simultaneously
-CMD ["sh", "-c", "uv run uvicorn app.server:app --host 0.0.0.0 --port 8000 & uv run celery -A app.worker.celery_app worker --loglevel=info"]
+# & runs them simultaneously, --concurrency=2 limits worker processes for Railway resource limits
+CMD ["sh", "-c", "uv run uvicorn app.server:app --host 0.0.0.0 --port 8000 & uv run celery -A app.worker.celery_app worker --loglevel=info --concurrency=2"]
