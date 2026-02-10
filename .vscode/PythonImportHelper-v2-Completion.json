@@ -1860,6 +1860,14 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -1914,6 +1922,14 @@
         "description": "contextlib",
         "isExtraImport": true,
         "detail": "contextlib",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "app.settings",
+        "description": "app.settings",
+        "isExtraImport": true,
+        "detail": "app.settings",
         "documentation": {}
     },
     {
@@ -2154,6 +2170,14 @@
         "description": "dotenv",
         "isExtraImport": true,
         "detail": "dotenv",
+        "documentation": {}
+    },
+    {
+        "label": "ThreadPoolExecutor",
+        "importPath": "concurrent.futures",
+        "description": "concurrent.futures",
+        "isExtraImport": true,
+        "detail": "concurrent.futures",
         "documentation": {}
     },
     {
@@ -2751,6 +2775,14 @@
         "documentation": {}
     },
     {
+        "label": "partial",
+        "importPath": "functools",
+        "description": "functools",
+        "isExtraImport": true,
+        "detail": "functools",
+        "documentation": {}
+    },
+    {
         "label": "SemanticChunker",
         "importPath": "chonkie",
         "description": "chonkie",
@@ -3143,22 +3175,6 @@
         "documentation": {}
     },
     {
-        "label": "ThreadPoolExecutor",
-        "importPath": "concurrent.futures",
-        "description": "concurrent.futures",
-        "isExtraImport": true,
-        "detail": "concurrent.futures",
-        "documentation": {}
-    },
-    {
-        "label": "ThreadPoolExecutor",
-        "importPath": "concurrent.futures",
-        "description": "concurrent.futures",
-        "isExtraImport": true,
-        "detail": "concurrent.futures",
-        "documentation": {}
-    },
-    {
         "label": "VideoFileClip",
         "importPath": "moviepy",
         "description": "moviepy",
@@ -3228,6 +3244,30 @@
         "description": "clients.idrivee2_client",
         "isExtraImport": true,
         "detail": "clients.idrivee2_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_thread_pool",
+        "importPath": "app.thread_pool",
+        "description": "app.thread_pool",
+        "isExtraImport": true,
+        "detail": "app.thread_pool",
+        "documentation": {}
+    },
+    {
+        "label": "get_thread_pool",
+        "importPath": "app.thread_pool",
+        "description": "app.thread_pool",
+        "isExtraImport": true,
+        "detail": "app.thread_pool",
+        "documentation": {}
+    },
+    {
+        "label": "get_thread_pool",
+        "importPath": "app.thread_pool",
+        "description": "app.thread_pool",
+        "isExtraImport": true,
+        "detail": "app.thread_pool",
         "documentation": {}
     },
     {
@@ -4320,6 +4360,24 @@
         "description": "backend.app.settings",
         "peekOfCode": "settings = Settings()",
         "detail": "backend.app.settings",
+        "documentation": {}
+    },
+    {
+        "label": "get_thread_pool",
+        "kind": 2,
+        "importPath": "backend.app.thread_pool",
+        "description": "backend.app.thread_pool",
+        "peekOfCode": "def get_thread_pool() -> ThreadPoolExecutor:\n    \"\"\"\n    Get or create the global thread pool executor.\n    This thread pool is shared across the entire application to prevent\n    thread exhaustion from unlimited thread creation.\n    Returns:\n        ThreadPoolExecutor: Shared thread pool with limited workers\n    \"\"\"\n    global _thread_pool\n    if _thread_pool is None:",
+        "detail": "backend.app.thread_pool",
+        "documentation": {}
+    },
+    {
+        "label": "shutdown_thread_pool",
+        "kind": 2,
+        "importPath": "backend.app.thread_pool",
+        "description": "backend.app.thread_pool",
+        "peekOfCode": "def shutdown_thread_pool(wait: bool = True):\n    \"\"\"\n    Shutdown the global thread pool.\n    Args:\n        wait: If True, wait for all threads to complete before returning\n    \"\"\"\n    global _thread_pool\n    if _thread_pool is not None:\n        _thread_pool.shutdown(wait=wait)\n        _thread_pool = None",
+        "detail": "backend.app.thread_pool",
         "documentation": {}
     },
     {

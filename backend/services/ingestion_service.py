@@ -12,7 +12,6 @@ import io
 import asyncio
 from typing import List, Dict, Any
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from fastapi import UploadFile
 from bson import ObjectId
@@ -33,6 +32,7 @@ from utils.file_utils import (
 )
 from app.logger import logger
 from app.settings import settings
+from app.thread_pool import get_thread_pool
 
 
 class IngestionService:
@@ -47,25 +47,13 @@ class IngestionService:
 
         # Get concurrency limits from settings (configurable via environment variables)
         self.max_concurrent_files = settings.MAX_CONCURRENT_FILES
-        self.max_thread_workers = settings.MAX_THREAD_WORKERS
 
         # Create semaphore for file-level concurrency control
         self.file_semaphore = asyncio.Semaphore(self.max_concurrent_files)
 
-        # Create thread pool with limited workers for blocking operations
-        self.thread_pool = ThreadPoolExecutor(
-            max_workers=self.max_thread_workers,
-            thread_name_prefix="ingestion_worker"
-        )
-        logger.info(f"🔧 Concurrency limits: {self.max_concurrent_files} files, {self.max_thread_workers} threads")
-
-    def __del__(self):
-        """Cleanup thread pool on service destruction"""
-        try:
-            self.thread_pool.shutdown(wait=False)
-            logger.info("🧹 Thread pool shut down")
-        except Exception:
-            pass  # Ignore errors during cleanup
+        # Use global thread pool (shared across entire application)
+        self.thread_pool = get_thread_pool()
+        logger.info(f"🔧 Concurrency limits: {self.max_concurrent_files} concurrent files")
 
     async def ingest_documents(
         self,
