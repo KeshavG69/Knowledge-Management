@@ -7,7 +7,8 @@ from typing import Optional, List, Dict, Any
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
-from pinecone.grpc import PineconeGRPC as Pinecone, ServerlessSpec  # Use gRPC to avoid thread pools
+from pinecone.grpc import PineconeGRPC as Pinecone  # Use gRPC to avoid thread pools
+from pinecone import ServerlessSpec  # ServerlessSpec is in main module
 from app.settings import settings
 from app.logger import logger
 

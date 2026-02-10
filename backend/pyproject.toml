@@ -28,7 +28,7 @@ dependencies = [
     "openai>=1.99.0",
     "anthropic>=0.60.0",
     # Vector Database
-    "pinecone>=5.0.0",
+    "pinecone[grpc]>=5.0.0",  # gRPC avoids threading issues in Celery
     "langchain>=0.2.7",
     "langchain-community>=0.2.6",
     "langchain-openai>=0.1.7",
