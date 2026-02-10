@@ -4,6 +4,7 @@ S3-compatible cloud storage using aioboto3 for async operations
 """
 
 import aioboto3
+import boto3
 from typing import Optional, BinaryIO
 from botocore.exceptions import ClientError
 from app.settings import settings
@@ -14,7 +15,7 @@ class IDriveE2Client:
     """Client for iDrive E2 cloud storage operations"""
 
     def __init__(self):
-        """Initialize iDrive E2 client with aioboto3"""
+        """Initialize iDrive E2 client with aioboto3 and boto3"""
         self.endpoint_url = settings.IDRIVEE2_ENDPOINT_URL
         self.access_key = settings.IDRIVEE2_ACCESS_KEY_ID
         self.secret_key = settings.IDRIVEE2_SECRET_ACCESS_KEY
@@ -30,11 +31,21 @@ class IDriveE2Client:
             }
         )
 
-        # Initialize aioboto3 session
+        # Initialize aioboto3 session (async)
         self.session = aioboto3.Session(
             aws_access_key_id=self.access_key,
             aws_secret_access_key=self.secret_key,
             region_name='us-east-1'
+        )
+
+        # Initialize boto3 client (sync)
+        self.sync_client = boto3.client(
+            's3',
+            endpoint_url=self.endpoint_url,
+            aws_access_key_id=self.access_key,
+            aws_secret_access_key=self.secret_key,
+            region_name='us-east-1',
+            config=self.config
         )
 
         logger.info(f"✅ iDrive E2 client initialized for bucket: {self.bucket_name}")
@@ -78,6 +89,46 @@ class IDriveE2Client:
                 )
 
             logger.info(f"✅ File uploaded successfully: {object_name}")
+            return object_name
+
+        except ClientError as e:
+            logger.error(f"❌ Failed to upload file {object_name}: {str(e)}")
+            raise Exception(f"Failed to upload file: {str(e)}")
+
+    def upload_file_sync(
+        self,
+        file_obj: BinaryIO,
+        object_name: str,
+        content_type: Optional[str] = None
+    ) -> str:
+        """
+        Upload a file to iDrive E2 storage (sync)
+
+        Args:
+            file_obj: File object to upload
+            object_name: S3 object name (key) in the bucket
+            content_type: MIME type of the file
+
+        Returns:
+            str: Object key (not URL since bucket is private)
+
+        Raises:
+            Exception: If upload fails
+        """
+        try:
+            extra_args = {}
+            if content_type:
+                extra_args['ContentType'] = content_type
+
+            # Upload without checksum validation (iDrive E2 compatibility)
+            self.sync_client.upload_fileobj(
+                file_obj,
+                self.bucket_name,
+                object_name,
+                ExtraArgs=extra_args
+            )
+
+            logger.info(f"✅ File uploaded successfully (sync): {object_name}")
             return object_name
 
         except ClientError as e:
