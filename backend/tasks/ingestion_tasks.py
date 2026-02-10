@@ -2,6 +2,7 @@
 Document Ingestion Celery Tasks
 Processes documents using existing MongoDB document IDs
 """
+import gc
 import base64
 from typing import Dict, Any, List
 from app.worker import celery_app
@@ -103,6 +104,7 @@ def process_single_document_task(
     Returns:
         Processing result
     """
+    ingestion_service = None
     try:
         logger.info(f"🚀 Worker processing: {filename} (doc_id: {document_id})")
 
@@ -140,3 +142,15 @@ def process_single_document_task(
             "filename": filename,
             "error": str(e)
         }
+    finally:
+        # CRITICAL: Clean up all client resources and thread pools after EACH task
+        if ingestion_service:
+            try:
+                ingestion_service.cleanup()
+                logger.info(f"🧹 Cleaned up resources for: {filename}")
+            except Exception as cleanup_error:
+                logger.warning(f"Cleanup warning for {filename}: {str(cleanup_error)}")
+
+        # Force garbage collection to clean up any lingering thread pools
+        gc.collect()
+        logger.info(f"🗑️ Forced garbage collection after: {filename}")

@@ -43,6 +43,17 @@ class IngestionService:
         self.pinecone_client = get_pinecone_client()
         self.chunker_client = get_chunker_client()
 
+    def cleanup(self):
+        """Clean up all client resources and thread pools"""
+        try:
+            if hasattr(self, 'idrivee2_client') and hasattr(self.idrivee2_client, 'cleanup'):
+                self.idrivee2_client.cleanup()
+            if hasattr(self, 'pinecone_client') and hasattr(self.pinecone_client, 'cleanup'):
+                self.pinecone_client.cleanup()
+            logger.info("✅ Cleaned up IngestionService")
+        except Exception as e:
+            logger.warning(f"Error cleaning up IngestionService: {str(e)}")
+
     def process_single_document_sync(
         self,
         document_id: str,

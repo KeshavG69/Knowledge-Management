@@ -48,6 +48,17 @@ class PineconeClient:
 
         logger.info(f"✅ Pinecone client initialized with index: {self.index_name}")
 
+    def cleanup(self):
+        """Clean up Pinecone client resources and thread pools"""
+        try:
+            # Close the Pinecone client's thread pool
+            if hasattr(self.pc, '_pool') and self.pc._pool:
+                self.pc._pool.close()
+                self.pc._pool.join()
+            logger.info("✅ Cleaned up Pinecone client")
+        except Exception as e:
+            logger.warning(f"Error cleaning up Pinecone client: {str(e)}")
+
     def _ensure_index_exists(self):
         """Ensure Pinecone index exists, create if not"""
         try:
