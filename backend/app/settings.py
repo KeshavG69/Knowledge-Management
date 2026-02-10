@@ -46,9 +46,9 @@ class Settings(BaseSettings):
     # File Storage
     PRESIGNED_URL_EXPIRATION: int = 604800  # 7 days in seconds (maximum)
 
-    # Concurrency Settings
-    MAX_CONCURRENT_FILES: int = 2  # Max files processed simultaneously
-    MAX_THREAD_WORKERS: int = 4    # Max thread pool workers for blocking operations
+    # Concurrency Settings - SIMPLIFIED for Railway resource limits
+    MAX_CONCURRENT_FILES: int = 1  # Process ONE file at a time (sequential)
+    MAX_THREAD_WORKERS: int = 2    # Minimal threading (reduced from 4)
 
     # Observability
 
