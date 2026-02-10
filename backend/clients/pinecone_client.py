@@ -228,15 +228,17 @@ class PineconeClient:
                     raise
 
                 # Prepare vectors for upsert
+                # Store all metadata fields at top level (as requested by user)
                 vectors = []
                 for vec_id, text, embedding, metadata in zip(batch_ids, batch_texts, embeddings, batch_metadatas):
-                    # Add text to metadata for LangChain compatibility
-                    metadata_with_text = {**metadata, "text": text}
-                    vectors.append({
+                    # Build vector with all fields at top level
+                    vector = {
                         "id": vec_id,
                         "values": embedding,
-                        "metadata": metadata_with_text
-                    })
+                        "text": text,
+                        **metadata  # Spread all metadata fields at top level
+                    }
+                    vectors.append(vector)
 
                 # Direct REST API upsert (no SDK, no thread pools)
                 try:
