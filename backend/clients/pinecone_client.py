@@ -229,11 +229,13 @@ class PineconeClient:
 
                 # Prepare vectors for upsert
                 vectors = []
-                for vec_id, embedding, metadata in zip(batch_ids, embeddings, batch_metadatas):
+                for vec_id, text, embedding, metadata in zip(batch_ids, batch_texts, embeddings, batch_metadatas):
+                    # Add text to metadata for LangChain compatibility
+                    metadata_with_text = {**metadata, "text": text}
                     vectors.append({
                         "id": vec_id,
                         "values": embedding,
-                        "metadata": metadata
+                        "metadata": metadata_with_text
                     })
 
                 # Direct REST API upsert (no SDK, no thread pools)
