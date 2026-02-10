@@ -151,6 +151,15 @@ def process_single_document_task(
             except Exception as cleanup_error:
                 logger.warning(f"Cleanup warning for {filename}: {str(cleanup_error)}")
 
+        # Clean up Unstructured client (singleton with httpx)
+        try:
+            from clients.unstructured_client import UnstructuredClient
+            unstructured_client = UnstructuredClient()
+            if hasattr(unstructured_client, 'cleanup'):
+                unstructured_client.cleanup()
+        except Exception as e:
+            logger.warning(f"Unstructured cleanup warning: {str(e)}")
+
         # Force garbage collection to clean up any lingering thread pools
         gc.collect()
         logger.info(f"🗑️ Forced garbage collection after: {filename}")

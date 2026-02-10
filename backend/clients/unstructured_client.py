@@ -58,6 +58,15 @@ class UnstructuredClient:
             self._initialized = True
             logger.info("✅ Unstructured API client initialized with custom HTTP client")
 
+    def cleanup(self):
+        """Clean up HTTP client resources"""
+        try:
+            if hasattr(self, '_http_client') and self._http_client:
+                self._http_client.close()
+                logger.info("✅ Closed Unstructured HTTP client")
+        except Exception as e:
+            logger.warning(f"Error cleaning up Unstructured client: {str(e)}")
+
     def extract_content(self, file_content: bytes, filename: str) -> str:
         """
         Extract content from file using Unstructured API with fast strategy
