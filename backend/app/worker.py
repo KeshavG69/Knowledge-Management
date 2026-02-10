@@ -38,4 +38,6 @@ celery_app.conf.update(
     task_soft_time_limit=3000,  # 50 minutes soft limit
     task_acks_late=True,  # Acknowledge after task completes
     worker_prefetch_multiplier=1,  # Fetch one task at a time
+    worker_max_tasks_per_child=1,  # Restart worker after each task to clean up threads
+    worker_pool_restarts=True,  # Enable pool restarts
 )
