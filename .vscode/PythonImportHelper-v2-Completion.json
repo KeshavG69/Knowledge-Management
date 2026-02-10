@@ -640,22 +640,6 @@
         "documentation": {}
     },
     {
-        "label": "Dict",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "Any",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
         "label": "Any",
         "importPath": "typing",
         "description": "typing",
@@ -881,6 +865,30 @@
     },
     {
         "label": "AsyncGenerator",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1492,7 +1500,7 @@
         "documentation": {}
     },
     {
-        "label": "BackgroundTasks",
+        "label": "Depends",
         "importPath": "fastapi",
         "description": "fastapi",
         "isExtraImport": true,
@@ -1500,7 +1508,7 @@
         "documentation": {}
     },
     {
-        "label": "Depends",
+        "label": "UploadFile",
         "importPath": "fastapi",
         "description": "fastapi",
         "isExtraImport": true,
@@ -1537,6 +1545,14 @@
         "description": "starlette.responses",
         "isExtraImport": true,
         "detail": "starlette.responses",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
         "documentation": {}
     },
     {
@@ -2045,6 +2061,14 @@
         "documentation": {}
     },
     {
+        "label": "settings",
+        "importPath": "app.settings",
+        "description": "app.settings",
+        "isExtraImport": true,
+        "detail": "app.settings",
+        "documentation": {}
+    },
+    {
         "label": "SecurityHeadersMiddleware",
         "importPath": "app.middleware",
         "description": "app.middleware",
@@ -2157,6 +2181,31 @@
         "documentation": {}
     },
     {
+        "label": "Celery",
+        "importPath": "celery",
+        "description": "celery",
+        "isExtraImport": true,
+        "detail": "celery",
+        "documentation": {}
+    },
+    {
+        "label": "tasks.ingestion_tasks",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "tasks.ingestion_tasks",
+        "description": "tasks.ingestion_tasks",
+        "detail": "tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
+        "label": "process_document_ids_task",
+        "importPath": "tasks.ingestion_tasks",
+        "description": "tasks.ingestion_tasks",
+        "isExtraImport": true,
+        "detail": "tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -2230,22 +2279,6 @@
     },
     {
         "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "timezone",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -3617,6 +3650,14 @@
         "documentation": {}
     },
     {
+        "label": "IngestionService",
+        "importPath": "services.ingestion_service",
+        "description": "services.ingestion_service",
+        "isExtraImport": true,
+        "detail": "services.ingestion_service",
+        "documentation": {}
+    },
+    {
         "label": "get_ingestion_service",
         "importPath": "services.ingestion_service",
         "description": "services.ingestion_service",
@@ -3822,6 +3863,23 @@
         "description": "models.podcast",
         "isExtraImport": true,
         "detail": "models.podcast",
+        "documentation": {}
+    },
+    {
+        "label": "nest_asyncio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "nest_asyncio",
+        "description": "nest_asyncio",
+        "detail": "nest_asyncio",
+        "documentation": {}
+    },
+    {
+        "label": "celery_app",
+        "importPath": "app.worker",
+        "description": "app.worker",
+        "isExtraImport": true,
+        "detail": "app.worker",
         "documentation": {}
     },
     {
@@ -4296,6 +4354,24 @@
         "description": "backend.app.settings",
         "peekOfCode": "settings = Settings()",
         "detail": "backend.app.settings",
+        "documentation": {}
+    },
+    {
+        "label": "build_redis_url",
+        "kind": 2,
+        "importPath": "backend.app.worker",
+        "description": "backend.app.worker",
+        "peekOfCode": "def build_redis_url(db: int) -> str:\n    \"\"\"Build Redis URL with optional authentication\"\"\"\n    if settings.REDIS_PASSWORD:\n        # Include password in URL (format: redis://:password@host:port/db)\n        return f\"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{db}\"\n    else:\n        # No password (local development)\n        return f\"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{db}\"\n# Initialize Celery app\ncelery_app = Celery(",
+        "detail": "backend.app.worker",
+        "documentation": {}
+    },
+    {
+        "label": "celery_app",
+        "kind": 5,
+        "importPath": "backend.app.worker",
+        "description": "backend.app.worker",
+        "peekOfCode": "celery_app = Celery(\n    \"soldieriq_worker\",\n    broker=build_redis_url(0),\n    backend=build_redis_url(1),\n)\n# Import task modules to register them with Celery\n# This must happen after celery_app is created\nimport tasks.ingestion_tasks  # noqa: E402, F401\n# Celery configuration\ncelery_app.conf.update(",
+        "detail": "backend.app.worker",
         "documentation": {}
     },
     {
@@ -5311,7 +5387,7 @@
         "kind": 6,
         "importPath": "backend.routers.upload",
         "description": "backend.routers.upload",
-        "peekOfCode": "class YouTubeIngestionRequest(BaseModel):\n    \"\"\"Request model for YouTube URL ingestion\"\"\"\n    youtube_url: str\n    folder_name: str\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n@router.post(\"/youtube\")\nasync def ingest_youtube_video(\n    request: YouTubeIngestionRequest,\n    background_tasks: BackgroundTasks,",
+        "peekOfCode": "class YouTubeIngestionRequest(BaseModel):\n    \"\"\"Request model for YouTube URL ingestion\"\"\"\n    youtube_url: str\n    folder_name: str\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n@router.post(\"/youtube\")\nasync def ingest_youtube_video(\n    request: YouTubeIngestionRequest,\n    current_user: dict = Depends(get_current_user)",
         "detail": "backend.routers.upload",
         "documentation": {}
     },
@@ -5320,7 +5396,7 @@
         "kind": 5,
         "importPath": "backend.routers.upload",
         "description": "backend.routers.upload",
-        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\nasync def process_ingestion_in_background(\n    document_ids: List[str],\n    file_data: List[Dict[str, Any]],\n    folder_name: str,\n    user_id: Optional[str],\n    organization_id: Optional[str]\n):\n    \"\"\"\n    Background task for document ingestion",
+        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\n@router.post(\"/documents\")\nasync def upload_documents(\n    files: List[UploadFile] = File(..., description=\"Multiple files to upload\"),\n    folder_name: str = Form(..., description=\"Folder name for organization\"),\n    user_id: Optional[str] = Form(None, description=\"Optional user ID\"),\n    organization_id: Optional[str] = Form(None, description=\"Optional organization ID\"),\n    current_user: dict = Depends(get_current_user)\n):\n    \"\"\"",
         "detail": "backend.routers.upload",
         "documentation": {}
     },
@@ -5529,6 +5605,24 @@
         "description": "backend.services.report_generator",
         "peekOfCode": "_report_generator_service = None\ndef get_report_generator_service() -> ReportGeneratorService:\n    \"\"\"Get or create ReportGeneratorService singleton\"\"\"\n    global _report_generator_service\n    if _report_generator_service is None:\n        _report_generator_service = ReportGeneratorService()\n    return _report_generator_service",
         "detail": "backend.services.report_generator",
+        "documentation": {}
+    },
+    {
+        "label": "process_document_ids_task",
+        "kind": 2,
+        "importPath": "backend.tasks.ingestion_tasks",
+        "description": "backend.tasks.ingestion_tasks",
+        "peekOfCode": "def process_document_ids_task(\n    documents_data: List[Dict[str, Any]],\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:\n    \"\"\"\n    Main Celery task - creates individual tasks for each document\n    Args:\n        documents_data: List of dicts with:",
+        "detail": "backend.tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
+        "label": "process_single_document_task",
+        "kind": 2,
+        "importPath": "backend.tasks.ingestion_tasks",
+        "description": "backend.tasks.ingestion_tasks",
+        "peekOfCode": "def process_single_document_task(\n    self,\n    document_id: str,\n    content_b64: str,\n    filename: str,\n    content_type: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:",
+        "detail": "backend.tasks.ingestion_tasks",
         "documentation": {}
     },
     {
