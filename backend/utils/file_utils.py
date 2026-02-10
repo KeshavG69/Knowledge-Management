@@ -68,7 +68,7 @@ def is_audio_file(extension: str) -> bool:
     return extension in audio_formats
 
 
-def extract_raw_data(file_content: bytes, file_name: str, folder_name: str = "files") -> str:
+def extract_raw_data(file_content: bytes, file_name: str, folder_name: str = "files", unstructured_client=None) -> str:
     """
     Extract raw text content from file
 
@@ -80,6 +80,8 @@ def extract_raw_data(file_content: bytes, file_name: str, folder_name: str = "fi
     Args:
         file_content: File content as bytes
         file_name: Original filename
+        folder_name: Folder name for organization
+        unstructured_client: Optional UnstructuredClient instance (for resource management)
 
     Returns:
         Extracted raw text content
@@ -118,7 +120,6 @@ def extract_raw_data(file_content: bytes, file_name: str, folder_name: str = "fi
 
     # Get clients
     markitdown_client = get_markitdown_client()
-    unstructured_client = get_unstructured_client()
 
     # Use MarkItDown for simple formats
     if MarkItDownClient.is_supported(extension):
@@ -128,6 +129,9 @@ def extract_raw_data(file_content: bytes, file_name: str, folder_name: str = "fi
     # Use Unstructured API for complex documents
     elif UnstructuredClient.is_supported(extension):
         logger.info(f"🔧 Using Unstructured API for {file_name}")
+        # Use provided client or get fresh one
+        if unstructured_client is None:
+            unstructured_client = get_unstructured_client()
         return unstructured_client.extract_content(file_content, file_name)
 
     else:
