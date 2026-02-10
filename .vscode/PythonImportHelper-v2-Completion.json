@@ -4965,7 +4965,7 @@
         "kind": 2,
         "importPath": "backend.clients.pinecone_client",
         "description": "backend.clients.pinecone_client",
-        "peekOfCode": "def get_pinecone_client() -> PineconeClient:\n    \"\"\"\n    Get or create PineconeClient singleton instance\n    Returns:\n        PineconeClient: Singleton client instance\n    \"\"\"\n    global _pinecone_client\n    if _pinecone_client is None:\n        _pinecone_client = PineconeClient()\n    return _pinecone_client",
+        "peekOfCode": "def get_pinecone_client() -> PineconeClient:\n    \"\"\"\n    Create a fresh PineconeClient instance (no caching to avoid multiprocessing issues in Celery)\n    Returns:\n        PineconeClient: Fresh client instance\n    \"\"\"\n    return PineconeClient()",
         "detail": "backend.clients.pinecone_client",
         "documentation": {}
     },

@@ -38,14 +38,25 @@ class IDriveE2Client:
             region_name='us-east-1'
         )
 
-        # Initialize boto3 client (sync)
+        # Initialize boto3 client (sync) with disabled threading for Celery compatibility
+        from botocore.config import Config as BotoConfig
+        sync_config = BotoConfig(
+            signature_version='s3v4',
+            s3={
+                'payload_signing_enabled': False,
+                'addressing_style': 'path'
+            },
+            max_pool_connections=1,  # Minimize connection pool
+            use_dualstack_endpoint=False
+        )
+
         self.sync_client = boto3.client(
             's3',
             endpoint_url=self.endpoint_url,
             aws_access_key_id=self.access_key,
             aws_secret_access_key=self.secret_key,
             region_name='us-east-1',
-            config=self.config
+            config=sync_config
         )
 
         logger.info(f"✅ iDrive E2 client initialized for bucket: {self.bucket_name}")
@@ -102,7 +113,7 @@ class IDriveE2Client:
         content_type: Optional[str] = None
     ) -> str:
         """
-        Upload a file to iDrive E2 storage (sync)
+        Upload a file to iDrive E2 storage (sync) without threading
 
         Args:
             file_obj: File object to upload
@@ -116,16 +127,18 @@ class IDriveE2Client:
             Exception: If upload fails
         """
         try:
-            extra_args = {}
-            if content_type:
-                extra_args['ContentType'] = content_type
+            # Read file content into memory
+            file_content = file_obj.read()
 
-            # Upload without checksum validation (iDrive E2 compatibility)
-            self.sync_client.upload_fileobj(
-                file_obj,
-                self.bucket_name,
-                object_name,
-                ExtraArgs=extra_args
+            # Use put_object instead of upload_fileobj to avoid TransferManager threading
+            put_args = {'Body': file_content}
+            if content_type:
+                put_args['ContentType'] = content_type
+
+            self.sync_client.put_object(
+                Bucket=self.bucket_name,
+                Key=object_name,
+                **put_args
             )
 
             logger.info(f"✅ File uploaded successfully (sync): {object_name}")

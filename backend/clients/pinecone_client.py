@@ -28,8 +28,8 @@ class PineconeClient:
         if not self.embedding_model:
             raise ValueError("OPENAI_API_KEY not configured for embeddings")
 
-        # Initialize Pinecone with single-threaded pool (avoids thread exhaustion on Railway)
-        self.pc = Pinecone(api_key=self.api_key, pool_threads=1)
+        # Initialize Pinecone without thread pool (avoids multiprocessing issues in Celery)
+        self.pc = Pinecone(api_key=self.api_key, pool_threads=1, source_tag="celery-worker")
 
         # Initialize OpenAI embeddings
         self.embeddings = OpenAIEmbeddings(
@@ -83,7 +83,7 @@ class PineconeClient:
         namespace: Optional[str] = None
     ) -> List[str]:
         """
-        Add documents to Pinecone vector store
+        Add documents to Pinecone vector store in small batches to avoid threading issues
 
         Args:
             texts: List of text chunks to embed and store
@@ -114,14 +114,25 @@ class PineconeClient:
             else:
                 vector_store = self.vector_store
 
-            # Add to vector store
-            if ids:
-                doc_ids = vector_store.add_documents(documents, ids=ids)
-            else:
-                doc_ids = vector_store.add_documents(documents)
+            # Process in small batches to avoid multiprocessing pool issues in Celery
+            batch_size = 50  # Smaller batches to avoid threading
+            all_doc_ids = []
 
-            logger.info(f"✅ Added {len(doc_ids)} documents to Pinecone (namespace: {namespace or 'default'})")
-            return doc_ids
+            for i in range(0, len(documents), batch_size):
+                batch_docs = documents[i:i + batch_size]
+                batch_ids = ids[i:i + batch_size] if ids else None
+
+                # Add batch to vector store
+                if batch_ids:
+                    doc_ids = vector_store.add_documents(batch_docs, ids=batch_ids)
+                else:
+                    doc_ids = vector_store.add_documents(batch_docs)
+
+                all_doc_ids.extend(doc_ids)
+                logger.info(f"✅ Added batch {i//batch_size + 1} ({len(doc_ids)} docs) to Pinecone")
+
+            logger.info(f"✅ Added {len(all_doc_ids)} total documents to Pinecone (namespace: {namespace or 'default'})")
+            return all_doc_ids
 
         except Exception as e:
             logger.error(f"❌ Failed to add documents to Pinecone: {str(e)}")
@@ -401,18 +412,11 @@ class PineconeClient:
             raise Exception(f"Failed to update metadata: {str(e)}")
 
 
-# Singleton instance
-_pinecone_client: Optional[PineconeClient] = None
-
-
 def get_pinecone_client() -> PineconeClient:
     """
-    Get or create PineconeClient singleton instance
+    Create a fresh PineconeClient instance (no caching to avoid multiprocessing issues in Celery)
 
     Returns:
-        PineconeClient: Singleton client instance
+        PineconeClient: Fresh client instance
     """
-    global _pinecone_client
-    if _pinecone_client is None:
-        _pinecone_client = PineconeClient()
-    return _pinecone_client
+    return PineconeClient()
