@@ -38,10 +38,12 @@ class IngestionService:
 
     def __init__(self):
         """Initialize service with all required clients"""
+        from clients.unstructured_client import get_unstructured_client
         self.idrivee2_client = get_idrivee2_client()
         self.mongodb_client = get_mongodb_client()
         self.pinecone_client = get_pinecone_client()
         self.chunker_client = get_chunker_client()
+        self.unstructured_client = get_unstructured_client()
 
     def cleanup(self):
         """Clean up all client resources and thread pools"""
@@ -50,6 +52,8 @@ class IngestionService:
                 self.idrivee2_client.cleanup()
             if hasattr(self, 'pinecone_client') and hasattr(self.pinecone_client, 'cleanup'):
                 self.pinecone_client.cleanup()
+            if hasattr(self, 'unstructured_client') and hasattr(self.unstructured_client, 'cleanup'):
+                self.unstructured_client.cleanup()
             logger.info("✅ Cleaned up IngestionService")
         except Exception as e:
             logger.warning(f"Error cleaning up IngestionService: {str(e)}")
@@ -100,8 +104,8 @@ class IngestionService:
                 content_type=content_type
             )
 
-            # Step 3: Extract content (sync)
-            raw_content = extract_raw_data(file_content, filename, folder_name)
+            # Step 3: Extract content (sync) - pass unstructured_client for proper cleanup
+            raw_content = extract_raw_data(file_content, filename, folder_name, self.unstructured_client)
             logger.info(f"✅ Upload and extraction complete for {filename}")
 
             # Check if video
@@ -443,8 +447,8 @@ class IngestionService:
                 content_type=file.content_type
             )
 
-            # Extract content (blocking call, no threading)
-            raw_content = extract_raw_data(file_content, file.filename, folder_name)
+            # Extract content (blocking call, no threading) - pass unstructured_client for proper cleanup
+            raw_content = extract_raw_data(file_content, file.filename, folder_name, self.unstructured_client)
 
             logger.info(f"✅ Upload and extraction complete for {file.filename}")
 
@@ -712,8 +716,8 @@ class IngestionService:
                 content_type=file.content_type
             )
 
-            # Extract content (blocking call, no threading)
-            raw_content = extract_raw_data(file_content, file.filename, folder_name)
+            # Extract content (blocking call, no threading) - pass unstructured_client for proper cleanup
+            raw_content = extract_raw_data(file_content, file.filename, folder_name, self.unstructured_client)
 
             logger.info(f"✅ Upload and extraction complete for {file.filename}")
 

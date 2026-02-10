@@ -360,14 +360,6 @@
         "documentation": {}
     },
     {
-        "label": "Optional",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
         "label": "List",
         "importPath": "typing",
         "description": "typing",
@@ -5028,7 +5020,7 @@
         "kind": 6,
         "importPath": "backend.clients.unstructured_client",
         "description": "backend.clients.unstructured_client",
-        "peekOfCode": "class UnstructuredClient:\n    \"\"\"Thread-safe Unstructured API client for document extraction\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:\n                    cls._instance = super().__new__(cls)",
+        "peekOfCode": "class UnstructuredClient:\n    \"\"\"Unstructured API client for document extraction (no singleton for Celery)\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Unstructured API client\"\"\"\n        self.api_key = settings.UNSTRUCTURED_API_KEY\n        self.api_url = settings.UNSTRUCTURED_API_URL\n        if not self.api_key:\n            raise ValueError(\"UNSTRUCTURED_API_KEY not configured in settings\")\n        # Create custom HTTP client with connection limits (prevents threading issues in Celery)\n        self._http_client = httpx.Client(",
         "detail": "backend.clients.unstructured_client",
         "documentation": {}
     },
@@ -5037,16 +5029,7 @@
         "kind": 2,
         "importPath": "backend.clients.unstructured_client",
         "description": "backend.clients.unstructured_client",
-        "peekOfCode": "def get_unstructured_client() -> UnstructuredClient:\n    \"\"\"\n    Get or create thread-safe UnstructuredClient singleton instance\n    Returns:\n        UnstructuredClient: Singleton client instance\n    \"\"\"\n    global _unstructured_client\n    if _unstructured_client is None:\n        with _client_lock:\n            if _unstructured_client is None:",
-        "detail": "backend.clients.unstructured_client",
-        "documentation": {}
-    },
-    {
-        "label": "_client_lock",
-        "kind": 5,
-        "importPath": "backend.clients.unstructured_client",
-        "description": "backend.clients.unstructured_client",
-        "peekOfCode": "_client_lock = threading.Lock()\ndef get_unstructured_client() -> UnstructuredClient:\n    \"\"\"\n    Get or create thread-safe UnstructuredClient singleton instance\n    Returns:\n        UnstructuredClient: Singleton client instance\n    \"\"\"\n    global _unstructured_client\n    if _unstructured_client is None:\n        with _client_lock:",
+        "peekOfCode": "def get_unstructured_client() -> UnstructuredClient:\n    \"\"\"\n    Create a fresh UnstructuredClient instance (no caching for Celery)\n    Returns:\n        UnstructuredClient: Fresh client instance\n    \"\"\"\n    return UnstructuredClient()",
         "detail": "backend.clients.unstructured_client",
         "documentation": {}
     },
@@ -5514,7 +5497,7 @@
         "kind": 6,
         "importPath": "backend.services.ingestion_service",
         "description": "backend.services.ingestion_service",
-        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()\n        self.chunker_client = get_chunker_client()\n    def cleanup(self):\n        \"\"\"Clean up all client resources and thread pools\"\"\"",
+        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        from clients.unstructured_client import get_unstructured_client\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()\n        self.chunker_client = get_chunker_client()\n        self.unstructured_client = get_unstructured_client()",
         "detail": "backend.services.ingestion_service",
         "documentation": {}
     },
@@ -5685,7 +5668,7 @@
         "kind": 2,
         "importPath": "backend.utils.file_utils",
         "description": "backend.utils.file_utils",
-        "peekOfCode": "def extract_raw_data(file_content: bytes, file_name: str, folder_name: str = \"files\") -> str:\n    \"\"\"\n    Extract raw text content from file\n    Routes to appropriate extraction method based on file type:\n    - MarkItDown: .docx, .xlsx, .xls, .zip, .md, .markdown, .txt, .csv\n    - Unstructured API: .pdf, .ppt, .pptx, .doc, .rtf and other complex docs\n    - Skip: images and videos (not supported yet)\n    Args:\n        file_content: File content as bytes\n        file_name: Original filename",
+        "peekOfCode": "def extract_raw_data(file_content: bytes, file_name: str, folder_name: str = \"files\", unstructured_client=None) -> str:\n    \"\"\"\n    Extract raw text content from file\n    Routes to appropriate extraction method based on file type:\n    - MarkItDown: .docx, .xlsx, .xls, .zip, .md, .markdown, .txt, .csv\n    - Unstructured API: .pdf, .ppt, .pptx, .doc, .rtf and other complex docs\n    - Skip: images and videos (not supported yet)\n    Args:\n        file_content: File content as bytes\n        file_name: Original filename",
         "detail": "backend.utils.file_utils",
         "documentation": {}
     },
