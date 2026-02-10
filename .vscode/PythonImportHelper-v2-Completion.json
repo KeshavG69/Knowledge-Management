@@ -5494,7 +5494,7 @@
         "kind": 6,
         "importPath": "backend.services.ingestion_service",
         "description": "backend.services.ingestion_service",
-        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()\n        self.chunker_client = get_chunker_client()\n        # Get concurrency limits from settings (configurable via environment variables)\n        self.max_concurrent_files = settings.MAX_CONCURRENT_FILES",
+        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    # GLOBAL semaphore shared across ALL users and ALL instances\n    # Allow up to MAX_THREAD_WORKERS concurrent ingestions to prevent thread exhaustion\n    _global_ingestion_semaphore = asyncio.Semaphore(settings.MAX_THREAD_WORKERS)\n    def __init__(self):\n        \"\"\"Initialize service with all required clients\"\"\"\n        self.idrivee2_client = get_idrivee2_client()\n        self.mongodb_client = get_mongodb_client()\n        self.pinecone_client = get_pinecone_client()",
         "detail": "backend.services.ingestion_service",
         "documentation": {}
     },
