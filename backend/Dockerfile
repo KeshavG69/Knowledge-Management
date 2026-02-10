@@ -45,6 +45,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Run both FastAPI and Celery worker in same container
-# & runs them simultaneously, --pool=solo runs in single process (avoids thread/multiprocessing issues on Railway)
-# --concurrency=2 limits to 2 concurrent tasks (prevents thread exhaustion on Railway's limited resources)
-CMD ["sh", "-c", "uv run uvicorn app.server:app --host 0.0.0.0 --port 8000 & uv run celery -A app.worker.celery_app worker --loglevel=info --pool=solo --concurrency=2"]
+# & runs them simultaneously
+# Removed --pool=solo: Pinecone SDK requires ThreadPool (incompatible with solo mode)
+# --concurrency=1 + rate_limit=5/m prevents resource exhaustion
+CMD ["sh", "-c", "uv run uvicorn app.server:app --host 0.0.0.0 --port 8000 & uv run celery -A app.worker.celery_app worker --loglevel=info --pool=threads --concurrency=2"]
