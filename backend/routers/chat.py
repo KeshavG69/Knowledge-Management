@@ -25,6 +25,7 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = None
     organization_id: Optional[str] = None
     document_ids: Optional[list[str]] = None
+    file_names: Optional[list[str]] = None  # Titles of selected documents
     model: Optional[str] = "anthropic/claude-sonnet-4.5"
 
 
@@ -61,8 +62,9 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
             user_id=request.user_id,
             organization_id=request.organization_id,
             document_ids=request.document_ids,
+            file_names=request.file_names,
             model=request.model,
-            
+
         )
 
         # SSE headers
