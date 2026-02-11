@@ -11,6 +11,7 @@ export default function Sidebar() {
     isLoading,
     uploadStatus,
     uploadProgress,
+    deletingKB,
     toggleDocSelection,
     selectAllDocs,
     deselectAllDocs,
@@ -311,6 +312,7 @@ export default function Sidebar() {
               const folderDocs = documentsByFolder[folderName] || [];
               const isExpanded = expandedFolders.has(folderName);
               const folderDocCount = folderDocs.length;
+              const isDeleting = deletingKB === folderName;
 
               // Check if all documents in folder are selected
               const folderDocIds = folderDocs.map(d => d._id);
@@ -325,7 +327,7 @@ export default function Sidebar() {
               return (
                 <div
                   key={folderName}
-                  className="data-load"
+                  className={`data-load ${isDeleting ? 'opacity-60 pointer-events-none' : ''}`}
                   style={{ animationDelay: `${folderIdx * 30}ms` }}
                 >
                   {/* Folder Header */}
@@ -339,7 +341,8 @@ export default function Sidebar() {
                       {/* Expand/Collapse Button */}
                       <button
                         onClick={() => toggleFolder(folderName)}
-                        className="text-blue-600 dark:text-amber-400 hover:text-blue-700 dark:hover:text-amber-300 transition-colors"
+                        disabled={isDeleting}
+                        className="text-blue-600 dark:text-amber-400 hover:text-blue-700 dark:hover:text-amber-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <svg
                           className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
@@ -355,6 +358,7 @@ export default function Sidebar() {
                       <input
                         type="checkbox"
                         checked={allFolderDocsSelected}
+                        disabled={isDeleting}
                         ref={(el) => {
                           if (el) {
                             el.indeterminate = someFolderDocsSelected;
@@ -367,14 +371,18 @@ export default function Sidebar() {
                             selectFolderDocs(folderName);
                           }
                         }}
-                        className="tactical-checkbox"
+                        className="tactical-checkbox disabled:opacity-50 disabled:cursor-not-allowed"
                         title={allFolderDocsSelected ? "Deselect all documents in folder" : "Select all documents in folder"}
                       />
 
-                      {/* Folder Icon */}
-                      <svg className="w-4 h-4 text-blue-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-                      </svg>
+                      {/* Folder Icon or Loader */}
+                      {isDeleting ? (
+                        <div className="w-4 h-4 border-2 border-blue-200 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin"></div>
+                      ) : (
+                        <svg className="w-4 h-4 text-blue-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                        </svg>
+                      )}
 
                       {/* Folder Name */}
                       <div className="flex-1">
@@ -387,15 +395,17 @@ export default function Sidebar() {
                       </div>
 
                       {/* Delete Folder Button */}
-                      <button
-                        onClick={() => handleDeleteKB(folderName)}
-                        className="opacity-0 group-hover:opacity-100 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1"
-                        title="Delete knowledge base"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {!isDeleting && (
+                        <button
+                          onClick={() => handleDeleteKB(folderName)}
+                          className="opacity-0 group-hover:opacity-100 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1"
+                          title="Delete knowledge base"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
 
                     {/* Decorative corner */}
