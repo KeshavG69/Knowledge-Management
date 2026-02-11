@@ -150,7 +150,8 @@ export const chatApi = {
     message: string,
     documentIds: string[],
     sessionId: string,
-    model: string
+    model: string,
+    fileNames?: string[]
   ): Promise<ReadableStream> => {
     const userParams = getUserParams();
     if (!userParams) {
@@ -172,6 +173,7 @@ export const chatApi = {
       body: JSON.stringify({
         message,
         document_ids: documentIds,
+        file_names: fileNames,
         session_id: sessionId,
         model,
         user_id: userParams.user_id,

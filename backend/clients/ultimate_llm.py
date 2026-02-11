@@ -2,7 +2,7 @@
 Ultimate LLM Implementation - Simplified Multi-Provider Integration
 
 This module provides a unified LLM implementation with:
-- Support for OpenAI and OpenRouter providers
+- Support for OpenAI, OpenRouter, and Groq providers
 - Dual framework support (LangChain + Agno)
 - Thread-safe singleton pattern
 - Simple caching per provider
@@ -17,7 +17,7 @@ from agno.models.openai import OpenAIChat
 from app.logger import logger
 from app.settings import settings
 
-ProviderType = Literal["openai", "openrouter"]
+ProviderType = Literal["openai", "openrouter", "groq"]
 
 
 class UltimateLLM:
@@ -25,7 +25,7 @@ class UltimateLLM:
     Simplified Ultimate LLM Implementation with Multi-Provider Support
 
     Features:
-    - Support for OpenAI and OpenRouter providers
+    - Support for OpenAI, OpenRouter, and Groq providers
     - Dual framework support (LangChain + Agno)
     - Thread-safe singleton
     - Simple instance caching per provider
@@ -46,6 +46,10 @@ class UltimateLLM:
                 "openrouter": {
                     "api_key": settings.OPENROUTER_API_KEY,
                     "base_url": "https://openrouter.ai/api/v1"
+                },
+                "groq": {
+                    "api_key": settings.GROQ_API_KEY,
+                    "base_url": "https://api.groq.com/openai/v1"
                 }
             }
 
@@ -55,7 +59,7 @@ class UltimateLLM:
             self._instance_lock = threading.Lock()
 
             self._initialized = True
-            logger.info("✅ UltimateLLM initialized with OpenAI and OpenRouter support")
+            logger.info("✅ UltimateLLM initialized with OpenAI, OpenRouter, and Groq support")
 
     def __new__(cls):
         """Singleton pattern with thread safety"""
@@ -75,13 +79,13 @@ class UltimateLLM:
 
         Args:
             model: Model name (default: google/gemma-3-27b-it)
-            provider: Provider to use ("openai" or "openrouter", default: "openrouter")
+            provider: Provider to use ("openai", "openrouter", or "groq", default: "openrouter")
 
         Returns:
             ChatOpenAI instance configured for the specified provider
         """
         if provider not in self.provider_configs:
-            raise ValueError(f"Unsupported provider: {provider}. Choose 'openai' or 'openrouter'")
+            raise ValueError(f"Unsupported provider: {provider}. Choose 'openai', 'openrouter', or 'groq'")
 
         config = self.provider_configs[provider]
         if not config["api_key"]:
@@ -91,14 +95,17 @@ class UltimateLLM:
 
         with self._instance_lock:
             if cache_key not in self._langchain_instances:
+                # Groq has lower max_tokens limit (8192)
+                max_tokens = 8192 if provider == "groq" else 20000
+
                 self._langchain_instances[cache_key] = ChatOpenAI(
                     model=model,
                     openai_api_key=config["api_key"],
                     openai_api_base=config["base_url"],
                     temperature=0,
-                    max_tokens=20000
+                    max_tokens=max_tokens
                 )
-                logger.info(f"✅ Created LangChain instance: provider={provider}, model={model}")
+                logger.info(f"✅ Created LangChain instance: provider={provider}, model={model}, max_tokens={max_tokens}")
 
             return self._langchain_instances[cache_key]
 
@@ -112,13 +119,13 @@ class UltimateLLM:
 
         Args:
             model: Model name (default: google/gemma-3-27b-it)
-            provider: Provider to use ("openai" or "openrouter", default: "openrouter")
+            provider: Provider to use ("openai", "openrouter", or "groq", default: "openrouter")
 
         Returns:
             OpenAIChat instance configured for the specified provider
         """
         if provider not in self.provider_configs:
-            raise ValueError(f"Unsupported provider: {provider}. Choose 'openai' or 'openrouter'")
+            raise ValueError(f"Unsupported provider: {provider}. Choose 'openai', 'openrouter', or 'groq'")
 
         config = self.provider_configs[provider]
         if not config["api_key"]:
@@ -128,14 +135,17 @@ class UltimateLLM:
 
         with self._instance_lock:
             if cache_key not in self._agno_instances:
+                # Groq has lower max_tokens limit (8192)
+                max_tokens = 8192 if provider == "groq" else 10000
+
                 self._agno_instances[cache_key] = OpenAIChat(
                     id=model,
                     api_key=config["api_key"],
                     base_url=config["base_url"],
                     temperature=0,
-                    max_tokens=10000
+                    max_tokens=max_tokens
                 )
-                logger.info(f"✅ Created Agno instance: provider={provider}, model={model}")
+                logger.info(f"✅ Created Agno instance: provider={provider}, model={model}, max_tokens={max_tokens}")
 
             return self._agno_instances[cache_key]
 
@@ -161,7 +171,7 @@ def get_llm(
 
     Args:
         model: Model name (default: google/gemma-3-27b-it)
-        provider: Provider to use ("openai" or "openrouter", default: "openrouter")
+        provider: Provider to use ("openai", "openrouter", or "groq", default: "openrouter")
 
     Returns:
         ChatOpenAI instance
@@ -178,7 +188,7 @@ def get_llm_agno(
 
     Args:
         model: Model name (default: google/gemma-3-27b-it)
-        provider: Provider to use ("openai" or "openrouter", default: "openrouter")
+        provider: Provider to use ("openai", "openrouter", or "groq", default: "openrouter")
 
     Returns:
         OpenAIChat instance

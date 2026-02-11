@@ -8,9 +8,9 @@ import tempfile
 from pathlib import Path
 from unstructured_client import UnstructuredClient as UnstructuredAPIClient
 from unstructured_client.models import shared
-import httpx
 from app.logger import logger
 from app.settings import settings
+from clients.pdf_image_extractor import get_pdf_image_extractor
 
 
 class UnstructuredClient:
@@ -24,43 +24,36 @@ class UnstructuredClient:
         if not self.api_key:
             raise ValueError("UNSTRUCTURED_API_KEY not configured in settings")
 
-        # Create custom HTTP client with connection limits (prevents threading issues in Celery)
-        self._http_client = httpx.Client(
-            timeout=httpx.Timeout(300.0),  # 5 minute timeout
-            limits=httpx.Limits(
-                max_keepalive_connections=0,  # Disable keep-alive
-                max_connections=1,  # Only 1 connection to prevent thread pool
-            ),
-        )
-
-        # Initialize client with custom HTTP client
+        # Initialize client with default HTTP client (more stable for HI_RES processing)
         self.client = UnstructuredAPIClient(
             api_key_auth=self.api_key,
-            server_url=self.api_url if self.api_url else None,
-            client=self._http_client  # Pass custom HTTP client
+            server_url=self.api_url if self.api_url else None
         )
 
-        logger.info("✅ Unstructured API client initialized with custom HTTP client")
+        logger.info("✅ Unstructured API client initialized")
 
     def cleanup(self):
-        """Clean up HTTP client resources"""
+        """Clean up resources"""
         try:
-            if hasattr(self, '_http_client') and self._http_client:
-                self._http_client.close()
-                logger.info("✅ Closed Unstructured HTTP client")
+            if hasattr(self, 'client') and self.client:
+                # Close the client's internal HTTP client if available
+                if hasattr(self.client, 'sdk_configuration') and hasattr(self.client.sdk_configuration, 'client'):
+                    self.client.sdk_configuration.client.close()
+                logger.info("✅ Closed Unstructured client")
         except Exception as e:
             logger.warning(f"Error cleaning up Unstructured client: {str(e)}")
 
     def extract_content(self, file_content: bytes, filename: str) -> str:
         """
-        Extract content from file using Unstructured API with fast strategy
+        Extract content from file using Unstructured API with FAST strategy
+        For PDFs: also extracts and analyzes images using PyMuPDF + Vision LLM
 
         Args:
             file_content: File content as bytes
             filename: Original filename
 
         Returns:
-            Extracted text
+            Extracted text with image analysis (for PDFs)
 
         Raises:
             Exception: If extraction fails
@@ -77,7 +70,7 @@ class UnstructuredClient:
                 tmp_file_path = tmp_file.name
 
             try:
-                # Read file and partition with fast strategy
+                # Read file and partition with HI_RES strategy
                 with open(tmp_file_path, "rb") as f:
                     # Correct API structure: dictionary with nested partition_parameters
                     req = {
@@ -87,7 +80,6 @@ class UnstructuredClient:
                                 "file_name": filename,
                             },
                             "strategy": shared.Strategy.FAST,  # Fast strategy for speed
-                            "languages": ["eng"],
                             "split_pdf_page": False,  # Disable PDF splitting to avoid threading
                             "split_pdf_allow_failed": False,  # Don't use split PDF hook
                             "split_pdf_concurrency_level": 1,  # Minimal concurrency
@@ -107,6 +99,24 @@ class UnstructuredClient:
                 logger.info(
                     f"✅ Unstructured API (fast) extracted {len(extracted_text)} chars from {filename}"
                 )
+
+                # For PDFs, also extract and analyze images
+                if extension == ".pdf":
+                    try:
+                        logger.info(f"🖼️ Extracting images from PDF: {filename}")
+                        pdf_image_extractor = get_pdf_image_extractor()
+                        image_analysis = pdf_image_extractor.extract_and_analyze_images(
+                            file_content, filename
+                        )
+
+                        if image_analysis:
+                            # Combine text and image analysis
+                            extracted_text = f"{extracted_text}\n\n{image_analysis}"
+                            logger.info(f"✅ Combined text and image analysis for {filename}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Failed to extract images from PDF: {str(e)}")
+                        # Continue with just text extraction
+
                 return extracted_text
 
             finally:

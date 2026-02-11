@@ -26,7 +26,7 @@ export default function ChatArea() {
     setLoading,
   } = useChatStore();
 
-  const { selectedDocs } = useDocumentStore();
+  const { selectedDocs, documents } = useDocumentStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -135,11 +135,21 @@ export default function ChatArea() {
 
     try {
       const documentIds = Array.from(selectedDocs);
+
+      // Extract file names from selected documents
+      const fileNames = documentIds
+        .map(docId => {
+          const doc = documents.find(d => d._id === docId);
+          return doc?.file_name;
+        })
+        .filter((name): name is string => name !== undefined);
+
       const stream = await chatApi.sendMessage(
         userMessage,
         documentIds,
         sessionId,
-        selectedModel
+        selectedModel,
+        fileNames
       );
 
       const reader = stream.getReader();

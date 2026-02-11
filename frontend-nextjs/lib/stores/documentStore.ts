@@ -132,6 +132,7 @@ interface DocumentState {
   error: string | null;
   uploadStatus: string | null;
   uploadProgress: { current: number; total: number } | null;
+  deletingKB: string | null;
 
   // Actions
   fetchDocuments: () => Promise<void>;
@@ -158,6 +159,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   error: null,
   uploadStatus: null,
   uploadProgress: null,
+  deletingKB: null,
 
   // Actions
   fetchDocuments: async () => {
@@ -286,6 +288,15 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   deleteDocument: async (docId) => {
     try {
+      // Remove from selectedDocs if it was selected
+      const { selectedDocs } = get();
+      if (selectedDocs.has(docId)) {
+        const newSelectedDocs = new Set(selectedDocs);
+        newSelectedDocs.delete(docId);
+        saveSelectedDocs(newSelectedDocs);
+        set({ selectedDocs: newSelectedDocs });
+      }
+
       await documentsApi.deleteDocument(docId);
       await get().fetchDocuments();
       await get().fetchKnowledgeBases();
@@ -297,12 +308,31 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   deleteKnowledgeBase: async (folderName) => {
     try {
+      // Set deleting state
+      set({ deletingKB: folderName });
+
+      // Remove all documents from this KB from selectedDocs
+      const { documents, selectedDocs } = get();
+      const kbDocIds = documents
+        .filter(doc => doc.folder_name === folderName)
+        .map(doc => doc._id);
+
+      if (kbDocIds.length > 0) {
+        const newSelectedDocs = new Set(selectedDocs);
+        kbDocIds.forEach(docId => newSelectedDocs.delete(docId));
+        saveSelectedDocs(newSelectedDocs);
+        set({ selectedDocs: newSelectedDocs });
+      }
+
       await documentsApi.deleteFolder(folderName);
       await get().fetchDocuments();
       await get().fetchKnowledgeBases();
     } catch (error: any) {
       set({ error: error.message });
       throw error;
+    } finally {
+      // Clear deleting state
+      set({ deletingKB: null });
     }
   },
 

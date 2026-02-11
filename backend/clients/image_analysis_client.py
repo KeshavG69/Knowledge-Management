@@ -1,5 +1,6 @@
 """
-Image Analysis Client using OpenRouter API with Gemma model
+Image Analysis Client supporting multiple vision LLM providers
+Supports: OpenRouter (Gemma) and Groq (Llama Vision)
 Thread-safe implementation
 """
 
@@ -12,7 +13,7 @@ from app.logger import logger
 
 
 class ImageAnalysisClient:
-    """Thread-safe Image Analysis client using OpenRouter with Gemma"""
+    """Thread-safe Image Analysis client supporting OpenRouter (Gemma) and Groq (Llama Vision)"""
 
     _instance = None
     _lock = threading.Lock()
@@ -34,7 +35,7 @@ class ImageAnalysisClient:
 
     def analyze_image(self, file_content: bytes, filename: str) -> str:
         """
-        Extract text and analyze image content using Gemma via OpenRouter
+        Extract text and analyze image content using vision LLM
 
         Args:
             file_content: Image file content as bytes
@@ -52,7 +53,7 @@ class ImageAnalysisClient:
                 image_base64 = base64.b64encode(file_content).decode('utf-8')
 
                 # Get LLM from ultimate_llm (using OpenRouter)
-                llm = get_llm(model="gpt-5-nano", provider="openai")
+                llm = get_llm(model="google/gemma-3-12b-it", provider="openrouter")
 
                 # Create prompt with image
                 from langchain_core.prompts import ChatPromptTemplate
