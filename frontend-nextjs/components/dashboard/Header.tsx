@@ -13,51 +13,23 @@ export default function Header() {
   const { user, logout } = useAuthStore();
   const { messages } = useChatStore();
   const [showMenu, setShowMenu] = useState(false);
+  const [comingSoonDialog, setComingSoonDialog] = useState<{ show: boolean; feature: string }>({
+    show: false,
+    feature: "",
+  });
 
   const handleLogout = async () => {
     await logout();
     router.push("/auth/login");
   };
 
-  const openCalendly = () => {
-    const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL || 'https://calendly.com/priceiq/30min';
-    if (typeof window !== 'undefined' && window.Calendly) {
-      window.Calendly.initPopupWidget({ url: calendlyUrl });
-    } else {
-      // Fallback to opening in new tab if Calendly widget hasn't loaded yet
-      window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
-    }
+  const showComingSoonDialog = (feature: string) => {
+    setComingSoonDialog({ show: true, feature });
   };
 
-  const [isZendeskOpen, setIsZendeskOpen] = useState(false);
-
-  const toggleZendeskTicket = () => {
-    if (typeof window !== 'undefined' && window.zE) {
-      if (isZendeskOpen) {
-        // If open, close it
-        window.zE('messenger', 'close');
-        setIsZendeskOpen(false);
-      } else {
-        // If closed, open it
-        window.zE('messenger', 'open');
-        setIsZendeskOpen(true);
-      }
-    } else {
-      console.warn('Zendesk widget not loaded yet');
-    }
+  const closeComingSoonDialog = () => {
+    setComingSoonDialog({ show: false, feature: "" });
   };
-
-  // Listen to Zendesk events to keep state in sync
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.zE) {
-      window.zE('messenger:on', 'open', () => {
-        setIsZendeskOpen(true);
-      });
-      window.zE('messenger:on', 'close', () => {
-        setIsZendeskOpen(false);
-      });
-    }
-  }, []);
 
   // Check if user has sent any messages in the current session
   const hasUserMessages = messages.some((msg) => msg.role === "user");
@@ -108,7 +80,7 @@ export default function Header() {
       <div className="flex items-center gap-3">
         {/* Create Ticket Button */}
         <button
-          onClick={toggleZendeskTicket}
+          onClick={() => showComingSoonDialog('CREATE A TICKET')}
           className="px-3 py-2 border border-blue-400/50 dark:border-amber-400/50 bg-blue-500/10 dark:bg-amber-500/10 hover:bg-blue-500/20 dark:hover:bg-amber-500/20 text-blue-600 dark:text-amber-400 font-semibold text-xs tracking-wider transition-all duration-200"
           style={{
             clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
@@ -124,10 +96,7 @@ export default function Header() {
 
         {/* Automated Agent Chat Button */}
         <button
-          onClick={() => {
-            // TODO: Implement automated agent chat
-            console.log('Automated agent chat clicked');
-          }}
+          onClick={() => showComingSoonDialog('AUTOMATED AGENT CHAT')}
           className="px-3 py-2 border border-blue-400/50 dark:border-amber-400/50 bg-blue-500/10 dark:bg-amber-500/10 hover:bg-blue-500/20 dark:hover:bg-amber-500/20 text-blue-600 dark:text-amber-400 font-semibold text-xs tracking-wider transition-all duration-200"
           style={{
             clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
@@ -143,7 +112,7 @@ export default function Header() {
 
         {/* Live Agent Button */}
         <button
-          onClick={openCalendly}
+          onClick={() => showComingSoonDialog('LIVE AGENT')}
           className="px-3 py-2 border border-blue-400/50 dark:border-amber-400/50 bg-blue-500/10 dark:bg-amber-500/10 hover:bg-blue-500/20 dark:hover:bg-amber-500/20 text-blue-600 dark:text-amber-400 font-semibold text-xs tracking-wider transition-all duration-200"
           style={{
             clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
@@ -265,6 +234,80 @@ export default function Header() {
 
       {/* Bottom scan line */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"></div>
+
+      {/* Coming Soon Dialog */}
+      {comingSoonDialog.show && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[500] animate-in fade-in duration-200"
+            onClick={closeComingSoonDialog}
+          />
+
+          {/* Dialog */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[501] w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="relative bg-white dark:bg-slate-900 border-2 border-amber-400/50 shadow-2xl mx-4">
+              {/* Tactical corners */}
+              <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400"></div>
+              <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-amber-400"></div>
+              <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-amber-400"></div>
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-amber-400"></div>
+
+              {/* Header */}
+              <div className="bg-gradient-to-r from-amber-500/10 to-blue-500/10 border-b-2 border-amber-400/30 p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-amber-500/20 border border-amber-400/50 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-amber-400 tracking-wider">COMING SOON</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 tracking-widest mt-1">FEATURE IN DEVELOPMENT</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-4">
+                <div className="bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 p-4">
+                  <p className="text-sm font-semibold text-blue-600 dark:text-amber-400 tracking-wide mb-2">
+                    {comingSoonDialog.feature}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    This feature is currently under development and will be available in a future update.
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-2 text-xs text-slate-500 dark:text-slate-500">
+                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p>Stay tuned for updates. We&apos;re working hard to bring you this functionality.</p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t-2 border-amber-400/30 p-4 bg-slate-50 dark:bg-slate-800/30">
+                <button
+                  onClick={closeComingSoonDialog}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-amber-500 dark:to-amber-600 hover:from-blue-600 hover:to-blue-700 dark:hover:from-amber-600 dark:hover:to-amber-700 text-white font-bold text-sm tracking-wider transition-all duration-200 border border-blue-400 dark:border-amber-400"
+                  style={{
+                    clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)'
+                  }}
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    ACKNOWLEDGED
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </header>
   );
 }

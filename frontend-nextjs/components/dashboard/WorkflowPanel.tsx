@@ -46,7 +46,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     {
       id: "audio-overview",
       title: "Audio Overview",
-      available: true,
+      available: false,
       description: "Generate an AI-powered podcast discussion about your documents",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,7 +256,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
                 className={`relative p-2 flex items-center justify-center transition-all group ${
                   workflow.available
                     ? 'bg-white dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 hover:border-blue-400 dark:hover:border-amber-400/50 cursor-pointer'
-                    : 'bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-slate-800/30 opacity-50 cursor-not-allowed'
+                    : 'bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-slate-800/30 opacity-50 blur-[0.5px] cursor-not-allowed'
                 }`}
                 title={workflow.title + (workflow.available ? '' : ' (Coming Soon)')}
               >
@@ -314,7 +314,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
               className={`relative tactical-panel p-3 text-left transition-all group ${
                 workflow.available
                   ? 'hover:border-blue-400 dark:hover:border-amber-400/50 cursor-pointer'
-                  : 'opacity-50 cursor-not-allowed'
+                  : 'opacity-50 blur-[0.5px] cursor-not-allowed'
               }`}
               title={workflow.description}
             >

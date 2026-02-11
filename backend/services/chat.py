@@ -67,8 +67,15 @@ The user has selected the following files for this conversation:
 
 {files_list}
 
+**Important Context About File Names:**
+- File names are provided purely for reference and identification purposes
+- Do NOT make assumptions about document content based solely on the filename
+- File names may be arbitrary, generic, or unrelated to the actual content inside
+- Always rely on the actual document content from search results, not filename interpretation
+- A file named "report.pdf" could contain anything - a contract, a manual, meeting notes, etc.
+- Focus your search and responses on the actual content retrieved from these files
+
 Your search will be focused on these files when answering questions. When the user asks about content, prioritize searching within these selected files.
-DONT TAKE THE NAME OF THE DOCUMENT SO SERIOUSLY IT CAN BE ANYTHING NO NEED FOR THE NAME TO MATCH THE CONTENT THE NAMES ARE JUST GIVEN FOR YOUR REFERENCE THATS IT DONT TAKE THE NAME SO LITERALLY
 </selected_files>""")
 
         instructions.extend([
