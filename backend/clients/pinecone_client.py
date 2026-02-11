@@ -133,12 +133,19 @@ class PineconeClient:
                     "metadata": metadata_with_text
                 })
 
-            # Upsert directly using gRPC index (no threading issues)
-            logger.info(f"Upserting {len(vectors)} vectors to Pinecone via gRPC...")
-            index.upsert(
-                vectors=vectors,
-                namespace=namespace or ""
-            )
+            # Batch upsert to avoid gRPC 4MB message size limit
+            batch_size = 100  # Upsert 100 vectors at a time
+            total_vectors = len(vectors)
+
+            logger.info(f"Upserting {total_vectors} vectors to Pinecone via gRPC (batch size: {batch_size})...")
+
+            for i in range(0, total_vectors, batch_size):
+                batch = vectors[i:i + batch_size]
+                index.upsert(
+                    vectors=batch,
+                    namespace=namespace or ""
+                )
+                logger.info(f"  ✓ Upserted batch {i // batch_size + 1}/{(total_vectors + batch_size - 1) // batch_size} ({len(batch)} vectors)")
 
             logger.info(f"✅ Added {len(ids)} documents to Pinecone via gRPC (namespace: {namespace or 'default'})")
             return ids
