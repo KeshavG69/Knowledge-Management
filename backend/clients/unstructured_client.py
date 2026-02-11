@@ -100,22 +100,22 @@ class UnstructuredClient:
                     f"✅ Unstructured API (fast) extracted {len(extracted_text)} chars from {filename}"
                 )
 
-                # For PDFs, also extract and analyze images
-                if extension == ".pdf":
-                    try:
-                        logger.info(f"🖼️ Extracting images from PDF: {filename}")
-                        pdf_image_extractor = get_pdf_image_extractor()
-                        image_analysis = pdf_image_extractor.extract_and_analyze_images(
-                            file_content, filename
-                        )
+                # # For PDFs, also extract and analyze images
+                # if extension == ".pdf":
+                #     try:
+                #         logger.info(f"🖼️ Extracting images from PDF: {filename}")
+                #         pdf_image_extractor = get_pdf_image_extractor()
+                #         image_analysis = pdf_image_extractor.extract_and_analyze_images(
+                #             file_content, filename
+                #         )
 
-                        if image_analysis:
-                            # Combine text and image analysis
-                            extracted_text = f"{extracted_text}\n\n{image_analysis}"
-                            logger.info(f"✅ Combined text and image analysis for {filename}")
-                    except Exception as e:
-                        logger.warning(f"⚠️ Failed to extract images from PDF: {str(e)}")
-                        # Continue with just text extraction
+                #         if image_analysis:
+                #             # Combine text and image analysis
+                #             extracted_text = f"{extracted_text}\n\n{image_analysis}"
+                #             logger.info(f"✅ Combined text and image analysis for {filename}")
+                #     except Exception as e:
+                #         logger.warning(f"⚠️ Failed to extract images from PDF: {str(e)}")
+                #         # Continue with just text extraction
 
                 return extracted_text
 

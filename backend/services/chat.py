@@ -68,6 +68,7 @@ The user has selected the following files for this conversation:
 {files_list}
 
 Your search will be focused on these files when answering questions. When the user asks about content, prioritize searching within these selected files.
+DONT TAKE THE NAME OF THE DOCUMENT SO SERIOUSLY IT CAN BE ANYTHING NO NEED FOR THE NAME TO MATCH THE CONTENT THE NAMES ARE JUST GIVEN FOR YOUR REFERENCE THATS IT DONT TAKE THE NAME SO LITERALLY
 </selected_files>""")
 
         instructions.extend([
