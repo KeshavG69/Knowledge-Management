@@ -94,7 +94,7 @@ class PineconeClient:
         namespace: Optional[str] = None
     ) -> List[str]:
         """
-        Add documents to Pinecone using LangChain (gRPC avoids threading issues)
+        Add documents to Pinecone using direct gRPC client (bypasses LangChain's REST API)
 
         Args:
             texts: List of text chunks to embed and store
@@ -109,30 +109,39 @@ class PineconeClient:
             Exception: If adding documents fails
         """
         try:
-            # Create LangChain Document objects
-            documents = [
-                Document(page_content=text, metadata=metadata)
-                for text, metadata in zip(texts, metadatas)
-            ]
+            import uuid
 
-            # Create vector store with namespace if provided
-            if namespace:
-                vector_store = PineconeVectorStore(
-                    index_name=self.index_name,
-                    embedding=self.embeddings,
-                    namespace=namespace
-                )
-            else:
-                vector_store = self.vector_store
+            # Generate IDs if not provided
+            if not ids:
+                ids = [str(uuid.uuid4()) for _ in texts]
 
-            # Add documents using LangChain (gRPC avoids ThreadPool issues)
-            if ids:
-                doc_ids = vector_store.add_documents(documents, ids=ids)
-            else:
-                doc_ids = vector_store.add_documents(documents)
+            # Generate embeddings using OpenAI
+            logger.info(f"Generating embeddings for {len(texts)} documents...")
+            embeddings = self.embeddings.embed_documents(texts)
 
-            logger.info(f"✅ Added {len(doc_ids)} documents to Pinecone (namespace: {namespace or 'default'})")
-            return doc_ids
+            # Get gRPC index directly (no ThreadPool creation)
+            index = self.pc.Index(self.index_name)
+
+            # Prepare vectors for upsert with text stored in metadata
+            vectors = []
+            for doc_id, text, embedding, metadata in zip(ids, texts, embeddings, metadatas):
+                # Store the text in metadata for LangChain compatibility
+                metadata_with_text = {**metadata, "text": text}
+                vectors.append({
+                    "id": doc_id,
+                    "values": embedding,
+                    "metadata": metadata_with_text
+                })
+
+            # Upsert directly using gRPC index (no threading issues)
+            logger.info(f"Upserting {len(vectors)} vectors to Pinecone via gRPC...")
+            index.upsert(
+                vectors=vectors,
+                namespace=namespace or ""
+            )
+
+            logger.info(f"✅ Added {len(ids)} documents to Pinecone via gRPC (namespace: {namespace or 'default'})")
+            return ids
 
         except Exception as e:
             logger.error(f"❌ Failed to add documents to Pinecone: {str(e)}")
