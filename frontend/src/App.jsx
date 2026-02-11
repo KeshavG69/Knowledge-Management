@@ -239,6 +239,14 @@ function MainApp() {
 
       const { documents: targetDocs } = buildQueryTargets();
 
+      // Extract file names (titles) from selected documents
+      const fileNames = targetDocs
+        .map(docId => {
+          const doc = allDocuments.find(d => String(d._id) === String(docId));
+          return doc ? doc.title || doc.filename : null;
+        })
+        .filter(Boolean); // Remove null values
+
       if (modelJustChanged) {
         console.log(`[Model Switch] Model changed to ${selectedModel}`);
         setModelJustChanged(false);
@@ -252,6 +260,7 @@ function MainApp() {
           user_id: USER_ID,
           organization_id: ORGANIZATION_ID,
           document_ids: targetDocs,
+          file_names: fileNames,
           model: selectedModel,
           session_id: sessionId,
         }),

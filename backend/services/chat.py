@@ -16,6 +16,7 @@ async def create_chat_agent(
     user_id: Optional[str] = None,
     organization_id: Optional[str] = None,
     document_ids: Optional[list[str]] = None,
+    file_names: Optional[list[str]] = None,
     model: str = "google/gemini-2.5-pro",
 ) -> Agent:
     """
@@ -26,6 +27,7 @@ async def create_chat_agent(
         user_id: Optional user ID for filtering
         organization_id: Optional organization ID for namespace
         document_ids: Optional list of document IDs to filter search results
+        file_names: Optional list of document titles/filenames to show in context
         model: LLM model name (default: google/gemini-2.5-pro via OpenRouter)
 
     Returns:
@@ -54,6 +56,21 @@ async def create_chat_agent(
             """You are an intelligent AI assistant specialized in powerful knowledge base search and information retrieval. Your purpose is to help users instantly find, analyze, and understand information across their uploaded documents, images, and videos.
 
 You have access to a comprehensive knowledge base containing all user-uploaded files including PDFs, documents, presentations, images, and videos.""",
+        ]
+
+        # Add selected files context if file_names are provided
+        if file_names and len(file_names) > 0:
+            files_list = "\n".join([f"- {name}" for name in file_names])
+            instructions.append(f"""<selected_files>
+**Currently Selected Files:**
+The user has selected the following files for this conversation:
+
+{files_list}
+
+Your search will be focused on these files when answering questions. When the user asks about content, prioritize searching within these selected files.
+</selected_files>""")
+
+        instructions.extend([
             """<response_style>
 Before writing a reply, quickly assess the latest user message to decide tone, depth, and structure.
 ALWAYS REPLY IN A CONFIDENT MANNER BE CONFIDENT IN THE INFORMATION YOU PROVIDE
