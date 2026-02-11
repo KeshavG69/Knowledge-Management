@@ -84,6 +84,8 @@ class YouTubeDownloader:
                 'http_headers': {
                     'User-Agent': user_agent,
                 },
+                # Use cookies from Chrome to bypass bot detection
+                'cookiesfrombrowser': ('chrome',),  # Try Chrome first
             }
 
             # Download video
