@@ -18,7 +18,7 @@ export default function Sidebar() {
     selectFolderDocs,
     deselectFolderDocs,
     uploadDocuments,
-    // uploadYouTubeVideo, // COMMENTED OUT - YouTube upload temporarily disabled
+    uploadYouTubeVideo,
     deleteDocument,
     deleteKnowledgeBase,
   } = useDocumentStore();
@@ -29,8 +29,8 @@ export default function Sidebar() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
-  // const [uploadMode, setUploadMode] = useState<"files" | "youtube">("files"); // COMMENTED OUT - YouTube upload temporarily disabled
-  // const [youtubeUrl, setYoutubeUrl] = useState<string>(""); // COMMENTED OUT - YouTube upload temporarily disabled
+  const [uploadMode, setUploadMode] = useState<"files" | "youtube">("files");
+  const [youtubeUrl, setYoutubeUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
@@ -85,58 +85,53 @@ export default function Sidebar() {
       return;
     }
 
-    // COMMENTED OUT - YouTube upload temporarily disabled
-    // if (uploadMode === "youtube") {
-    //   handleYouTubeUpload();
-    // } else {
-    //   // Don't close modal - wait for file selection
-    //   fileInputRef.current?.click();
-    // }
-
-    // Don't close modal - wait for file selection
-    fileInputRef.current?.click();
+    if (uploadMode === "youtube") {
+      handleYouTubeUpload();
+    } else {
+      // Don't close modal - wait for file selection
+      fileInputRef.current?.click();
+    }
   };
 
-  // COMMENTED OUT - YouTube upload temporarily disabled
-  // const handleYouTubeUpload = async () => {
-  //   if (!youtubeUrl || !youtubeUrl.trim()) {
-  //     alert("Please enter a YouTube URL");
-  //     return;
-  //   }
+  const handleYouTubeUpload = async () => {
+    if (!youtubeUrl || !youtubeUrl.trim()) {
+      alert("Please enter a YouTube URL");
+      return;
+    }
 
-  //   if (!selectedFolderName || !selectedFolderName.trim()) {
-  //     alert("Please enter a folder name");
-  //     return;
-  //   }
+    if (!selectedFolderName || !selectedFolderName.trim()) {
+      alert("Please enter a folder name");
+      return;
+    }
 
-  //   setIsUploading(true);
-  //   setUploadingFiles([youtubeUrl]);
+    setIsUploading(true);
+    setUploadingFiles([youtubeUrl]);
 
-  //   try {
-  //     const targetFolder = selectedFolderName.trim();
+    try {
+      const targetFolder = selectedFolderName.trim();
 
-  //     // Auto-expand the folder
-  //     setExpandedFolders(prev => {
-  //       const next = new Set(prev);
-  //       next.add(targetFolder);
-  //       return next;
-  //     });
+      // Auto-expand the folder
+      setExpandedFolders(prev => {
+        const next = new Set(prev);
+        next.add(targetFolder);
+        return next;
+      });
 
-  //     await uploadYouTubeVideo(youtubeUrl.trim(), targetFolder);
+      await uploadYouTubeVideo(youtubeUrl.trim(), targetFolder);
 
-  //     // Upload successful, close modal and reset
-  //     setShowUploadModal(false);
-  //     setSelectedFolderName("");
-  //     setYoutubeUrl("");
-  //     setUploadMode("files");
-  //   } catch (error: any) {
-  //     console.error("YouTube upload failed:", error);
-  //     alert(`YouTube upload failed: ${error.message}`);
-  //   } finally {
-  //     setIsUploading(false);
-  //     setUploadingFiles([]);
-  //   }
-  // };
+      // Upload successful, close modal and reset
+      setShowUploadModal(false);
+      setSelectedFolderName("");
+      setYoutubeUrl("");
+      setUploadMode("files");
+    } catch (error: any) {
+      console.error("YouTube upload failed:", error);
+      alert(`YouTube upload failed: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+      setUploadingFiles([]);
+    }
+  };
 
   const handleDeleteKB = async (folderName: string) => {
     if (confirm(`Delete knowledge base "${folderName}"? This will delete all documents in it.`)) {
@@ -509,8 +504,8 @@ export default function Sidebar() {
               if (!isUploading) {
                 setShowUploadModal(false);
                 setSelectedFolderName("");
-                // setYoutubeUrl(""); // COMMENTED OUT - YouTube upload temporarily disabled
-                // setUploadMode("files"); // COMMENTED OUT - YouTube upload temporarily disabled
+                setYoutubeUrl("");
+                setUploadMode("files");
               }
             }}
           />
@@ -531,9 +526,7 @@ export default function Sidebar() {
                       <div className="w-5 h-5 border-2 border-amber-400/20 border-t-amber-400 rounded-full animate-spin flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="text-sm text-slate-200 font-semibold">
-                          {/* COMMENTED OUT - YouTube upload temporarily disabled */}
-                          {/* {uploadMode === "youtube" ? "Downloading YouTube video..." : `Uploading ${uploadingFiles.length} file${uploadingFiles.length !== 1 ? 's' : ''}...`} */}
-                          Uploading {uploadingFiles.length} file{uploadingFiles.length !== 1 ? 's' : ''}...
+                          {uploadMode === "youtube" ? "Downloading YouTube video..." : `Uploading ${uploadingFiles.length} file${uploadingFiles.length !== 1 ? 's' : ''}...`}
                         </div>
                         <div className="text-xs text-slate-500 mt-0.5">
                           To: {selectedFolderName}
@@ -552,17 +545,14 @@ export default function Sidebar() {
                     </div>
 
                     <div className="text-xs text-slate-600 text-center">
-                      {/* COMMENTED OUT - YouTube upload temporarily disabled */}
-                      {/* {uploadMode === "youtube" ? "Please wait while the video is being downloaded and processed..." : "Please wait while files are being uploaded..."} */}
-                      Please wait while files are being uploaded...
+                      {uploadMode === "youtube" ? "Please wait while the video is being downloaded and processed..." : "Please wait while files are being uploaded..."}
                     </div>
                   </div>
                 ) : (
                   // Upload mode selection state
                   <div className="space-y-4">
-                    {/* COMMENTED OUT - YouTube upload temporarily disabled */}
                     {/* Mode Tabs */}
-                    {/* <div className="flex gap-2 p-1 bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex gap-2 p-1 bg-slate-800/50 border border-slate-700/50">
                       <button
                         onClick={() => setUploadMode("files")}
                         className={`flex-1 py-2 px-3 text-xs font-semibold tracking-wider transition-all ${
@@ -583,7 +573,7 @@ export default function Sidebar() {
                       >
                         YOUTUBE
                       </button>
-                    </div> */}
+                    </div>
 
                     {/* Folder Name Input */}
                     <div>
@@ -597,7 +587,7 @@ export default function Sidebar() {
                         onChange={(e) => setSelectedFolderName(e.target.value)}
                         placeholder="e.g., CSS VSAT"
                         className="tactical-input"
-                        autoFocus // MODIFIED - YouTube upload temporarily disabled, always autofocus
+                        autoFocus={uploadMode === "files"}
                       />
                       {folderList.length > 0 && (
                         <datalist id="existing-folders">
@@ -615,9 +605,8 @@ export default function Sidebar() {
                       </div>
                     </div>
 
-                    {/* COMMENTED OUT - YouTube upload temporarily disabled */}
                     {/* YouTube URL Input (only show in YouTube mode) */}
-                    {/* {uploadMode === "youtube" && (
+                    {uploadMode === "youtube" && (
                       <div>
                         <label className="block text-xs text-slate-500 tracking-widest mb-2 uppercase">
                           YouTube URL
@@ -634,16 +623,14 @@ export default function Sidebar() {
                           Paste a YouTube video URL to download and process
                         </div>
                       </div>
-                    )} */}
+                    )}
 
                     <button
                       onClick={handleProceedWithUpload}
-                      disabled={!selectedFolderName.trim()} // MODIFIED - YouTube upload temporarily disabled
+                      disabled={!selectedFolderName.trim() || (uploadMode === "youtube" && !youtubeUrl.trim())}
                       className="tactical-btn tactical-btn-primary w-full disabled:opacity-50"
                     >
-                      {/* COMMENTED OUT - YouTube upload temporarily disabled */}
-                      {/* {uploadMode === "youtube" ? "DOWNLOAD & PROCESS VIDEO" : "PROCEED WITH UPLOAD"} */}
-                      PROCEED WITH UPLOAD
+                      {uploadMode === "youtube" ? "DOWNLOAD & PROCESS VIDEO" : "PROCEED WITH UPLOAD"}
                     </button>
                   </div>
                 )}
@@ -654,8 +641,8 @@ export default function Sidebar() {
                       onClick={() => {
                         setShowUploadModal(false);
                         setSelectedFolderName("");
-                        // setYoutubeUrl(""); // COMMENTED OUT - YouTube upload temporarily disabled
-                        // setUploadMode("files"); // COMMENTED OUT - YouTube upload temporarily disabled
+                        setYoutubeUrl("");
+                        setUploadMode("files");
                       }}
                       className="tactical-btn flex-1"
                     >
