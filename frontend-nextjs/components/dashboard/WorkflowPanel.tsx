@@ -46,7 +46,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
     {
       id: "audio-overview",
       title: "Audio Overview",
-      available: false,
+      available: true,
       description: "Generate an AI-powered podcast discussion about your documents",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,6 +206,12 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
 
     // Handle audio overview workflow (podcast)
     if (workflow.id === "audio-overview") {
+      // Check if documents are selected
+      if (selectedDocs.size === 0) {
+        setError("Please select at least one document to generate an audio overview");
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
       setShowPodcastGenerator(true);
     }
   };
@@ -351,7 +357,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
                 ACTIVE WORKFLOWS
               </div>
               <div className="text-[9px] text-slate-600 dark:text-slate-500 leading-relaxed">
-                Mind Maps, Reports, and Flashcards available. Select documents to generate intelligence products.
+                Audio Overview, Mind Maps, Reports, and Flashcards available. Select documents to generate intelligence products.
               </div>
             </div>
           </div>
@@ -400,6 +406,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
           <div className="text-center">
             <div className="inline-block w-12 h-12 border-2 border-blue-600 dark:border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
             <p className="text-sm text-blue-700 dark:text-amber-400 font-semibold tracking-wider">
+              {selectedWorkflow === 'audio-overview' && 'GENERATING AUDIO OVERVIEW'}
               {selectedWorkflow === 'mind-map' && 'GENERATING MIND MAP'}
               {selectedWorkflow === 'flashcards' && 'GENERATING FLASHCARDS'}
               {selectedWorkflow === 'reports' && 'GENERATING REPORT'}
