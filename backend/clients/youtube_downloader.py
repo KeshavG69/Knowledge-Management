@@ -45,7 +45,8 @@ class YouTubeDownloader:
     def __init__(self):
         """Initialize YouTube downloader"""
         self.ydl_opts = {
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            # Download 720p MP4 for balance between quality and file size
+            'format': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best[height<=720]',
             'outtmpl': '%(id)s.%(ext)s',
             'quiet': False,
             'no_warnings': False,
