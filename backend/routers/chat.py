@@ -14,6 +14,7 @@ from app.logger import logger
 from auth.dependencies import get_current_user
 from clients.mongodb_client import get_mongodb_client
 import uuid
+import json
 
 router = APIRouter(tags=["chat"])
 
@@ -253,29 +254,103 @@ async def get_chat_session(
 
         # Extract clean message history (avoiding duplicates from from_history)
         messages = []
-        for run in session.get("runs", []):
-            for message in run.get("messages", []):
+        for run_idx, run in enumerate(session.get("runs", [])):
+            run_messages = run.get("messages", [])
+            logger.debug(f"Processing run {run_idx}: {len(run_messages)} messages")
+
+            # Build a map of tool call IDs to their results from role=tool messages
+            tool_results_map = {}
+            for message in run_messages:
+                if message.get("role") == "tool":
+                    tool_call_id = message.get("tool_call_id")
+                    tool_name = message.get("tool_name")
+                    content = message.get("content")
+
+                    if tool_call_id and tool_name and content:
+                        tool_results_map[tool_call_id] = {
+                            "tool_name": tool_name,
+                            "result": content
+                        }
+
+            # Extract user and assistant messages
+            for msg_idx, message in enumerate(run_messages):
                 # Only include new messages, not historical ones
                 if message.get("from_history", False):
                     continue
 
-                # Skip messages without content (e.g., tool calls)
+                # Skip tool response messages
+                message_role = message.get("role")
+                if message_role == "tool":
+                    continue
+
+                # Skip messages without content (e.g., tool call requests)
                 if "content" not in message:
                     continue
 
                 # Skip system messages (AI instructions/prompts)
-                message_role = message.get("role")
                 if message_role == "system":
                     continue
 
                 # Only include user and assistant messages
                 if message_role in ["user", "assistant"]:
-                    messages.append({
+                    message_data = {
                         "role": message_role,
                         "content": message["content"],
                         "created_at": message.get("created_at"),
                         "model": message.get("model") if message_role == "assistant" else None
-                    })
+                    }
+
+                    # If this is an assistant message with content, find associated tool calls
+                    if message_role == "assistant":
+                        sources = []
+
+                        # Look backward to find the most recent assistant message with tool_calls
+                        for prev_idx in range(msg_idx - 1, -1, -1):
+                            prev_msg = run_messages[prev_idx]
+                            if prev_msg.get("role") == "assistant" and prev_msg.get("tool_calls"):
+                                tool_calls = prev_msg.get("tool_calls", [])
+
+                                for tool_call in tool_calls:
+                                    tool_call_id = tool_call.get("id")
+                                    tool_function_name = tool_call.get("function", {}).get("name")
+
+                                    if tool_call_id and tool_call_id in tool_results_map:
+                                        tool_info = tool_results_map[tool_call_id]
+
+                                        # Check if it's search_knowledge_base
+                                        if tool_info["tool_name"] == "search_knowledge_base" or tool_function_name == "search_knowledge_base":
+                                            # Parse the result JSON to extract sources
+                                            try:
+                                                result_data = json.loads(tool_info["result"])
+                                                if isinstance(result_data, list):
+                                                    for item in result_data:
+                                                        if isinstance(item, dict):
+                                                            sources.append({
+                                                                "document_id": item.get("file_id"),
+                                                                "filename": item.get("metadata", {}).get("file_name", ""),
+                                                                "folder_name": item.get("metadata", {}).get("folder_name", ""),
+                                                                "text": item.get("text", ""),
+                                                                "score": item.get("metadata", {}).get("score", 0),
+                                                                "file_key": item.get("metadata", {}).get("file_key", ""),
+                                                                # Video fields
+                                                                "video_id": item.get("metadata", {}).get("video_id"),
+                                                                "video_name": item.get("metadata", {}).get("video_name"),
+                                                                "clip_start": item.get("metadata", {}).get("clip_start"),
+                                                                "clip_end": item.get("metadata", {}).get("clip_end"),
+                                                                "scene_id": item.get("metadata", {}).get("scene_id"),
+                                                                "key_frame_timestamp": item.get("metadata", {}).get("key_frame_timestamp"),
+                                                                "keyframe_file_key": item.get("metadata", {}).get("keyframe_file_key"),
+                                                            })
+                                            except json.JSONDecodeError as e:
+                                                logger.warning(f"Failed to parse tool result for tool_call_id {tool_call_id}: {e}")
+                                # Stop after finding the first assistant message with tool_calls
+                                break
+
+                        if sources:
+                            message_data["sources"] = sources
+                            logger.info(f"Added {len(sources)} sources to assistant message")
+
+                    messages.append(message_data)
 
         logger.info(f"✅ Retrieved {len(messages)} messages from session")
 

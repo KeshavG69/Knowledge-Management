@@ -1860,6 +1860,14 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -2183,6 +2191,14 @@
     },
     {
         "label": "process_document_ids_task",
+        "importPath": "tasks.ingestion_tasks",
+        "description": "tasks.ingestion_tasks",
+        "isExtraImport": true,
+        "detail": "tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
+        "label": "process_youtube_document_task",
         "importPath": "tasks.ingestion_tasks",
         "description": "tasks.ingestion_tasks",
         "isExtraImport": true,
@@ -3029,6 +3045,39 @@
         "documentation": {}
     },
     {
+        "label": "fitz",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "fitz",
+        "description": "fitz",
+        "detail": "fitz",
+        "documentation": {}
+    },
+    {
+        "label": "ThreadPoolExecutor",
+        "importPath": "concurrent.futures",
+        "description": "concurrent.futures",
+        "isExtraImport": true,
+        "detail": "concurrent.futures",
+        "documentation": {}
+    },
+    {
+        "label": "get_image_analysis_client",
+        "importPath": "clients.image_analysis_client",
+        "description": "clients.image_analysis_client",
+        "isExtraImport": true,
+        "detail": "clients.image_analysis_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_image_analysis_client",
+        "importPath": "clients.image_analysis_client",
+        "description": "clients.image_analysis_client",
+        "isExtraImport": true,
+        "detail": "clients.image_analysis_client",
+        "documentation": {}
+    },
+    {
         "label": "PineconeVectorStore",
         "importPath": "langchain_pinecone",
         "description": "langchain_pinecone",
@@ -3061,11 +3110,11 @@
         "documentation": {}
     },
     {
-        "label": "Pinecone",
-        "importPath": "pinecone",
-        "description": "pinecone",
+        "label": "PineconeGRPC",
+        "importPath": "pinecone.grpc",
+        "description": "pinecone.grpc",
         "isExtraImport": true,
-        "detail": "pinecone",
+        "detail": "pinecone.grpc",
         "documentation": {}
     },
     {
@@ -3101,12 +3150,11 @@
         "documentation": {}
     },
     {
-        "label": "httpx",
-        "kind": 6,
+        "label": "get_pdf_image_extractor",
+        "importPath": "clients.pdf_image_extractor",
+        "description": "clients.pdf_image_extractor",
         "isExtraImport": true,
-        "importPath": "httpx",
-        "description": "httpx",
-        "detail": "httpx",
+        "detail": "clients.pdf_image_extractor",
         "documentation": {}
     },
     {
@@ -3692,6 +3740,14 @@
         "documentation": {}
     },
     {
+        "label": "get_file_extension",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
         "label": "extract_raw_data",
         "importPath": "utils.file_utils",
         "description": "utils.file_utils",
@@ -3914,14 +3970,6 @@
         "description": "clients.unstructured_client",
         "isExtraImport": true,
         "detail": "clients.unstructured_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_image_analysis_client",
-        "importPath": "clients.image_analysis_client",
-        "description": "clients.image_analysis_client",
-        "isExtraImport": true,
-        "detail": "clients.image_analysis_client",
         "documentation": {}
     },
     {
@@ -4885,7 +4933,7 @@
         "kind": 6,
         "importPath": "backend.clients.image_analysis_client",
         "description": "backend.clients.image_analysis_client",
-        "peekOfCode": "class ImageAnalysisClient:\n    \"\"\"Thread-safe Image Analysis client using OpenRouter with Gemma\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:\n                    cls._instance = super().__new__(cls)",
+        "peekOfCode": "class ImageAnalysisClient:\n    \"\"\"Thread-safe Image Analysis client supporting OpenRouter (Gemma) and Groq (Llama Vision)\"\"\"\n    _instance = None\n    _lock = threading.Lock()\n    def __new__(cls):\n        \"\"\"Singleton pattern with thread locking\"\"\"\n        if cls._instance is None:\n            with cls._lock:\n                if cls._instance is None:\n                    cls._instance = super().__new__(cls)",
         "detail": "backend.clients.image_analysis_client",
         "documentation": {}
     },
@@ -4953,11 +5001,29 @@
         "documentation": {}
     },
     {
+        "label": "PDFImageExtractor",
+        "kind": 6,
+        "importPath": "backend.clients.pdf_image_extractor",
+        "description": "backend.clients.pdf_image_extractor",
+        "peekOfCode": "class PDFImageExtractor:\n    \"\"\"Extract and analyze images from PDF files\"\"\"\n    def __init__(self):\n        \"\"\"Initialize PDF image extractor\"\"\"\n        self.image_analyzer = get_image_analysis_client()\n    def extract_and_analyze_images(self, pdf_content: bytes, filename: str) -> str:\n        \"\"\"\n        Extract images from PDF and analyze them (5 at a time in parallel)\n        Args:\n            pdf_content: PDF file content as bytes",
+        "detail": "backend.clients.pdf_image_extractor",
+        "documentation": {}
+    },
+    {
+        "label": "get_pdf_image_extractor",
+        "kind": 2,
+        "importPath": "backend.clients.pdf_image_extractor",
+        "description": "backend.clients.pdf_image_extractor",
+        "peekOfCode": "def get_pdf_image_extractor() -> PDFImageExtractor:\n    \"\"\"\n    Get PDF image extractor instance\n    Returns:\n        PDFImageExtractor: Extractor instance\n    \"\"\"\n    return PDFImageExtractor()",
+        "detail": "backend.clients.pdf_image_extractor",
+        "documentation": {}
+    },
+    {
         "label": "PineconeClient",
         "kind": 6,
         "importPath": "backend.clients.pinecone_client",
         "description": "backend.clients.pinecone_client",
-        "peekOfCode": "class PineconeClient:\n    \"\"\"Client for Pinecone vector database operations using LangChain\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Pinecone client with LangChain\"\"\"\n        import os\n        self.api_key = settings.PINECONE_API_KEY\n        self.index_name = settings.PINECONE_INDEX_NAME\n        self.embedding_model = settings.OPENAI_API_KEY\n        if not self.api_key:\n            raise ValueError(\"PINECONE_API_KEY not configured\")",
+        "peekOfCode": "class PineconeClient:\n    \"\"\"Client for Pinecone vector database operations using LangChain\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Pinecone client with gRPC (no threading issues)\"\"\"\n        self.api_key = settings.PINECONE_API_KEY\n        self.index_name = settings.PINECONE_INDEX_NAME\n        self.embedding_model = settings.OPENAI_API_KEY\n        if not self.api_key:\n            raise ValueError(\"PINECONE_API_KEY not configured\")\n        if not self.index_name:",
         "detail": "backend.clients.pinecone_client",
         "documentation": {}
     },
@@ -4975,7 +5041,7 @@
         "kind": 6,
         "importPath": "backend.clients.ultimate_llm",
         "description": "backend.clients.ultimate_llm",
-        "peekOfCode": "class UltimateLLM:\n    \"\"\"\n    Simplified Ultimate LLM Implementation with Multi-Provider Support\n    Features:\n    - Support for OpenAI and OpenRouter providers\n    - Dual framework support (LangChain + Agno)\n    - Thread-safe singleton\n    - Simple instance caching per provider\n    \"\"\"\n    _instance = None",
+        "peekOfCode": "class UltimateLLM:\n    \"\"\"\n    Simplified Ultimate LLM Implementation with Multi-Provider Support\n    Features:\n    - Support for OpenAI, OpenRouter, and Groq providers\n    - Dual framework support (LangChain + Agno)\n    - Thread-safe singleton\n    - Simple instance caching per provider\n    \"\"\"\n    _instance = None",
         "detail": "backend.clients.ultimate_llm",
         "documentation": {}
     },
@@ -4984,7 +5050,7 @@
         "kind": 2,
         "importPath": "backend.clients.ultimate_llm",
         "description": "backend.clients.ultimate_llm",
-        "peekOfCode": "def get_llm(\n    model: str = \"google/gemma-3-27b-it\",\n    provider: ProviderType = \"openrouter\"\n) -> ChatOpenAI:\n    \"\"\"\n    Get LangChain ChatOpenAI instance\n    Args:\n        model: Model name (default: google/gemma-3-27b-it)\n        provider: Provider to use (\"openai\" or \"openrouter\", default: \"openrouter\")\n    Returns:",
+        "peekOfCode": "def get_llm(\n    model: str = \"google/gemma-3-27b-it\",\n    provider: ProviderType = \"openrouter\"\n) -> ChatOpenAI:\n    \"\"\"\n    Get LangChain ChatOpenAI instance\n    Args:\n        model: Model name (default: google/gemma-3-27b-it)\n        provider: Provider to use (\"openai\", \"openrouter\", or \"groq\", default: \"openrouter\")\n    Returns:",
         "detail": "backend.clients.ultimate_llm",
         "documentation": {}
     },
@@ -4993,7 +5059,7 @@
         "kind": 2,
         "importPath": "backend.clients.ultimate_llm",
         "description": "backend.clients.ultimate_llm",
-        "peekOfCode": "def get_llm_agno(\n    model: str = \"google/gemma-3-27b-it\",\n    provider: ProviderType = \"openrouter\"\n) -> OpenAIChat:\n    \"\"\"\n    Get Agno OpenAIChat instance\n    Args:\n        model: Model name (default: google/gemma-3-27b-it)\n        provider: Provider to use (\"openai\" or \"openrouter\", default: \"openrouter\")\n    Returns:",
+        "peekOfCode": "def get_llm_agno(\n    model: str = \"google/gemma-3-27b-it\",\n    provider: ProviderType = \"openrouter\"\n) -> OpenAIChat:\n    \"\"\"\n    Get Agno OpenAIChat instance\n    Args:\n        model: Model name (default: google/gemma-3-27b-it)\n        provider: Provider to use (\"openai\", \"openrouter\", or \"groq\", default: \"openrouter\")\n    Returns:",
         "detail": "backend.clients.ultimate_llm",
         "documentation": {}
     },
@@ -5002,7 +5068,7 @@
         "kind": 5,
         "importPath": "backend.clients.ultimate_llm",
         "description": "backend.clients.ultimate_llm",
-        "peekOfCode": "ProviderType = Literal[\"openai\", \"openrouter\"]\nclass UltimateLLM:\n    \"\"\"\n    Simplified Ultimate LLM Implementation with Multi-Provider Support\n    Features:\n    - Support for OpenAI and OpenRouter providers\n    - Dual framework support (LangChain + Agno)\n    - Thread-safe singleton\n    - Simple instance caching per provider\n    \"\"\"",
+        "peekOfCode": "ProviderType = Literal[\"openai\", \"openrouter\", \"groq\"]\nclass UltimateLLM:\n    \"\"\"\n    Simplified Ultimate LLM Implementation with Multi-Provider Support\n    Features:\n    - Support for OpenAI, OpenRouter, and Groq providers\n    - Dual framework support (LangChain + Agno)\n    - Thread-safe singleton\n    - Simple instance caching per provider\n    \"\"\"",
         "detail": "backend.clients.ultimate_llm",
         "documentation": {}
     },
@@ -5020,7 +5086,7 @@
         "kind": 6,
         "importPath": "backend.clients.unstructured_client",
         "description": "backend.clients.unstructured_client",
-        "peekOfCode": "class UnstructuredClient:\n    \"\"\"Unstructured API client for document extraction (no singleton for Celery)\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Unstructured API client\"\"\"\n        self.api_key = settings.UNSTRUCTURED_API_KEY\n        self.api_url = settings.UNSTRUCTURED_API_URL\n        if not self.api_key:\n            raise ValueError(\"UNSTRUCTURED_API_KEY not configured in settings\")\n        # Create custom HTTP client with connection limits (prevents threading issues in Celery)\n        self._http_client = httpx.Client(",
+        "peekOfCode": "class UnstructuredClient:\n    \"\"\"Unstructured API client for document extraction (no singleton for Celery)\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Unstructured API client\"\"\"\n        self.api_key = settings.UNSTRUCTURED_API_KEY\n        self.api_url = settings.UNSTRUCTURED_API_URL\n        if not self.api_key:\n            raise ValueError(\"UNSTRUCTURED_API_KEY not configured in settings\")\n        # Initialize client with default HTTP client (more stable for HI_RES processing)\n        self.client = UnstructuredAPIClient(",
         "detail": "backend.clients.unstructured_client",
         "documentation": {}
     },
@@ -5281,7 +5347,7 @@
         "kind": 6,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")\nasync def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):",
+        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -5290,7 +5356,7 @@
         "kind": 5,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")",
+        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -5614,7 +5680,16 @@
         "kind": 2,
         "importPath": "backend.tasks.ingestion_tasks",
         "description": "backend.tasks.ingestion_tasks",
-        "peekOfCode": "def process_single_document_task(\n    self,\n    document_id: str,\n    content_b64: str,\n    filename: str,\n    content_type: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:",
+        "peekOfCode": "def process_single_document_task(\n    self,\n    document_id: str,\n    file_key: str,\n    content_b64: str,\n    filename: str,\n    content_type: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None",
+        "detail": "backend.tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
+        "label": "process_youtube_document_task",
+        "kind": 2,
+        "importPath": "backend.tasks.ingestion_tasks",
+        "description": "backend.tasks.ingestion_tasks",
+        "peekOfCode": "def process_youtube_document_task(\n    self,\n    document_id: str,\n    youtube_url: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:\n    \"\"\"\n    Worker task - downloads and processes YouTube video",
         "detail": "backend.tasks.ingestion_tasks",
         "documentation": {}
     },

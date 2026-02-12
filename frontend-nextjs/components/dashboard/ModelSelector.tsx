@@ -2,30 +2,27 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useChatStore } from "@/lib/stores/chatStore";
-import { modelsApi, Model } from "@/lib/api/models";
+
+interface Model {
+  id: string;
+  name: string;
+}
+
+// Static list of available models
+const AVAILABLE_MODELS: Model[] = [
+  { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro" },
+  { id: "anthropic/claude-sonnet-4.5", name: "Claude Sonnet 4.5" },
+  { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash" },
+  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+  { id: "anthropic/claude-haiku-4.5", name: "Claude Haiku 4.5" },
+];
 
 export default function ModelSelector() {
   const { selectedModel, setSelectedModel } = useChatStore();
-  const [models, setModels] = useState<Model[]>([]);
+  const [models] = useState<Model[]>(AVAILABLE_MODELS);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const modelsList = await modelsApi.list();
-        setModels(modelsList);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Failed to fetch models:", error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchModels();
-  }, []);
 
   useEffect(() => {
     if (isOpen && buttonRef.current) {
@@ -43,14 +40,6 @@ export default function ModelSelector() {
     setSelectedModel(modelId);
     setIsOpen(false);
   };
-
-  if (isLoading) {
-    return (
-      <div className="tactical-panel px-4 py-2 bg-slate-100 dark:bg-slate-800/50">
-        <span className="text-xs text-slate-500 tracking-wider">LOADING...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="relative">

@@ -50,6 +50,15 @@ class YouTubeDownloader:
             'quiet': False,
             'no_warnings': False,
             'extract_flat': False,
+            # Anti-bot detection: Add sleep intervals (CRITICAL)
+            'sleep_interval': 2,           # Wait 2 seconds between requests
+            'max_sleep_interval': 5,       # Random delay up to 5 seconds
+            # Rate limiting to appear more natural
+            'ratelimit': 2000000,          # Limit to 2MB/s (adjust as needed)
+            # Retry settings
+            'retries': 10,
+            'fragment_retries': 10,
+            'skip_unavailable_fragments': True,
         }
 
     def download_video(self, youtube_url: str) -> Tuple[bytes, str, dict]:
@@ -84,8 +93,6 @@ class YouTubeDownloader:
                 'http_headers': {
                     'User-Agent': user_agent,
                 },
-                # Use cookies from Chrome to bypass bot detection
-                'cookiesfrombrowser': ('chrome',),  # Try Chrome first
             }
 
             # Download video

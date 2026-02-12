@@ -61,6 +61,7 @@ class IngestionService:
     def process_single_document_sync(
         self,
         document_id: str,
+        file_key: str,
         file_content: bytes,
         filename: str,
         content_type: str,
@@ -72,25 +73,30 @@ class IngestionService:
         """
         Synchronous document processing for Celery tasks
         Uses sync methods only - no event loop needed
+
+        Args:
+            document_id: MongoDB document ID
+            file_key: iDrive E2 file path (already contains document_id)
+            file_content: File bytes
+            filename: Original filename (for display)
+            content_type: MIME type
+            folder_name: Folder name
+            user_id: Optional user ID
+            organization_id: Optional organization ID
+            additional_metadata: Optional metadata
         """
         logger.info(f"📄 Processing document sync {document_id}: {filename}")
 
         file_size_mb = get_file_size_mb(file_content)
 
-        # Prepare file key
-        safe_filename = sanitize_filename(filename)
-        if organization_id:
-            file_key = f"{organization_id}/{folder_name}/{safe_filename}"
-        else:
-            file_key = f"{folder_name}/{safe_filename}"
-
         try:
-            # Step 1: Update status
+            # Step 1: Update status and set file_key
             logger.info(f"🚀 Starting processing: Upload to E2 + Content extraction for {filename}")
             self.mongodb_client.update_document(
                 collection="documents",
                 query={"_id": ObjectId(document_id)},
                 update={
+                    "file_key": file_key,  # Set the file_key now
                     "processing_stage": "uploading_extracting",
                     "processing_stage_description": "Uploading to storage and extracting content",
                     "updated_at": datetime.utcnow()

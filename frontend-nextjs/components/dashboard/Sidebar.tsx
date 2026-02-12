@@ -28,6 +28,7 @@ export default function Sidebar() {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   // const [uploadMode, setUploadMode] = useState<"files" | "youtube">("files"); // COMMENTED OUT - YouTube upload temporarily disabled
   // const [youtubeUrl, setYoutubeUrl] = useState<string>(""); // COMMENTED OUT - YouTube upload temporarily disabled
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -155,9 +156,12 @@ export default function Sidebar() {
   const handleDeleteDoc = async (docId: string) => {
     if (confirm("Delete this document?")) {
       try {
+        setDeletingDocId(docId);
         await deleteDocument(docId);
       } catch (error) {
         console.error("Failed to delete document:", error);
+      } finally {
+        setDeletingDocId(null);
       }
     }
   };
@@ -319,10 +323,11 @@ export default function Sidebar() {
               const folderDocCount = folderDocs.length;
               const isDeleting = deletingKB === folderName;
 
-              // Check if all documents in folder are selected
+              // Check if any or all documents in folder are selected
               const folderDocIds = folderDocs.map(d => d._id);
               const allFolderDocsSelected = folderDocIds.length > 0 && folderDocIds.every(id => selectedDocs.has(id));
-              const someFolderDocsSelected = folderDocIds.some(id => selectedDocs.has(id)) && !allFolderDocsSelected;
+              const anyFolderDocsSelected = folderDocIds.some(id => selectedDocs.has(id));
+              const someFolderDocsSelected = anyFolderDocsSelected && !allFolderDocsSelected;
 
               // Don't show folders with 0 documents
               if (folderDocCount === 0) {
@@ -362,22 +367,17 @@ export default function Sidebar() {
                       {/* Folder Selection Checkbox */}
                       <input
                         type="checkbox"
-                        checked={allFolderDocsSelected}
+                        checked={anyFolderDocsSelected}
                         disabled={isDeleting}
-                        ref={(el) => {
-                          if (el) {
-                            el.indeterminate = someFolderDocsSelected;
-                          }
-                        }}
                         onChange={() => {
-                          if (allFolderDocsSelected) {
+                          if (anyFolderDocsSelected) {
                             deselectFolderDocs(folderName);
                           } else {
                             selectFolderDocs(folderName);
                           }
                         }}
                         className="tactical-checkbox disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={allFolderDocsSelected ? "Deselect all documents in folder" : "Select all documents in folder"}
+                        title={anyFolderDocsSelected ? "Deselect all documents in folder" : "Select all documents in folder"}
                       />
 
                       {/* Folder Icon or Loader */}
@@ -390,8 +390,8 @@ export default function Sidebar() {
                       )}
 
                       {/* Folder Name */}
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-wide">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-wide break-words">
                           {folderName}
                         </div>
                         <div className="text-[10px] text-slate-500 font-mono mt-0.5">
@@ -420,10 +420,13 @@ export default function Sidebar() {
                   {/* Folder Documents */}
                   {isExpanded && folderDocs.length > 0 && (
                     <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-300 dark:border-slate-700/30 pl-3">
-                      {folderDocs.map((doc, docIdx) => (
+                      {folderDocs.map((doc, docIdx) => {
+                        const isDeleting = deletingDocId === doc._id;
+                        const isFailed = doc.status === 'failed';
+                        return (
                         <div
                           key={doc._id}
-                          className="relative bg-slate-100 dark:bg-slate-800/30 border border-slate-300 dark:border-slate-700/40 hover:border-blue-400 dark:hover:border-amber-400/30 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-all duration-200 group"
+                          className={`relative bg-slate-100 dark:bg-slate-800/30 border border-slate-300 dark:border-slate-700/40 transition-all duration-200 group ${isDeleting ? 'opacity-60' : isFailed ? 'opacity-50' : 'hover:border-blue-400 dark:hover:border-amber-400/30 hover:bg-slate-200 dark:hover:bg-slate-800/50'}`}
                           style={{
                             clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)',
                           }}
@@ -434,33 +437,36 @@ export default function Sidebar() {
                               checked={selectedDocs.has(doc._id)}
                               onChange={() => toggleDocSelection(doc._id)}
                               className="tactical-checkbox mt-1"
-                              disabled={doc.status === 'processing'}
+                              disabled={doc.status === 'processing' || isFailed || isDeleting}
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
+                              <div className="flex items-start gap-2">
+                                <div className="text-xs font-medium text-slate-700 dark:text-slate-200 break-words flex-1">
                                   {doc.file_name}
                                 </div>
-                                {doc.status === 'processing' && (
+                                {isDeleting && (
+                                  <div className="w-3 h-3 border border-red-200 dark:border-red-400/20 border-t-red-600 dark:border-t-red-400 rounded-full animate-spin flex-shrink-0"></div>
+                                )}
+                                {!isDeleting && doc.status === 'processing' && (
                                   <div className="w-3 h-3 border border-blue-200 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin flex-shrink-0"></div>
                                 )}
-                                {doc.status === 'failed' && (
-                                  <svg className="w-3 h-3 text-red-500 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                )}
                               </div>
-                              {doc.status === 'processing' && doc.processing_stage_description && (
+                              {isDeleting && (
+                                <div className="text-[9px] text-red-600 dark:text-red-400 mt-0.5">
+                                  Deleting document...
+                                </div>
+                              )}
+                              {!isDeleting && doc.status === 'processing' && doc.processing_stage_description && (
                                 <div className="text-[9px] text-blue-600 dark:text-amber-400/70 mt-0.5">
                                   {doc.processing_stage_description}
                                 </div>
                               )}
-                              {doc.status === 'failed' && doc.error && (
+                              {!isDeleting && doc.status === 'failed' && doc.error && (
                                 <div className="text-[9px] text-red-500 dark:text-red-400 mt-0.5">
                                   {doc.error}
                                 </div>
                               )}
-                              {(!doc.status || doc.status === 'completed') && (
+                              {!isDeleting && (!doc.status || doc.status === 'completed') && (
                                 <div className="text-[10px] text-slate-600 font-mono mt-0.5">
                                   {doc.created_at ? new Date(doc.created_at).toLocaleDateString('en-US', {
                                     year: 'numeric',
@@ -470,18 +476,21 @@ export default function Sidebar() {
                                 </div>
                               )}
                             </div>
-                            <button
-                              onClick={() => handleDeleteDoc(doc._id)}
-                              className="opacity-0 group-hover:opacity-100 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1"
-                              title="Delete document"
-                            >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
+                            {!isDeleting && (
+                              <button
+                                onClick={() => handleDeleteDoc(doc._id)}
+                                className={`text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1 flex-shrink-0 ${isFailed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                title="Delete document"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -208,6 +208,7 @@ export interface ChatMessage {
   content: string;
   created_at: number;
   model?: string;
+  sources?: any[];
 }
 
 export interface SessionHistory {
