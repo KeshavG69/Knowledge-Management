@@ -2981,6 +2981,14 @@
         "documentation": {}
     },
     {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
         "label": "get_llm_agno",
         "importPath": "clients.ultimate_llm",
         "description": "clients.ultimate_llm",

@@ -11,6 +11,7 @@ from pinecone.grpc import PineconeGRPC as Pinecone  # Use gRPC to avoid thread p
 from pinecone import ServerlessSpec  # ServerlessSpec is in main module
 from app.settings import settings
 from app.logger import logger
+from clients.ultimate_llm import get_llm
 
 
 class PineconeClient:
@@ -58,6 +59,49 @@ class PineconeClient:
             logger.info("✅ Cleaned up Pinecone client")
         except Exception as e:
             logger.warning(f"Error cleaning up Pinecone client: {str(e)}")
+
+    def _summarize_large_text(self, text: str, max_bytes: int = 30000) -> str:
+        """
+        Summarize text using LLM when it's too large for Pinecone metadata
+
+        Args:
+            text: The text to summarize
+            max_bytes: Max byte size before summarization (default: 30KB, leaves 10KB buffer)
+
+        Returns:
+            Summarized text or original if under max_bytes
+        """
+        text_bytes = len(text.encode('utf-8'))
+
+        # Only summarize if text exceeds 30KB (Pinecone has 40KB limit, we use 30KB for safety)
+        if text_bytes <= max_bytes:
+            return text
+
+        try:
+            # Use gpt-4.1-mini for fast, cheap summarization
+            llm = get_llm(model="gpt-4.1-mini", provider="openai")
+
+            prompt = f"""Summarize the following text concisely while preserving key information and context.
+Keep the summary under 3000 characters.
+
+Text:
+{text}
+...
+"""
+
+            response = llm.invoke(prompt)
+            summary = response.content
+
+            logger.info(f"✅ Summarized text from {text_bytes} bytes ({len(text)} chars) to {len(summary.encode('utf-8'))} bytes ({len(summary)} chars) using LLM")
+            return summary
+
+        except Exception as e:
+            logger.error(f"❌ Failed to summarize text with LLM: {str(e)}")
+            # Fallback to truncation if LLM summarization fails
+            logger.warning("⚠️  Falling back to text truncation")
+            # Truncate at byte level to fit within limit
+            truncated_bytes = text.encode('utf-8')[:max_bytes]
+            return truncated_bytes.decode('utf-8', errors='ignore')
 
     def _ensure_index_exists(self):
         """Ensure Pinecone index exists, create if not"""
@@ -123,10 +167,18 @@ class PineconeClient:
             index = self.pc.Index(self.index_name)
 
             # Prepare vectors for upsert with text stored in metadata
+            # NOTE: Pinecone has a 40KB limit for metadata per vector
+            # We use LLM summarization for large texts, but the FULL text was already
+            # used to generate the embedding, so semantic search quality is not affected
             vectors = []
             for doc_id, text, embedding, metadata in zip(ids, texts, embeddings, metadatas):
-                # Store the text in metadata for LangChain compatibility
-                metadata_with_text = {**metadata, "text": text}
+                # Summarize text if it's too large for Pinecone metadata (40KB limit)
+                # Use 30KB threshold to leave 10KB buffer for other metadata
+                processed_text = self._summarize_large_text(text, max_bytes=30000)
+
+                # Store the processed text in metadata for LangChain compatibility
+                metadata_with_text = {**metadata, "text": processed_text}
+
                 vectors.append({
                     "id": doc_id,
                     "values": embedding,
