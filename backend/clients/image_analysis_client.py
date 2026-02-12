@@ -53,7 +53,7 @@ class ImageAnalysisClient:
                 image_base64 = base64.b64encode(file_content).decode('utf-8')
 
                 # Get LLM from ultimate_llm (using OpenRouter)
-                llm = get_llm(model="google/gemma-3-12b-it", provider="openrouter")
+                llm = get_llm(model="google/gemma-3-27b-it", provider="openrouter")
 
                 # Create prompt with image
                 from langchain_core.prompts import ChatPromptTemplate
