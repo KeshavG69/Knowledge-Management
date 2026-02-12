@@ -70,6 +70,7 @@ export default function SessionDropdown({ hasUserMessages }: SessionDropdownProp
           content: msg.content,
           timestamp: new Date(msg.created_at * 1000).toISOString(),
           ...(msg.model && { model: msg.model }),
+          ...(msg.sources && { sources: msg.sources }),
         }));
 
       // Load session into chat store
