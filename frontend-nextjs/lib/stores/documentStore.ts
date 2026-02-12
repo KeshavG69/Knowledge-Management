@@ -354,7 +354,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   selectAllDocs: () => {
     const { documents } = get();
-    const docIds = Array.isArray(documents) ? documents.map(d => d._id) : [];
+    const docIds = Array.isArray(documents)
+      ? documents
+          .filter(d => d.status !== 'failed' && d.status !== 'processing') // Exclude failed and processing files
+          .map(d => d._id)
+      : [];
     const selectedDocs = new Set(docIds);
     saveSelectedDocs(selectedDocs);
     set({ selectedDocs });
@@ -369,7 +373,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   selectFolderDocs: (folderName) => {
     const { documents, selectedDocs } = get();
     const folderDocIds = Array.isArray(documents)
-      ? documents.filter(d => d.folder_name === folderName).map(d => d._id)
+      ? documents
+          .filter(d => d.folder_name === folderName)
+          .filter(d => d.status !== 'failed' && d.status !== 'processing') // Exclude failed and processing files
+          .map(d => d._id)
       : [];
     const newSelected = new Set(selectedDocs);
     folderDocIds.forEach(id => newSelected.add(id));

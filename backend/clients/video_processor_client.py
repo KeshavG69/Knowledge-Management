@@ -117,7 +117,7 @@ class VideoProcessorClient:
                         scenes, entropy_cache = scene_detector.detect_scenes_from_video(
                             file_content,
                             filename,
-                            threshold=18.0,  # Lower threshold = more sensitive (detects more scenes)
+                            threshold=27.0,  # Lower threshold = more sensitive (detects more scenes)
                             downscale=1  # Full resolution = catches subtle changes
                         )
 

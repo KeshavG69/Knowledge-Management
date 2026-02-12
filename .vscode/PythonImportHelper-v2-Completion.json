@@ -2198,6 +2198,14 @@
         "documentation": {}
     },
     {
+        "label": "process_youtube_document_task",
+        "importPath": "tasks.ingestion_tasks",
+        "description": "tasks.ingestion_tasks",
+        "isExtraImport": true,
+        "detail": "tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -3725,6 +3733,14 @@
     },
     {
         "label": "get_file_size_mb",
+        "importPath": "utils.file_utils",
+        "description": "utils.file_utils",
+        "isExtraImport": true,
+        "detail": "utils.file_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_file_extension",
         "importPath": "utils.file_utils",
         "description": "utils.file_utils",
         "isExtraImport": true,
@@ -5664,7 +5680,16 @@
         "kind": 2,
         "importPath": "backend.tasks.ingestion_tasks",
         "description": "backend.tasks.ingestion_tasks",
-        "peekOfCode": "def process_single_document_task(\n    self,\n    document_id: str,\n    content_b64: str,\n    filename: str,\n    content_type: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:",
+        "peekOfCode": "def process_single_document_task(\n    self,\n    document_id: str,\n    file_key: str,\n    content_b64: str,\n    filename: str,\n    content_type: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None",
+        "detail": "backend.tasks.ingestion_tasks",
+        "documentation": {}
+    },
+    {
+        "label": "process_youtube_document_task",
+        "kind": 2,
+        "importPath": "backend.tasks.ingestion_tasks",
+        "description": "backend.tasks.ingestion_tasks",
+        "peekOfCode": "def process_youtube_document_task(\n    self,\n    document_id: str,\n    youtube_url: str,\n    folder_name: str,\n    user_id: str = None,\n    organization_id: str = None\n) -> Dict[str, Any]:\n    \"\"\"\n    Worker task - downloads and processes YouTube video",
         "detail": "backend.tasks.ingestion_tasks",
         "documentation": {}
     },
