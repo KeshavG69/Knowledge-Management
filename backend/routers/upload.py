@@ -9,10 +9,10 @@ from bson import ObjectId
 import base64
 from services.ingestion_service import get_ingestion_service
 from clients.youtube_downloader import get_youtube_downloader
-from tasks.ingestion_tasks import process_document_ids_task
+from tasks.ingestion_tasks import process_document_ids_task, process_youtube_document_task
 from app.logger import logger
 from auth.dependencies import get_current_user
-from utils.file_utils import sanitize_filename, get_file_size_mb
+from utils.file_utils import sanitize_filename, get_file_size_mb,get_file_extension
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -77,27 +77,30 @@ async def upload_documents(
             # Encode to base64 for Celery JSON serialization
             content_b64 = base64.b64encode(content).decode('utf-8')
 
-            safe_filename = sanitize_filename(file.filename)
-            # Include organization_id in file_key for multi-tenant isolation
-            if organization_id:
-                file_key = f"{organization_id}/{folder_name.strip()}/{safe_filename}"
-            else:
-                file_key = f"{folder_name.strip()}/{safe_filename}"  # Backwards compatibility
             file_size_mb = get_file_size_mb(content)
 
-            # Create document record with status="processing"
+            # Create document record with status="processing" (without file_key initially)
             document_id = await ingestion_service._create_document_with_status(
                 file_name=file.filename,
                 folder_name=folder_name.strip(),
-                file_key=file_key,
+                file_key=None,  # Will be updated with document_id
                 file_size_mb=file_size_mb,
                 user_id=user_id,
                 organization_id=organization_id,
                 additional_metadata=None
             )
 
+            # Build file_key using document_id and original extension
+            
+            extension = get_file_extension(file.filename)
+            if organization_id:
+                file_key = f"{organization_id}/{folder_name.strip()}/{document_id}{extension}"
+            else:
+                file_key = f"{folder_name.strip()}/{document_id}{extension}"
+
             documents_data.append({
                 "document_id": document_id,
+                "file_key": file_key,
                 "content_b64": content_b64,
                 "filename": file.filename,
                 "content_type": file.content_type
@@ -150,17 +153,17 @@ async def ingest_youtube_video(
     Ingest YouTube video by URL (Celery background processing)
 
     This endpoint:
-    1. Validates YouTube URL
-    2. Downloads video from YouTube
-    3. Creates document record with status="processing" in MongoDB
-    4. Returns immediately with document_id for frontend tracking
-    5. Dispatches Celery task to process the video:
-       - Uploads to iDrive E2
-       - Extracts frames and transcription
-       - Stores in MongoDB
-       - Chunks content semantically
-       - Stores chunks in Pinecone
-       - Updates status to "completed" or "failed"
+    1. Validates YouTube URL format
+    2. Creates document record with status="processing" in MongoDB (fast!)
+    3. Returns immediately with document_id for frontend tracking
+    4. Dispatches Celery task to:
+       - Download video from YouTube
+       - Extract metadata and update document
+       - Upload to iDrive E2
+       - Extract frames and transcription
+       - Chunk content semantically
+       - Store chunks in Pinecone
+       - Update status to "completed" or "failed"
 
     Args:
         request: YouTubeIngestionRequest with URL and metadata
@@ -191,79 +194,51 @@ async def ingest_youtube_video(
 
         logger.info(f"📺 YouTube ingestion request: {request.youtube_url}, folder={request.folder_name}")
 
-        # Download YouTube video (this happens in foreground to validate URL works)
-        try:
-            video_bytes, filename, metadata = youtube_downloader.download_video(request.youtube_url)
-        except Exception as e:
-            logger.error(f"❌ Failed to download YouTube video: {str(e)}")
-            raise HTTPException(status_code=400, detail=f"Failed to download YouTube video: {str(e)}")
-
-        # Encode to base64 for Celery JSON serialization
-        content_b64 = base64.b64encode(video_bytes).decode('utf-8')
-
-        # Create document record with status="processing"
+        # Create document record with status="processing" (fast - just DB write)
         ingestion_service = get_ingestion_service()
 
-        safe_filename = sanitize_filename(filename)
-        # Include organization_id in file_key for multi-tenant isolation
-        if request.organization_id:
-            file_key = f"{request.organization_id}/{request.folder_name.strip()}/{safe_filename}"
-        else:
-            file_key = f"{request.folder_name.strip()}/{safe_filename}"
-        file_size_mb = get_file_size_mb(video_bytes)
+        # Use YouTube URL as placeholder filename initially
+        filename = f"YouTube Video - {request.youtube_url.split('=')[-1][:11]}"
 
-        # Add YouTube metadata to additional_metadata
+        # Add YouTube URL to metadata
         additional_metadata = {
             "source": "youtube",
             "youtube_url": request.youtube_url,
-            "youtube_video_id": metadata.get("video_id"),
-            "youtube_title": metadata.get("title"),
-            "youtube_uploader": metadata.get("uploader"),
-            "youtube_duration": metadata.get("duration"),
-            "youtube_upload_date": metadata.get("upload_date"),
-            "youtube_description": metadata.get("description"),
         }
 
-        # Create document record
+        # Create document record (without file_key initially)
         document_id = await ingestion_service._create_document_with_status(
             file_name=filename,
             folder_name=request.folder_name.strip(),
-            file_key=file_key,
-            file_size_mb=file_size_mb,
+            file_key=None,  # Will be set by worker after download
+            file_size_mb=0,  # Unknown initially, will be updated by worker
             user_id=request.user_id,
             organization_id=request.organization_id,
             additional_metadata=additional_metadata
         )
 
-        logger.info(f"📝 Created document record: {document_id} for YouTube video: {filename}")
+        logger.info(f"📝 Created document record: {document_id} for YouTube URL")
 
-        # Dispatch Celery task
-        documents_data = [{
-            "document_id": document_id,
-            "content_b64": content_b64,
-            "filename": filename,
-            "content_type": "video/mp4"
-        }]
-
-        task = process_document_ids_task.delay(
-            documents_data=documents_data,
+        # Dispatch Celery task (worker will download, process, and update document)
+        task = process_youtube_document_task.delay(
+            document_id=document_id,
+            youtube_url=request.youtube_url,
             folder_name=request.folder_name.strip(),
             user_id=request.user_id,
             organization_id=request.organization_id
         )
 
-        logger.info(f"✅ YouTube video dispatched to Celery: {filename} (task_id: {task.id})")
+        logger.info(f"✅ YouTube video dispatched to Celery (task_id: {task.id})")
 
         return {
             "success": True,
-            "message": f"YouTube video ingestion started: {metadata.get('title')}",
+            "message": f"YouTube video ingestion started",
             "data": {
                 "document_id": document_id,
                 "file_name": filename,
                 "folder_name": request.folder_name.strip(),
                 "task_id": task.id,
-                "status": "processing",
-                "youtube_metadata": metadata
+                "status": "processing"
             }
         }
 

@@ -52,6 +52,8 @@ export interface ChatMessage {
 export interface SourceReference {
   document_id: string;
   filename: string;
+  text?: string;
+  file_key?: string;
   page_number?: number;
   snippet?: string;
   folder_name?: string;

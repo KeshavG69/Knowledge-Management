@@ -46,6 +46,15 @@ export default function ChatArea() {
     filename: "",
   });
 
+  // Citation hover state
+  const [hoveredCitation, setHoveredCitation] = useState<{
+    index: number;
+    messageId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Fetch presigned URLs for all sources in messages
   useEffect(() => {
     const fetchUrlsForSources = async () => {
@@ -228,8 +237,8 @@ export default function ChatArea() {
                   try {
                     const results = JSON.parse(parsed.data.result);
                     if (Array.isArray(results)) {
-                      // Map all sources
-                      const allSources = results.map((result: any) => ({
+                      // Map all sources (no deduplication)
+                      accumulatedSources = results.map((result: any) => ({
                         document_id: result.file_id,
                         filename: result.metadata?.file_name || '',
                         folder_name: result.metadata?.folder_name || '',
@@ -245,27 +254,6 @@ export default function ChatArea() {
                         key_frame_timestamp: result.metadata?.key_frame_timestamp,
                         keyframe_file_key: result.metadata?.keyframe_file_key,
                       }));
-
-                      // Deduplicate sources
-                      // For videos with different clips, use scene_id or timestamp as part of key
-                      // For regular documents, deduplicate by document_id
-                      const uniqueSourcesMap = new Map<string, DocumentSource>();
-                      allSources.forEach(source => {
-                        // Create unique key: for videos with clips, include scene_id or timestamp
-                        let key = source.document_id;
-                        if (source.scene_id) {
-                          key = `${source.document_id}-${source.scene_id}`;
-                        } else if (source.clip_start !== undefined) {
-                          key = `${source.document_id}-${source.clip_start}-${source.clip_end}`;
-                        }
-
-                        const existing = uniqueSourcesMap.get(key);
-                        if (!existing || source.score > existing.score) {
-                          uniqueSourcesMap.set(key, source);
-                        }
-                      });
-
-                      accumulatedSources = Array.from(uniqueSourcesMap.values());
                       // Update current message with sources
                       updateLastMessage(accumulatedContent, accumulatedSources);
                     }
@@ -318,17 +306,6 @@ export default function ChatArea() {
       e.preventDefault();
       handleSendMessage(e as any);
     }
-  };
-
-  const formatTimestamp = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    if (hours > 0) {
-      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -470,8 +447,100 @@ export default function ChatArea() {
                             [&_ul]:list-disc [&_ul]:pl-7
                             [&_ol]:list-decimal [&_ol]:pl-7
                             [&_ul_ul]:my-3 [&_ol_ol]:my-3">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {message.content}
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a: ({ node, href, children, ...props }) => {
+                                  // Check if this is a citation link (format: #source-n)
+                                  if (href?.startsWith('#source-')) {
+                                    const index = parseInt(href.replace('#source-', ''), 10);
+                                    if (!isNaN(index) && message.sources && message.sources[index - 1]) {
+                                      const sourceId = `source-${message.id}-${index - 1}`;
+
+                                      const source = message.sources[index - 1];
+                                      const fileKey = source.file_key;
+                                      const finalUrl = sourceUrls.get(fileKey);
+                                      const isVideo = source.filename && /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(source.filename);
+                                      const hasClipTimes = source.clip_start !== undefined && source.clip_end !== undefined;
+
+                                      return (
+                                        <span
+                                          className="inline-flex items-center justify-center w-5 h-5 ml-1 mr-0.5 text-[10px] font-bold text-tactical-green bg-tactical-green/10 border border-tactical-green/30 rounded-full cursor-pointer hover:bg-tactical-green/20 transition-colors align-super relative"
+                                          onMouseEnter={(e) => {
+                                            // Clear any pending timeout
+                                            if (hoverTimeoutRef.current) {
+                                              clearTimeout(hoverTimeoutRef.current);
+                                              hoverTimeoutRef.current = null;
+                                            }
+
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setHoveredCitation({
+                                              index: index - 1,
+                                              messageId: message.id,
+                                              x: rect.left + rect.width / 2,
+                                              y: rect.top,
+                                            });
+                                          }}
+                                          onMouseLeave={() => {
+                                            // Delay closing to allow moving to tooltip
+                                            hoverTimeoutRef.current = setTimeout(() => {
+                                              setHoveredCitation(null);
+                                            }, 100);
+                                          }}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+
+                                            // Clear any pending timeout and close tooltip
+                                            if (hoverTimeoutRef.current) {
+                                              clearTimeout(hoverTimeoutRef.current);
+                                              hoverTimeoutRef.current = null;
+                                            }
+                                            setHoveredCitation(null);
+
+                                            if (!finalUrl) return;
+
+                                            // For videos with clip times, open in VideoClipViewer
+                                            if (isVideo && hasClipTimes) {
+                                              setVideoViewer({
+                                                isOpen: true,
+                                                url: finalUrl,
+                                                filename: source.filename,
+                                                clipStart: source.clip_start,
+                                                clipEnd: source.clip_end,
+                                              });
+                                            } else {
+                                              // For other documents, open in new tab
+                                              window.open(finalUrl, '_blank');
+                                            }
+                                          }}
+                                        >
+                                          {index}
+                                        </span>
+                                      );
+                                    }
+                                  }
+                                  // Default link rendering
+                                  return <a href={href} {...props} className="text-tactical-green hover:underline">{children}</a>;
+                                }
+                              }}
+                            >
+                              {(() => {
+                                // Pre-process content to turn [1], [2] into links [[1]](#source-1)
+                                // Only process citations after streaming is complete (or for old messages where isStreaming is undefined)
+                                let content = message.content || "";
+                                if (message.isStreaming !== true && message.sources && message.sources.length > 0) {
+                                  // Replace [n] with [[n]](#source-n)
+                                  content = content.replace(/\[\s*(\d+)\s*\]/g, (match, id) => {
+                                    const index = parseInt(id, 10);
+                                    if (index > 0 && index <= message.sources!.length) {
+                                      return ` [${index}](#source-${index})`;
+                                    }
+                                    return match;
+                                  });
+                                }
+                                return content;
+                              })()}
                             </ReactMarkdown>
                           </div>
                         ) : (
@@ -485,79 +554,6 @@ export default function ChatArea() {
                       )}
                     </div>
 
-                    {/* Sources */}
-                    {message.sources && message.sources.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-slate-300 dark:border-slate-700/50">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="w-4 h-4 text-tactical-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <span className="text-[10px] text-tactical-green tracking-widest uppercase font-semibold">
-                            {message.sources.length} Source{message.sources.length !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {message.sources.map((source: any, idx) => {
-                            const finalUrl = sourceUrls.get(source.file_key);
-
-                            // Check if this is a video file
-                            const isVideo = source.filename && /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(source.filename);
-
-                            // For videos with clip times, open in video viewer
-                            const hasClipTimes = source.clip_start !== undefined && source.clip_end !== undefined;
-                            const shouldUseVideoViewer = isVideo && hasClipTimes && finalUrl;
-
-                            const handleClick = (e: React.MouseEvent) => {
-                              if (shouldUseVideoViewer) {
-                                e.preventDefault();
-                                setVideoViewer({
-                                  isOpen: true,
-                                  url: finalUrl!,
-                                  filename: source.filename,
-                                  clipStart: source.clip_start,
-                                  clipEnd: source.clip_end,
-                                });
-                              }
-                            };
-
-                            const SourceElement = finalUrl ? (shouldUseVideoViewer ? 'button' : 'a') : 'div';
-
-                            return (
-                              <SourceElement
-                                key={idx}
-                                {...(finalUrl && !shouldUseVideoViewer ? {
-                                  href: finalUrl,
-                                  target: "_blank",
-                                  rel: "noopener noreferrer"
-                                } : {})}
-                                {...(shouldUseVideoViewer ? {
-                                  onClick: handleClick
-                                } : {})}
-                                className={`text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/50 px-2 py-1 flex items-center gap-1.5 ${
-                                  finalUrl ? 'hover:border-tactical-green/50 hover:text-tactical-green transition-colors cursor-pointer' : ''
-                                }`}
-                                style={{
-                                  clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)',
-                                }}
-                              >
-                                <div className="w-1 h-1 bg-tactical-green/50 rounded-full"></div>
-                                <span className="truncate max-w-[200px]">{source.filename}</span>
-                                {source.scene_id && (
-                                  <span className="text-slate-500 dark:text-slate-600 text-[10px]">
-                                    [{formatTimestamp(source.clip_start || 0)}]
-                                  </span>
-                                )}
-                                {finalUrl && (
-                                  <svg className="w-3 h-3 text-slate-500 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                  </svg>
-                                )}
-                              </SourceElement>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Corner decorations */}
@@ -660,6 +656,58 @@ export default function ChatArea() {
           onClose={() => setVideoViewer({ isOpen: false, url: "", filename: "" })}
         />
       )}
+
+      {/* Citation Hover Tooltip */}
+      {hoveredCitation && (() => {
+        const message = messages.find(m => m.id === hoveredCitation.messageId);
+        const source = message?.sources?.[hoveredCitation.index];
+
+        if (!source) return null;
+
+        return (
+          <div
+            className="fixed z-50 pointer-events-none"
+            style={{
+              left: `${hoveredCitation.x}px`,
+              top: `${hoveredCitation.y - 10}px`,
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <div
+              className="bg-[#252b3b] border border-tactical-green/30 rounded-lg shadow-2xl p-4 max-w-md animate-in fade-in slide-in-from-bottom-2 duration-200 pointer-events-auto"
+              onMouseEnter={() => {
+                // Clear any pending timeout when entering tooltip
+                if (hoverTimeoutRef.current) {
+                  clearTimeout(hoverTimeoutRef.current);
+                  hoverTimeoutRef.current = null;
+                }
+              }}
+              onMouseLeave={() => {
+                // Close tooltip when leaving
+                setHoveredCitation(null);
+              }}
+            >
+              {/* Filename */}
+              <div className="text-sm font-semibold text-tactical-green mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="truncate">{source.filename}</span>
+              </div>
+
+              {/* Source text preview */}
+              <div className="text-xs text-slate-300 dark:text-slate-400 leading-relaxed max-h-64 overflow-y-auto tactical-scrollbar">
+                {source.text}
+              </div>
+
+              {/* Arrow pointing down */}
+              <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-full pointer-events-none">
+                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-tactical-green/30"></div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
