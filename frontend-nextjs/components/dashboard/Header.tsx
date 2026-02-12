@@ -7,12 +7,14 @@ import { useChatStore } from "@/lib/stores/chatStore";
 import ModelSelector from "./ModelSelector";
 import ThemeToggle from "../ThemeToggle";
 import SessionDropdown from "./SessionDropdown";
+import TicketCreationModal from "../TicketCreationModal";
 
 export default function Header() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { messages } = useChatStore();
   const [showMenu, setShowMenu] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
   const [comingSoonDialog, setComingSoonDialog] = useState<{ show: boolean; feature: string }>({
     show: false,
     feature: "",
@@ -29,6 +31,20 @@ export default function Header() {
 
   const closeComingSoonDialog = () => {
     setComingSoonDialog({ show: false, feature: "" });
+  };
+
+  const openCalendly = () => {
+    const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
+    if (!calendlyUrl) {
+      console.error('Calendly URL not configured');
+      return;
+    }
+
+    if (typeof window !== 'undefined' && window.Calendly) {
+      window.Calendly.initPopupWidget({ url: calendlyUrl });
+    } else {
+      console.error('Calendly widget not loaded');
+    }
   };
 
   // Check if user has sent any messages in the current session
@@ -80,7 +96,7 @@ export default function Header() {
       <div className="flex items-center gap-3">
         {/* Create Ticket Button */}
         <button
-          onClick={() => showComingSoonDialog('CREATE A TICKET')}
+          onClick={() => setShowTicketModal(true)}
           className="px-3 py-2 border border-blue-400/50 dark:border-amber-400/50 bg-blue-500/10 dark:bg-amber-500/10 hover:bg-blue-500/20 dark:hover:bg-amber-500/20 text-blue-600 dark:text-amber-400 font-semibold text-xs tracking-wider transition-all duration-200"
           style={{
             clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
@@ -112,7 +128,7 @@ export default function Header() {
 
         {/* Live Agent Button */}
         <button
-          onClick={() => showComingSoonDialog('LIVE AGENT')}
+          onClick={openCalendly}
           className="px-3 py-2 border border-blue-400/50 dark:border-amber-400/50 bg-blue-500/10 dark:bg-amber-500/10 hover:bg-blue-500/20 dark:hover:bg-amber-500/20 text-blue-600 dark:text-amber-400 font-semibold text-xs tracking-wider transition-all duration-200"
           style={{
             clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)'
@@ -307,6 +323,11 @@ export default function Header() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Ticket Creation Modal */}
+      {showTicketModal && (
+        <TicketCreationModal onClose={() => setShowTicketModal(false)} />
       )}
     </header>
   );

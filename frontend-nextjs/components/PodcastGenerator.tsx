@@ -31,7 +31,7 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
       const episodeId = response.episode_id;
       pollStatus(episodeId);
     } catch (err: any) {
-      setError(err.message || 'Failed to start podcast generation');
+      setError(err.message || 'Failed to start audio overview generation');
       setIsGenerating(false);
     }
   };
@@ -45,7 +45,7 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
       
       if (attempts > maxAttempts) {
         clearInterval(interval);
-        setError('Podcast generation timed out');
+        setError('Audio overview generation timed out');
         setIsGenerating(false);
         return;
       }
@@ -64,14 +64,14 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
           }
         } else if (statusData.status === 'failed') {
           clearInterval(interval);
-          setError(statusData.error_message || 'Podcast generation failed');
+          setError(statusData.error_message || 'Audio overview generation failed');
           setIsGenerating(false);
         }
       } catch (err: any) {
         console.error('Polling error:', err);
         if (attempts > 3) {
           clearInterval(interval);
-          setError('Failed to check podcast status');
+          setError('Failed to check audio overview status');
           setIsGenerating(false);
         }
       }
@@ -132,7 +132,7 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
       case 'script_generated':
         return 'Generating audio...';
       case 'completed':
-        return 'Podcast ready!';
+        return 'Audio overview ready!';
       case 'failed':
         return 'Generation failed';
       default:
@@ -149,7 +149,7 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
             <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
             </svg>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Podcast Generator</h2>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Audio Overview Generator</h2>
           </div>
           {onClose && (
             <button
@@ -163,7 +163,7 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
           )}
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-          Generate an AI podcast from {selectedDocumentIds.length} selected document(s)
+          Generate an AI audio overview from {selectedDocumentIds.length} selected document(s)
         </p>
       </div>
 
@@ -184,14 +184,14 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
             {isGenerating || (episode && (episode.status === 'processing' || episode.status === 'script_generated')) ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/20 dark:border-slate-900/20 border-t-white dark:border-t-slate-900 rounded-full animate-spin" />
-                Generating Podcast...
+                Generating Audio Overview...
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
-                Generate Podcast
+                Generate Audio Overview
               </>
             )}
           </button>
@@ -216,14 +216,14 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
                 >
                   Your browser does not support the audio element.
                 </audio>
-                <button 
+                <button
                   className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center justify-center gap-2"
                   onClick={() => window.open(audioUrl, '_blank')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
-                  Download Podcast
+                  Download Audio Overview
                 </button>
               </div>
             )}
