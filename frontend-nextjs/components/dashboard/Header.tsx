@@ -34,11 +34,8 @@ export default function Header() {
   };
 
   const openCalendly = () => {
-    const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
-    if (!calendlyUrl) {
-      console.error('Calendly URL not configured');
-      return;
-    }
+    // Hardcoded Calendly URL for production reliability
+    const calendlyUrl = 'https://calendly.com/soldieriq-io/30min';
 
     if (typeof window !== 'undefined' && window.Calendly) {
       window.Calendly.initPopupWidget({ url: calendlyUrl });
