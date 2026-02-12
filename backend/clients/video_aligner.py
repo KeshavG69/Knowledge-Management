@@ -267,7 +267,7 @@ class VideoAligner:
             image_base64 = base64.b64encode(buffer).decode('utf-8')
 
             # Get VLM (using OpenAI vision)
-            llm = get_llm(model="google/gemma-3-12b-it", provider="openrouter")
+            llm = get_llm(model="google/gemma-3-27b-it", provider="openrouter")
 
             # Create prompt (enhanced for maximum visual detail)
             prompt = ChatPromptTemplate.from_messages([
