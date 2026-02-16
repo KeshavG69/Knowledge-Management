@@ -5658,7 +5658,7 @@
         "kind": 2,
         "importPath": "backend.scripts.create_indexes",
         "description": "backend.scripts.create_indexes",
-        "peekOfCode": "def create_documents_indexes(db):\n    \"\"\"Create indexes for documents collection\"\"\"\n    logger.info(\"📊 Creating indexes for 'documents' collection...\")\n    documents_collection = db[\"documents\"]\n    existing_indexes = documents_collection.index_information()\n    indexes_to_create = [\n        (\"user_id_1\", [(\"user_id\", ASCENDING)]),\n        (\"organization_id_1\", [(\"organization_id\", ASCENDING)]),\n        (\"folder_name_1\", [(\"folder_name\", ASCENDING)]),\n        (\"created_at_-1\", [(\"created_at\", DESCENDING)]),",
+        "peekOfCode": "def create_documents_indexes(db):\n    \"\"\"Create indexes for documents collection\n    Note: user_id is now a Keycloak UUID string (not MongoDB ObjectId)\n    \"\"\"\n    logger.info(\"📊 Creating indexes for 'documents' collection...\")\n    documents_collection = db[\"documents\"]\n    existing_indexes = documents_collection.index_information()\n    indexes_to_create = [\n        (\"user_id_1\", [(\"user_id\", ASCENDING)]),\n        (\"organization_id_1\", [(\"organization_id\", ASCENDING)]),",
         "detail": "backend.scripts.create_indexes",
         "documentation": {}
     },
@@ -5667,7 +5667,34 @@
         "kind": 2,
         "importPath": "backend.scripts.create_indexes",
         "description": "backend.scripts.create_indexes",
-        "peekOfCode": "def create_ingestion_tasks_indexes(db):\n    \"\"\"Create indexes for ingestion_tasks collection\"\"\"\n    logger.info(\"📊 Creating indexes for 'ingestion_tasks' collection...\")\n    tasks_collection = db[\"ingestion_tasks\"]\n    existing_indexes = tasks_collection.index_information()\n    indexes_to_create = [\n        (\"status_1\", [(\"status\", ASCENDING)]),\n        (\"user_id_1\", [(\"user_id\", ASCENDING)]),\n        (\"organization_id_1\", [(\"organization_id\", ASCENDING)]),\n        (\"created_at_-1\", [(\"created_at\", DESCENDING)]),",
+        "peekOfCode": "def create_ingestion_tasks_indexes(db):\n    \"\"\"Create indexes for ingestion_tasks collection\n    Note: user_id is now a Keycloak UUID string (not MongoDB ObjectId)\n    \"\"\"\n    logger.info(\"📊 Creating indexes for 'ingestion_tasks' collection...\")\n    tasks_collection = db[\"ingestion_tasks\"]\n    existing_indexes = tasks_collection.index_information()\n    indexes_to_create = [\n        (\"status_1\", [(\"status\", ASCENDING)]),\n        (\"user_id_1\", [(\"user_id\", ASCENDING)]),",
+        "detail": "backend.scripts.create_indexes",
+        "documentation": {}
+    },
+    {
+        "label": "create_agent_sessions_indexes",
+        "kind": 2,
+        "importPath": "backend.scripts.create_indexes",
+        "description": "backend.scripts.create_indexes",
+        "peekOfCode": "def create_agent_sessions_indexes(db):\n    \"\"\"Create indexes for agent_sessions collection\n    Note: user_id is now a Keycloak UUID string (not MongoDB ObjectId)\n    \"\"\"\n    logger.info(\"📊 Creating indexes for 'agent_sessions' collection...\")\n    collection = db[\"agent_sessions\"]\n    existing_indexes = collection.index_information()\n    indexes_to_create = [\n        (\"session_id_1\", [(\"session_id\", ASCENDING)], {\"unique\": True}),\n        (\"user_id_1\", [(\"user_id\", ASCENDING)], {}),",
+        "detail": "backend.scripts.create_indexes",
+        "documentation": {}
+    },
+    {
+        "label": "create_workflows_indexes",
+        "kind": 2,
+        "importPath": "backend.scripts.create_indexes",
+        "description": "backend.scripts.create_indexes",
+        "peekOfCode": "def create_workflows_indexes(db):\n    \"\"\"Create indexes for workflows collection (used by reports, mindmaps, flashcards)\n    Note: user_id is now a Keycloak UUID string (not MongoDB ObjectId)\n    \"\"\"\n    logger.info(\"📊 Creating indexes for 'workflows' collection...\")\n    collection = db[\"workflows\"]\n    existing_indexes = collection.index_information()\n    indexes_to_create = [\n        (\"user_id_1\", [(\"user_id\", ASCENDING)]),\n        (\"organization_id_1\", [(\"organization_id\", ASCENDING)]),",
+        "detail": "backend.scripts.create_indexes",
+        "documentation": {}
+    },
+    {
+        "label": "create_podcasts_indexes",
+        "kind": 2,
+        "importPath": "backend.scripts.create_indexes",
+        "description": "backend.scripts.create_indexes",
+        "peekOfCode": "def create_podcasts_indexes(db):\n    \"\"\"Create indexes for podcasts collection\"\"\"\n    logger.info(\"📊 Creating indexes for 'podcasts' collection...\")\n    collection = db[\"podcasts\"]\n    existing_indexes = collection.index_information()\n    indexes_to_create = [\n        (\"organization_id_1\", [(\"organization_id\", ASCENDING)]),\n        (\"created_at_-1\", [(\"created_at\", DESCENDING)]),\n        (\"status_1\", [(\"status\", ASCENDING)]),\n        (\"organization_id_1_created_at_-1\", [(\"organization_id\", ASCENDING), (\"created_at\", DESCENDING)]),",
         "detail": "backend.scripts.create_indexes",
         "documentation": {}
     },
@@ -5676,7 +5703,7 @@
         "kind": 2,
         "importPath": "backend.scripts.create_indexes",
         "description": "backend.scripts.create_indexes",
-        "peekOfCode": "def main():\n    \"\"\"Main function to create all indexes\"\"\"\n    try:\n        logger.info(\"🚀 Starting MongoDB index creation...\\n\")\n        # Get MongoDB client\n        mongodb_client = get_mongodb_client()\n        db = mongodb_client.sync_db\n        # Create indexes for each collection\n        create_documents_indexes(db)\n        create_ingestion_tasks_indexes(db)",
+        "peekOfCode": "def main():\n    \"\"\"Main function to create all indexes\"\"\"\n    try:\n        logger.info(\"🚀 Starting MongoDB index creation...\\n\")\n        logger.info(\"ℹ️  Note: user_id is now a Keycloak UUID string (not MongoDB ObjectId)\\n\")\n        # Get MongoDB client\n        mongodb_client = get_mongodb_client()\n        db = mongodb_client.sync_db\n        # Create indexes for each collection\n        create_documents_indexes(db)",
         "detail": "backend.scripts.create_indexes",
         "documentation": {}
     },

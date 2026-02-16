@@ -38,7 +38,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">
-                Username
+                Username or Email
               </label>
               <input
                 id="username"
@@ -47,7 +47,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="your_username"
+                placeholder="your_username or email@example.com"
               />
             </div>
 
