@@ -11,7 +11,7 @@ const getUserParams = () => {
         // Map user object fields to API parameter names
         return {
           user_id: user.id,
-          organisation_id: user.organization_id
+          organization_id: user.organization_id
         };
       }
     } catch (e) {
@@ -37,8 +37,7 @@ export const documentsApi = {
     }
 
     const params = new URLSearchParams({
-      user_id: userParams.user_id,
-      organisation_id: userParams.organisation_id,
+      organization_id: userParams.organization_id,
     });
 
     if (folderName && folderName !== 'All Knowledge Bases') {
@@ -51,11 +50,6 @@ export const documentsApi = {
 
   // Upload documents (documents are created immediately with status="processing")
   uploadDocuments: async (files: File[], folderName: string): Promise<{ task_id: string; status: string; total_files: number }> => {
-    const userParams = getUserParams();
-    if (!userParams) {
-      throw new Error('User not authenticated');
-    }
-
     if (!folderName || !folderName.trim()) {
       throw new Error('Folder name is required');
     }
@@ -66,8 +60,7 @@ export const documentsApi = {
       formData.append('files', file);
     });
     formData.append('folder_name', folderName.trim());
-    formData.append('user_id', userParams.user_id);
-    formData.append('organization_id', userParams.organisation_id);
+    // user_id and organization_id are extracted from JWT token by backend
 
     const response = await apiClient.post<ApiResponse<{ task_id: string; status: string; total_files: number; folder_name: string }>>('/upload/documents', formData, {
       headers: {
@@ -79,11 +72,6 @@ export const documentsApi = {
 
   // Upload YouTube video by URL
   uploadYouTubeVideo: async (youtubeUrl: string, folderName: string): Promise<{ document_id: string; youtube_metadata: any }> => {
-    const userParams = getUserParams();
-    if (!userParams) {
-      throw new Error('User not authenticated');
-    }
-
     if (!folderName || !folderName.trim()) {
       throw new Error('Folder name is required');
     }
@@ -95,8 +83,7 @@ export const documentsApi = {
     const response = await apiClient.post<ApiResponse<{ document_id: string; youtube_metadata: any }>>('/upload/youtube', {
       youtube_url: youtubeUrl.trim(),
       folder_name: folderName.trim(),
-      user_id: userParams.user_id,
-      organization_id: userParams.organisation_id,
+      // user_id and organization_id are extracted from JWT token by backend
     });
     return response.data.data;
   },
@@ -120,8 +107,7 @@ export const documentsApi = {
     }
 
     const params = new URLSearchParams({
-      user_id: userParams.user_id,
-      organization_id: userParams.organisation_id,
+      organization_id: userParams.organization_id,
     });
 
     const response = await apiClient.get<ApiResponse<KnowledgeBase[]>>(`/upload/folders?${params.toString()}`);
@@ -136,8 +122,7 @@ export const documentsApi = {
     }
 
     const params = new URLSearchParams({
-      user_id: userParams.user_id,
-      organization_id: userParams.organisation_id,
+      organization_id: userParams.organization_id,
     });
 
     await apiClient.delete(`/upload/folders/${encodeURIComponent(folderName)}?${params.toString()}`);
@@ -153,11 +138,6 @@ export const chatApi = {
     model: string,
     fileNames?: string[]
   ): Promise<ReadableStream> => {
-    const userParams = getUserParams();
-    if (!userParams) {
-      throw new Error('User not authenticated');
-    }
-
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       throw new Error('No access token found');
@@ -176,8 +156,7 @@ export const chatApi = {
         file_names: fileNames,
         session_id: sessionId,
         model,
-        user_id: userParams.user_id,
-        organization_id: userParams.organisation_id,
+        // user_id and organization_id are extracted from JWT token by backend
       }),
     });
 

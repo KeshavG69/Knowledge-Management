@@ -9,14 +9,14 @@ from bson import ObjectId
 from models.report_models import GenerateReportRequest
 from services.report_generator import get_report_generator_service
 from app.logger import logger
-from auth.dependencies import get_current_user
+from auth.keycloak_auth import get_current_user_keycloak
 
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 @router.post("/generate")
-async def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user)):
+async def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user_keycloak)):
     """
     Generate a report from documents using Map-Reduce with streaming
 
@@ -62,6 +62,10 @@ async def generate_report(request: GenerateReportRequest, current_user: dict = D
     ```
     """
     try:
+        # Extract user_id and organization_id from JWT token
+        user_id = current_user.get("id")
+        organization_id = current_user.get("organization_id")
+
         # Validate all document_ids
         for doc_id in request.document_ids:
             if not ObjectId.is_valid(doc_id):
@@ -70,13 +74,9 @@ async def generate_report(request: GenerateReportRequest, current_user: dict = D
                     detail=f"Invalid document_id format: {doc_id}"
                 )
 
-        # Validate user_id if provided
-        if request.user_id and not ObjectId.is_valid(request.user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {request.user_id}")
-
-        # Validate organization_id if provided
-        if request.organization_id and not ObjectId.is_valid(request.organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {request.organization_id}")
+        # Validate organization_id format
+        if organization_id and not ObjectId.is_valid(organization_id):
+            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
 
         # Validate prompt
         if not request.prompt or not request.prompt.strip():
@@ -91,8 +91,8 @@ async def generate_report(request: GenerateReportRequest, current_user: dict = D
             generator_service.generate_report_stream(
                 document_ids=request.document_ids,
                 prompt=request.prompt,
-                user_id=request.user_id,
-                organization_id=request.organization_id
+                user_id=user_id,
+                organization_id=organization_id
             ),
             media_type="text/event-stream",
             headers={

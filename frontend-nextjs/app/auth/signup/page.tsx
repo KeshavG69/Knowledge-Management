@@ -9,6 +9,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { signup, login, isLoading, error, clearError } = useAuthStore();
 
+  const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -19,9 +20,9 @@ export default function SignupPage() {
     clearError();
 
     try {
-      await signup({ firstName, lastName, email, password });
+      await signup({ username, firstName, lastName, email, password });
       // Auto-login after signup
-      await login({ email, password });
+      await login({ username, password });
       router.push("/dashboard");
     } catch (err) {
       // Error is already handled in store
@@ -40,6 +41,22 @@ export default function SignupPage() {
           <h2 className="text-2xl font-semibold text-white mb-6">Sign Up</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                minLength={3}
+                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="your_username"
+              />
+            </div>
+
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-zinc-300 mb-2">
                 First Name

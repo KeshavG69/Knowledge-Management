@@ -7,13 +7,12 @@ from app.logger import logger
 from clients.mongodb_client import get_mongodb_client, MongoDBClient
 from bson import ObjectId
 from datetime import datetime
-from auth.dependencies import get_current_user
+from auth.keycloak_auth import get_current_user_keycloak
 
 router = APIRouter(prefix="/podcasts", tags=["Podcasts"])
 
 class PodcastGenerateRequest(BaseModel):
     document_ids: List[str]
-    organization_id: str
 
 class PodcastResponse(BaseModel):
     episode_id: str
@@ -26,35 +25,41 @@ async def generate_podcast(
     background_tasks: BackgroundTasks,
     service: PodcastService = Depends(get_podcast_service),
     mongodb: MongoDBClient = Depends(get_mongodb_client),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Start the podcast generation process in the background.
     Returns an episode_id to track progress.
     """
     try:
-        logger.info(f"🎙️ Received podcast generation request for {len(request.document_ids)} documents (Org: {request.organization_id})")
-        
+        # Extract organization_id from JWT token
+        organization_id = current_user.get("organization_id")
+
+        if not organization_id:
+            raise HTTPException(status_code=400, detail="User must belong to an organization")
+
+        logger.info(f"🎙️ Received podcast generation request for {len(request.document_ids)} documents (Org: {organization_id[:8]}...)")
+
         # Verify document IDs are not empty
         if not request.document_ids:
             raise HTTPException(status_code=400, detail="No document IDs provided")
-            
+
         # Create initial PodcastEpisode record (As Dict, no Pydantic model needed per user)
         episode = {
-            "organization_id": request.organization_id,
+            "organization_id": organization_id,
             "document_ids": request.document_ids,
             "status": "processing",
             "created_at": datetime.utcnow().isoformat()
         }
-        
+
         # Insert into MongoDB to get ID
         episode_id = await mongodb.async_insert_document("podcasts", episode)
-        
+
         # Add to background tasks
         background_tasks.add_task(
-            service.generate_podcast, 
-            request.document_ids, 
-            request.organization_id, 
+            service.generate_podcast,
+            request.document_ids,
+            organization_id,
             episode_id
         )
         
@@ -72,7 +77,7 @@ async def generate_podcast(
 async def get_podcast(
     episode_id: str,
     mongodb: MongoDBClient = Depends(get_mongodb_client),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Get the status and result of a podcast generation task.

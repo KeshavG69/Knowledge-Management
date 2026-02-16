@@ -949,8 +949,7 @@ class IngestionService:
         Returns:
             Document ID (string)
         """
-        # Convert user_id and organization_id to ObjectId
-        user_object_id = ObjectId(user_id) if user_id else None
+        # user_id = Keycloak UUID (string), organization_id = MongoDB ObjectId (convert to ObjectId)
         organization_object_id = ObjectId(organization_id) if organization_id else None
 
         document = {
@@ -960,8 +959,8 @@ class IngestionService:
             "file_key": file_key,
             "file_size_mb": file_size_mb,
             "file_extension": get_file_extension(file_name),
-            "user_id": user_object_id,
-            "organization_id": organization_object_id,
+            "user_id": user_id,  # Keep as string (Keycloak UUID)
+            "organization_id": organization_object_id,  # Convert to ObjectId (MongoDB)
             "status": "processing",
             "processing_stage": "initializing",
             "processing_stage_description": "Starting ingestion",
@@ -1105,8 +1104,7 @@ class IngestionService:
         Returns:
             Document ID
         """
-        # Convert user_id and organization_id to ObjectId
-        user_object_id = ObjectId(user_id) if user_id else None
+        # user_id = Keycloak UUID (string), organization_id = MongoDB ObjectId (convert)
         organization_object_id = ObjectId(organization_id) if organization_id else None
 
         document = {
@@ -1116,8 +1114,8 @@ class IngestionService:
             "file_key": file_key,
             "file_size_mb": file_size_mb,
             "file_extension": get_file_extension(file_name),
-            "user_id": user_object_id,
-            "organization_id": organization_object_id,
+            "user_id": user_id,  # Keep as string (Keycloak UUID)
+            "organization_id": organization_object_id,  # Convert to ObjectId
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             **(additional_metadata or {})
@@ -1274,7 +1272,7 @@ class IngestionService:
             filter_query["folder_name"] = folder_name
 
         if user_id:
-            filter_query["user_id"] = ObjectId(user_id)
+            filter_query["user_id"] = user_id
 
         if organization_id:
             filter_query["organization_id"] = ObjectId(organization_id)
@@ -1324,7 +1322,7 @@ class IngestionService:
         filter_query = {}
 
         if user_id:
-            filter_query["user_id"] = ObjectId(user_id)
+            filter_query["user_id"] = user_id
 
         if organization_id:
             filter_query["organization_id"] = ObjectId(organization_id)
@@ -1371,7 +1369,7 @@ class IngestionService:
         filter_query = {"folder_name": folder_name}
 
         if user_id:
-            filter_query["user_id"] = ObjectId(user_id)
+            filter_query["user_id"] = user_id
 
         if organization_id:
             filter_query["organization_id"] = ObjectId(organization_id)
@@ -1448,7 +1446,7 @@ class IngestionService:
         filter_query = {"folder_name": old_folder_name}
 
         if user_id:
-            filter_query["user_id"] = ObjectId(user_id)
+            filter_query["user_id"] = user_id
 
         if organization_id:
             filter_query["organization_id"] = ObjectId(organization_id)

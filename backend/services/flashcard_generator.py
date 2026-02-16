@@ -250,8 +250,8 @@ Return ONLY a JSON object in this exact format (no markdown, no code fences):
         workflow_doc = {
             "type": "flashcards",
             "document_ids": [ObjectId(doc_id) for doc_id in document_ids],
-            "user_id": ObjectId(user_id) if user_id else None,
-            "organization_id": ObjectId(organization_id) if organization_id else None,
+            "user_id": user_id,  # Keep as string (Keycloak UUID)
+            "organization_id": ObjectId(organization_id) if organization_id else None,  # Convert to ObjectId
             "status": "completed",
             "data": {
                 "title": flashcard_data["title"],

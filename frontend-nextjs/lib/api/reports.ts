@@ -1,24 +1,5 @@
 import apiClient from './client';
 
-// Helper to get user info from localStorage
-const getUserParams = () => {
-  const userStr = localStorage.getItem('user');
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr);
-      if (user.id && user.organization_id) {
-        return {
-          user_id: user.id,
-          organisation_id: user.organization_id
-        };
-      }
-    } catch (e) {
-      console.error('Failed to parse user from localStorage:', e);
-    }
-  }
-  return null;
-};
-
 export interface FormatSuggestion {
   name: string;
   description: string;
@@ -36,15 +17,9 @@ export interface SuggestionsResponse {
 export const reportsApi = {
   // Trigger format suggestions generation
   triggerFormatSuggestions: async (documentIds: string[]): Promise<{ workflow_id: string; status: string; message: string }> => {
-    const userParams = getUserParams();
-    if (!userParams) {
-      throw new Error('User not authenticated');
-    }
-
     const response = await apiClient.post('/report-suggestions/suggest-formats', {
       document_ids: documentIds,
-      user_id: userParams.user_id,
-      organization_id: userParams.organisation_id,
+      // user_id and organization_id are extracted from JWT token by backend
     });
 
     return response.data;
@@ -64,11 +39,6 @@ export const reportsApi = {
     documentIds: string[],
     prompt: string
   ): Promise<ReadableStream> => {
-    const userParams = getUserParams();
-    if (!userParams) {
-      throw new Error('User not authenticated');
-    }
-
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       throw new Error('No access token found');
@@ -84,8 +54,7 @@ export const reportsApi = {
       body: JSON.stringify({
         document_ids: documentIds,
         prompt,
-        user_id: userParams.user_id,
-        organization_id: userParams.organisation_id,
+        // user_id and organization_id are extracted from JWT token by backend
       }),
     });
 
