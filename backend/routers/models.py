@@ -5,13 +5,13 @@ Returns list of available AI models for chat via OpenRouter
 
 from fastapi import APIRouter, Depends
 from app.logger import logger
-from auth.dependencies import get_current_user
+from auth.keycloak_auth import get_current_user_keycloak
 
 router = APIRouter(tags=["models"])
 
 
 @router.get("/models")
-async def list_models(current_user: dict = Depends(get_current_user)) -> dict:
+async def list_models(current_user: dict = Depends(get_current_user_keycloak)) -> dict:
     """
     List all available AI models for chat (OpenRouter aliases)
 

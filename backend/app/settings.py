@@ -55,6 +55,16 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = ""  # Will be set from REDIS_HOST/PORT
     CELERY_RESULT_BACKEND: str = ""  # Will be set from REDIS_HOST/PORT
 
+    # Keycloak Authentication
+    KEYCLOAK_SERVER_URL: str = "http://localhost:8080"
+    KEYCLOAK_REALM: str = "SoldierIQ"
+    KEYCLOAK_CLIENT_ID: str = "soldieriq-backend"
+    KEYCLOAK_CLIENT_SECRET: str = ""
+
+    # Keycloak Admin (for creating users programmatically)
+    KEYCLOAK_ADMIN_USERNAME: str = "admin"
+    KEYCLOAK_ADMIN_PASSWORD: str = "admin"
+
     # Observability
 
 

@@ -3,18 +3,23 @@ import apiClient from './client';
 // Types
 export interface User {
   id: string;
+  username: string;
   email: string;
   firstName?: string;
   lastName?: string;
+  email_verified: boolean;
+  roles: string[];
   organization_id?: string;
+  organization_name?: string;
 }
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
 export interface SignupData {
+  username: string;
   email: string;
   password: string;
   firstName: string;
@@ -23,13 +28,19 @@ export interface SignupData {
 
 interface LoginResponse {
   access_token: string;
-  refresh_token?: string;
+  refresh_token: string;
   token_type: string;
-  user: User;
+  expires_in: number;
 }
 
 interface SignupResponse {
+  id: string;
+  username: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  organization_id: string;
+  organization_name: string;
   message: string;
 }
 

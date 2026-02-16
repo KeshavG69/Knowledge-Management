@@ -8,14 +8,14 @@ from bson import ObjectId
 from models.report_models import SuggestFormatsRequest
 from services.format_suggester import get_format_suggester_service
 from app.logger import logger
-from auth.dependencies import get_current_user
+from auth.keycloak_auth import get_current_user_keycloak
 
 
 router = APIRouter(prefix="/report-suggestions", tags=["report-suggestions"])
 
 
 @router.post("/suggest-formats")
-async def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
+async def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user_keycloak)):
     """
     Trigger background task to generate format suggestions
 
@@ -51,6 +51,10 @@ async def suggest_formats(request: SuggestFormatsRequest, background_tasks: Back
     ```
     """
     try:
+        # Extract user_id and organization_id from JWT token
+        user_id = current_user.get("id")
+        organization_id = current_user.get("organization_id")
+
         # Validate all document_ids
         for doc_id in request.document_ids:
             if not ObjectId.is_valid(doc_id):
@@ -59,13 +63,9 @@ async def suggest_formats(request: SuggestFormatsRequest, background_tasks: Back
                     detail=f"Invalid document_id format: {doc_id}"
                 )
 
-        # Validate user_id if provided
-        if request.user_id and not ObjectId.is_valid(request.user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {request.user_id}")
-
-        # Validate organization_id if provided
-        if request.organization_id and not ObjectId.is_valid(request.organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {request.organization_id}")
+        # Validate organization_id format
+        if organization_id and not ObjectId.is_valid(organization_id):
+            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
 
         logger.info(f"📊 Format suggestions requested for {len(request.document_ids)} documents")
 
@@ -74,8 +74,8 @@ async def suggest_formats(request: SuggestFormatsRequest, background_tasks: Back
         # Get or create suggestions workflow
         workflow_id = await suggester_service.get_or_create_suggestions(
             document_ids=request.document_ids,
-            user_id=request.user_id,
-            organization_id=request.organization_id
+            user_id=user_id,
+            organization_id=organization_id
         )
 
         # Trigger background task (won't run if already exists)
@@ -83,8 +83,8 @@ async def suggest_formats(request: SuggestFormatsRequest, background_tasks: Back
             suggester_service.generate_suggestions_background,
             workflow_id=workflow_id,
             document_ids=request.document_ids,
-            user_id=request.user_id,
-            organization_id=request.organization_id
+            user_id=user_id,
+            organization_id=organization_id
         )
 
         return {
@@ -101,7 +101,7 @@ async def suggest_formats(request: SuggestFormatsRequest, background_tasks: Back
 
 
 @router.post("/get-suggestions")
-async def get_suggestions(request: SuggestFormatsRequest, current_user: dict = Depends(get_current_user)):
+async def get_suggestions(request: SuggestFormatsRequest, current_user: dict = Depends(get_current_user_keycloak)):
     """
     Get format suggestions for documents (frontend polling endpoint)
 

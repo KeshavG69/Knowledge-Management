@@ -167,6 +167,25 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       set({ isLoading: true, error: null });
       const docs = await documentsApi.listDocuments();
       set({ documents: Array.isArray(docs) ? docs : [], isLoading: false });
+
+      // Clean up selectedDocs: remove any IDs that don't exist in fetched documents
+      // This handles stale IDs from: previous users, deleted documents, wrong organization, etc.
+      const currentSelectedDocs = get().selectedDocs;
+      const validDocIds = new Set((Array.isArray(docs) ? docs : []).map(d => d._id));
+      const cleanedSelectedDocs = new Set<string>();
+
+      currentSelectedDocs.forEach(docId => {
+        if (validDocIds.has(docId)) {
+          cleanedSelectedDocs.add(docId);
+        }
+      });
+
+      // Update if we removed any invalid IDs
+      if (cleanedSelectedDocs.size !== currentSelectedDocs.size) {
+        console.log(`🧹 Cleaned ${currentSelectedDocs.size - cleanedSelectedDocs.size} stale document IDs from selection`);
+        saveSelectedDocs(cleanedSelectedDocs);
+        set({ selectedDocs: cleanedSelectedDocs });
+      }
     } catch (error: any) {
       set({ error: error.message, isLoading: false, documents: [] });
     }
