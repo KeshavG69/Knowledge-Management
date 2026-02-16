@@ -42,7 +42,7 @@ ENV ZENDESK_API_TOKEN=$ZENDESK_API_TOKEN
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Build the Next.js app
-RUN npm run build
+RUN npm run build:production
 
 # Expose port
 EXPOSE 3000

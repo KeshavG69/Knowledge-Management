@@ -98,7 +98,6 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
 
 @router.get("/chat/sessions")
 async def list_chat_sessions(
-    user_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user_keycloak),
     limit: int = 50,
     skip: int = 0
@@ -118,7 +117,6 @@ async def list_chat_sessions(
     Organization-level filtering is handled by user authentication.
 
     Args:
-        user_id: Optional user ID (defaults to current authenticated user)
         current_user: Authenticated user from token
         limit: Maximum number of sessions to return (default: 50)
         skip: Number of sessions to skip for pagination (default: 0)
@@ -127,15 +125,15 @@ async def list_chat_sessions(
         Dict with success status and list of sessions
     """
     try:
-        # Use provided user_id or fall back to authenticated user
-        effective_user_id = user_id or str(current_user["_id"])
+        # Extract user_id from JWT token
+        user_id = current_user.get("id")
 
-        logger.info(f"📋 Listing chat sessions for user: {effective_user_id}")
+        logger.info(f"📋 Listing chat sessions for user: {user_id}")
 
         mongodb = get_mongodb_client()
 
         # Query by user_id only (agent_sessions collection doesn't store organization_id)
-        query = {"user_id": effective_user_id}
+        query = {"user_id": user_id}
 
         # Get sessions with limited projection for performance
         sessions = await mongodb.async_find_documents(
@@ -211,7 +209,6 @@ async def list_chat_sessions(
 @router.get("/chat/sessions/{session_id}")
 async def get_chat_session(
     session_id: str,
-    user_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user_keycloak)
 ) -> Dict[str, Any]:
     """
@@ -224,24 +221,23 @@ async def get_chat_session(
 
     Args:
         session_id: The unique session identifier
-        user_id: Optional user ID (defaults to current authenticated user)
         current_user: Authenticated user from token
 
     Returns:
         Dict with session details and full message history
     """
     try:
-        # Use provided user_id or fall back to authenticated user
-        effective_user_id = user_id or str(current_user["_id"])
+        # Extract user_id from JWT token
+        user_id = current_user.get("id")
 
-        logger.info(f"📖 Getting chat session: {session_id} for user: {effective_user_id}")
+        logger.info(f"📖 Getting chat session: {session_id} for user: {user_id}")
 
         mongodb = get_mongodb_client()
 
         # Security: Ensure user owns this session (filter by user_id only)
         query = {
             "session_id": session_id,
-            "user_id": effective_user_id
+            "user_id": user_id
         }
 
         session = await mongodb.async_find_document(
@@ -376,7 +372,6 @@ async def get_chat_session(
 @router.delete("/chat/sessions/{session_id}")
 async def delete_chat_session(
     session_id: str,
-    user_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user_keycloak)
 ) -> Dict[str, Any]:
     """
@@ -389,24 +384,23 @@ async def delete_chat_session(
 
     Args:
         session_id: The unique session identifier
-        user_id: Optional user ID (defaults to current authenticated user)
         current_user: Authenticated user from token
 
     Returns:
         Dict with success status
     """
     try:
-        # Use provided user_id or fall back to authenticated user
-        effective_user_id = user_id or str(current_user["_id"])
+        # Extract user_id from JWT token
+        user_id = current_user.get("id")
 
-        logger.info(f"🗑️ Deleting chat session: {session_id} for user: {effective_user_id}")
+        logger.info(f"🗑️ Deleting chat session: {session_id} for user: {user_id}")
 
         mongodb = get_mongodb_client()
 
         # Security: Ensure user owns this session (filter by user_id only)
         query = {
             "session_id": session_id,
-            "user_id": effective_user_id
+            "user_id": user_id
         }
 
         deleted_count = await mongodb.async_delete_document(
@@ -439,7 +433,6 @@ async def delete_chat_session(
 async def rename_chat_session(
     session_id: str,
     new_name: str,
-    user_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user_keycloak)
 ) -> Dict[str, Any]:
     """
@@ -453,15 +446,14 @@ async def rename_chat_session(
     Args:
         session_id: The unique session identifier
         new_name: The new name for the session
-        user_id: Optional user ID (defaults to current authenticated user)
         current_user: Authenticated user from token
 
     Returns:
         Dict with success status
     """
     try:
-        # Use provided user_id or fall back to authenticated user
-        effective_user_id = user_id or str(current_user["_id"])
+        # Extract user_id from JWT token
+        user_id = current_user.get("id")
 
         if not new_name or not new_name.strip():
             raise HTTPException(status_code=400, detail="Session name cannot be empty")
@@ -473,7 +465,7 @@ async def rename_chat_session(
         # Security: Ensure user owns this session (filter by user_id only)
         query = {
             "session_id": session_id,
-            "user_id": effective_user_id
+            "user_id": user_id
         }
 
         # Update session name
