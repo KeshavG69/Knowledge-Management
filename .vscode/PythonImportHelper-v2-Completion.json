@@ -176,6 +176,14 @@
         "documentation": {}
     },
     {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Optional",
         "importPath": "typing",
         "description": "typing",
@@ -529,6 +537,14 @@
     },
     {
         "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1236,6 +1252,30 @@
         "documentation": {}
     },
     {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "status",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "APIRouter",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -1868,6 +1908,22 @@
         "documentation": {}
     },
     {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -1922,6 +1978,14 @@
         "description": "contextlib",
         "isExtraImport": true,
         "detail": "contextlib",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "app.settings",
+        "description": "app.settings",
+        "isExtraImport": true,
+        "detail": "app.settings",
         "documentation": {}
     },
     {
@@ -2262,14 +2326,6 @@
         "documentation": {}
     },
     {
-        "label": "timedelta",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -2347,6 +2403,14 @@
         "description": "datetime",
         "isExtraImport": true,
         "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
         "documentation": {}
     },
     {
@@ -2551,6 +2615,22 @@
         "documentation": {}
     },
     {
+        "label": "HTTPBearer",
+        "importPath": "fastapi.security",
+        "description": "fastapi.security",
+        "isExtraImport": true,
+        "detail": "fastapi.security",
+        "documentation": {}
+    },
+    {
+        "label": "HTTPAuthorizationCredentials",
+        "importPath": "fastapi.security",
+        "description": "fastapi.security",
+        "isExtraImport": true,
+        "detail": "fastapi.security",
+        "documentation": {}
+    },
+    {
         "label": "jwt",
         "importPath": "jose",
         "description": "jose",
@@ -2596,6 +2676,46 @@
         "description": "auth.database",
         "isExtraImport": true,
         "detail": "auth.database",
+        "documentation": {}
+    },
+    {
+        "label": "KeycloakOpenID",
+        "importPath": "keycloak",
+        "description": "keycloak",
+        "isExtraImport": true,
+        "detail": "keycloak",
+        "documentation": {}
+    },
+    {
+        "label": "KeycloakAdmin",
+        "importPath": "keycloak",
+        "description": "keycloak",
+        "isExtraImport": true,
+        "detail": "keycloak",
+        "documentation": {}
+    },
+    {
+        "label": "KeycloakOpenIDConnection",
+        "importPath": "keycloak",
+        "description": "keycloak",
+        "isExtraImport": true,
+        "detail": "keycloak",
+        "documentation": {}
+    },
+    {
+        "label": "lru_cache",
+        "importPath": "functools",
+        "description": "functools",
+        "isExtraImport": true,
+        "detail": "functools",
+        "documentation": {}
+    },
+    {
+        "label": "lru_cache",
+        "importPath": "functools",
+        "description": "functools",
+        "isExtraImport": true,
+        "detail": "functools",
         "documentation": {}
     },
     {
@@ -2703,6 +2823,30 @@
         "documentation": {}
     },
     {
+        "label": "EmailStr",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
         "label": "BaseModel",
         "importPath": "pydantic",
         "description": "pydantic",
@@ -2757,14 +2901,6 @@
         "description": "agno.memory.manager",
         "isExtraImport": true,
         "detail": "agno.memory.manager",
-        "documentation": {}
-    },
-    {
-        "label": "lru_cache",
-        "importPath": "functools",
-        "description": "functools",
-        "isExtraImport": true,
-        "detail": "functools",
         "documentation": {}
     },
     {
@@ -3339,131 +3475,91 @@
         "documentation": {}
     },
     {
-        "label": "UserSignup",
-        "importPath": "auth.models",
-        "description": "auth.models",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.models",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "UserLogin",
-        "importPath": "auth.models",
-        "description": "auth.models",
+        "label": "get_keycloak_client",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.models",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "UserResponse",
-        "importPath": "auth.models",
-        "description": "auth.models",
+        "label": "get_keycloak_admin",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.models",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "Token",
-        "importPath": "auth.models",
-        "description": "auth.models",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.models",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "UserCRUD",
-        "importPath": "auth.crud",
-        "description": "auth.crud",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.crud",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "create_access_token",
-        "importPath": "auth.utils",
-        "description": "auth.utils",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.utils",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "ACCESS_TOKEN_EXPIRE_MINUTES",
-        "importPath": "auth.utils",
-        "description": "auth.utils",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.utils",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.dependencies",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.dependencies",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.dependencies",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
         "isExtraImport": true,
-        "detail": "auth.dependencies",
-        "documentation": {}
-    },
-    {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
-        "isExtraImport": true,
-        "detail": "auth.dependencies",
-        "documentation": {}
-    },
-    {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
-        "isExtraImport": true,
-        "detail": "auth.dependencies",
-        "documentation": {}
-    },
-    {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
-        "isExtraImport": true,
-        "detail": "auth.dependencies",
-        "documentation": {}
-    },
-    {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
-        "isExtraImport": true,
-        "detail": "auth.dependencies",
-        "documentation": {}
-    },
-    {
-        "label": "get_current_user",
-        "importPath": "auth.dependencies",
-        "description": "auth.dependencies",
-        "isExtraImport": true,
-        "detail": "auth.dependencies",
+        "detail": "auth.keycloak_auth",
         "documentation": {}
     },
     {
@@ -4532,6 +4628,42 @@
         "documentation": {}
     },
     {
+        "label": "get_keycloak_client",
+        "kind": 2,
+        "importPath": "backend.auth.keycloak_auth",
+        "description": "backend.auth.keycloak_auth",
+        "peekOfCode": "def get_keycloak_client() -> KeycloakOpenID:\n    \"\"\"\n    Get or create Keycloak OpenID Connect client (singleton pattern)\n    This function is cached, so the Keycloak client is only created once\n    and reused across all requests for better performance.\n    Returns:\n        KeycloakOpenID: Configured Keycloak client\n    \"\"\"\n    try:\n        keycloak_openid = KeycloakOpenID(",
+        "detail": "backend.auth.keycloak_auth",
+        "documentation": {}
+    },
+    {
+        "label": "get_keycloak_admin",
+        "kind": 2,
+        "importPath": "backend.auth.keycloak_auth",
+        "description": "backend.auth.keycloak_auth",
+        "peekOfCode": "def get_keycloak_admin() -> KeycloakAdmin:\n    \"\"\"\n    Get or create Keycloak Admin client (singleton pattern)\n    Admin authenticates against 'master' realm but manages users in target realm.\n    Returns:\n        KeycloakAdmin: Configured Keycloak admin client\n    \"\"\"\n    try:\n        # Create connection - admin user is in master realm\n        keycloak_connection = KeycloakOpenIDConnection(",
+        "detail": "backend.auth.keycloak_auth",
+        "documentation": {}
+    },
+    {
+        "label": "verify_user_role",
+        "kind": 2,
+        "importPath": "backend.auth.keycloak_auth",
+        "description": "backend.auth.keycloak_auth",
+        "peekOfCode": "def verify_user_role(required_role: str):\n    \"\"\"\n    Decorator to check if user has a specific role\n    Usage:\n        @router.get(\"/admin\")\n        async def admin_endpoint(user = Depends(verify_user_role(\"admin\"))):\n            return {\"message\": \"Admin access granted\"}\n    Args:\n        required_role: Role name required to access the endpoint\n    Returns:",
+        "detail": "backend.auth.keycloak_auth",
+        "documentation": {}
+    },
+    {
+        "label": "security",
+        "kind": 5,
+        "importPath": "backend.auth.keycloak_auth",
+        "description": "backend.auth.keycloak_auth",
+        "peekOfCode": "security = HTTPBearer()\n@lru_cache()\ndef get_keycloak_client() -> KeycloakOpenID:\n    \"\"\"\n    Get or create Keycloak OpenID Connect client (singleton pattern)\n    This function is cached, so the Keycloak client is only created once\n    and reused across all requests for better performance.\n    Returns:\n        KeycloakOpenID: Configured Keycloak client\n    \"\"\"",
+        "detail": "backend.auth.keycloak_auth",
+        "documentation": {}
+    },
+    {
         "label": "UserSignup",
         "kind": 6,
         "importPath": "backend.auth.models",
@@ -5238,7 +5370,7 @@
         "kind": 6,
         "importPath": "backend.models.flashcard_models",
         "description": "backend.models.flashcard_models",
-        "peekOfCode": "class GenerateFlashcardsRequest(BaseModel):\n    \"\"\"Request to generate flashcards from documents\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to generate flashcards from\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")",
+        "peekOfCode": "class GenerateFlashcardsRequest(BaseModel):\n    \"\"\"Request to generate flashcards from documents\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to generate flashcards from\")\n    # user_id and organization_id are extracted from JWT token by backend",
         "detail": "backend.models.flashcard_models",
         "documentation": {}
     },
@@ -5328,7 +5460,7 @@
         "kind": 6,
         "importPath": "backend.models.report_models",
         "description": "backend.models.report_models",
-        "peekOfCode": "class SuggestFormatsRequest(BaseModel):\n    \"\"\"Request to trigger format suggestion generation (background task)\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to analyze\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")\nclass GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")",
+        "peekOfCode": "class SuggestFormatsRequest(BaseModel):\n    \"\"\"Request to trigger format suggestion generation (background task)\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to analyze\")\n    # user_id and organization_id are extracted from JWT token by backend\nclass GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    # user_id and organization_id are extracted from JWT token by backend",
         "detail": "backend.models.report_models",
         "documentation": {}
     },
@@ -5337,8 +5469,62 @@
         "kind": 6,
         "importPath": "backend.models.report_models",
         "description": "backend.models.report_models",
-        "peekOfCode": "class GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    user_id: Optional[str] = Field(None, description=\"User ID\")\n    organization_id: Optional[str] = Field(None, description=\"Organization ID\")",
+        "peekOfCode": "class GenerateReportRequest(BaseModel):\n    \"\"\"Request to generate a report\"\"\"\n    document_ids: List[str] = Field(..., description=\"Document IDs to include in report\")\n    prompt: str = Field(..., description=\"Report generation prompt from frontend\")\n    # user_id and organization_id are extracted from JWT token by backend",
         "detail": "backend.models.report_models",
+        "documentation": {}
+    },
+    {
+        "label": "SignupRequest",
+        "kind": 6,
+        "importPath": "backend.routers.auth",
+        "description": "backend.routers.auth",
+        "peekOfCode": "class SignupRequest(BaseModel):\n    \"\"\"User registration request\"\"\"\n    username: str = Field(..., min_length=3, max_length=50)\n    email: EmailStr\n    password: str = Field(..., min_length=8)\n    firstName: str\n    lastName: str\nclass SignupResponse(BaseModel):\n    \"\"\"User registration response\"\"\"\n    id: str",
+        "detail": "backend.routers.auth",
+        "documentation": {}
+    },
+    {
+        "label": "SignupResponse",
+        "kind": 6,
+        "importPath": "backend.routers.auth",
+        "description": "backend.routers.auth",
+        "peekOfCode": "class SignupResponse(BaseModel):\n    \"\"\"User registration response\"\"\"\n    id: str\n    username: str\n    email: str\n    firstName: str\n    lastName: str\n    organization_id: str\n    organization_name: str\n    message: str",
+        "detail": "backend.routers.auth",
+        "documentation": {}
+    },
+    {
+        "label": "LoginRequest",
+        "kind": 6,
+        "importPath": "backend.routers.auth",
+        "description": "backend.routers.auth",
+        "peekOfCode": "class LoginRequest(BaseModel):\n    \"\"\"User login request\"\"\"\n    username: str\n    password: str\nclass LoginResponse(BaseModel):\n    \"\"\"User login response with tokens\"\"\"\n    access_token: str\n    refresh_token: str\n    token_type: str = \"bearer\"\n    expires_in: int",
+        "detail": "backend.routers.auth",
+        "documentation": {}
+    },
+    {
+        "label": "LoginResponse",
+        "kind": 6,
+        "importPath": "backend.routers.auth",
+        "description": "backend.routers.auth",
+        "peekOfCode": "class LoginResponse(BaseModel):\n    \"\"\"User login response with tokens\"\"\"\n    access_token: str\n    refresh_token: str\n    token_type: str = \"bearer\"\n    expires_in: int\nclass RefreshTokenRequest(BaseModel):\n    \"\"\"Refresh token request\"\"\"\n    refresh_token: str\nclass UserInfoResponse(BaseModel):",
+        "detail": "backend.routers.auth",
+        "documentation": {}
+    },
+    {
+        "label": "RefreshTokenRequest",
+        "kind": 6,
+        "importPath": "backend.routers.auth",
+        "description": "backend.routers.auth",
+        "peekOfCode": "class RefreshTokenRequest(BaseModel):\n    \"\"\"Refresh token request\"\"\"\n    refresh_token: str\nclass UserInfoResponse(BaseModel):\n    \"\"\"Current user information response\"\"\"\n    id: str\n    username: str\n    email: str\n    firstName: Optional[str] = None\n    lastName: Optional[str] = None",
+        "detail": "backend.routers.auth",
+        "documentation": {}
+    },
+    {
+        "label": "UserInfoResponse",
+        "kind": 6,
+        "importPath": "backend.routers.auth",
+        "description": "backend.routers.auth",
+        "peekOfCode": "class UserInfoResponse(BaseModel):\n    \"\"\"Current user information response\"\"\"\n    id: str\n    username: str\n    email: str\n    firstName: Optional[str] = None\n    lastName: Optional[str] = None\n    email_verified: bool\n    roles: list[str] = []\n    organization_id: Optional[str] = None",
+        "detail": "backend.routers.auth",
         "documentation": {}
     },
     {
@@ -5346,7 +5532,7 @@
         "kind": 5,
         "importPath": "backend.routers.auth",
         "description": "backend.routers.auth",
-        "peekOfCode": "router = APIRouter(prefix=\"/auth\", tags=[\"authentication\"])\n@router.post(\"/signup\", response_model=UserResponse)\nasync def signup(user_data: UserSignup):\n    \"\"\"\n    Register a new user\n    Args:\n        user_data: User signup data including firstName, lastName, email, password\n    Returns:\n        UserResponse: Created user information\n    \"\"\"",
+        "peekOfCode": "router = APIRouter(prefix=\"/auth\", tags=[\"authentication\"])\n# ==================== REQUEST/RESPONSE MODELS ====================\nclass SignupRequest(BaseModel):\n    \"\"\"User registration request\"\"\"\n    username: str = Field(..., min_length=3, max_length=50)\n    email: EmailStr\n    password: str = Field(..., min_length=8)\n    firstName: str\n    lastName: str\nclass SignupResponse(BaseModel):",
         "detail": "backend.routers.auth",
         "documentation": {}
     },
@@ -5355,7 +5541,7 @@
         "kind": 6,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n@router.post(\"/chat\")",
+        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n    # user_id and organization_id are extracted from JWT token by backend\n@router.post(\"/chat\")\nasync def chat(request: ChatRequest, current_user: dict = Depends(get_current_user_keycloak)):",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -5364,7 +5550,7 @@
         "kind": 5,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"",
+        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n    # user_id and organization_id are extracted from JWT token by backend\n@router.post(\"/chat\")",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -5373,7 +5559,7 @@
         "kind": 5,
         "importPath": "backend.routers.flashcards",
         "description": "backend.routers.flashcards",
-        "peekOfCode": "router = APIRouter(prefix=\"/flashcards\", tags=[\"flashcards\"])\n@router.post(\"/generate\")\nasync def generate_flashcards(request: GenerateFlashcardsRequest, current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:\n    \"\"\"\n    Generate flashcards from documents using Map-Reduce\n    Args:\n        request: Flashcard generation request with document IDs\n    Returns:\n        Dict with flashcard data (title, cards, workflow_id)\n    \"\"\"",
+        "peekOfCode": "router = APIRouter(prefix=\"/flashcards\", tags=[\"flashcards\"])\n@router.post(\"/generate\")\nasync def generate_flashcards(request: GenerateFlashcardsRequest, current_user: dict = Depends(get_current_user_keycloak)) -> Dict[str, Any]:\n    \"\"\"\n    Generate flashcards from documents using Map-Reduce\n    Args:\n        request: Flashcard generation request with document IDs\n    Returns:\n        Dict with flashcard data (title, cards, workflow_id)\n    \"\"\"",
         "detail": "backend.routers.flashcards",
         "documentation": {}
     },
@@ -5391,7 +5577,7 @@
         "kind": 5,
         "importPath": "backend.routers.mindmap",
         "description": "backend.routers.mindmap",
-        "peekOfCode": "router = APIRouter(prefix=\"/mindmap\", tags=[\"mindmap\"])\n@router.post(\"/generate\")\nasync def generate_mindmap(request: MindMapRequest, current_user: dict = Depends(get_current_user)):\n    \"\"\"\n    Generate mind map from multiple documents (like NotebookLM)\n    Returns JSON data structure for frontend rendering\n    Args:\n        request: MindMapRequest with list of document_ids\n    Returns:\n        Mind map data with nodes and edges JSON",
+        "peekOfCode": "router = APIRouter(prefix=\"/mindmap\", tags=[\"mindmap\"])\n@router.post(\"/generate\")\nasync def generate_mindmap(request: MindMapRequest, current_user: dict = Depends(get_current_user_keycloak)):\n    \"\"\"\n    Generate mind map from multiple documents (like NotebookLM)\n    Returns JSON data structure for frontend rendering\n    Args:\n        request: MindMapRequest with list of document_ids\n    Returns:\n        Mind map data with nodes and edges JSON",
         "detail": "backend.routers.mindmap",
         "documentation": {}
     },
@@ -5400,7 +5586,7 @@
         "kind": 5,
         "importPath": "backend.routers.models",
         "description": "backend.routers.models",
-        "peekOfCode": "router = APIRouter(tags=[\"models\"])\n@router.get(\"/models\")\nasync def list_models(current_user: dict = Depends(get_current_user)) -> dict:\n    \"\"\"\n    List all available AI models for chat (OpenRouter aliases)\n    Returns:\n        Dict with list of available models\n    \"\"\"\n    logger.info(\"Listing available models\")\n    models = [",
+        "peekOfCode": "router = APIRouter(tags=[\"models\"])\n@router.get(\"/models\")\nasync def list_models(current_user: dict = Depends(get_current_user_keycloak)) -> dict:\n    \"\"\"\n    List all available AI models for chat (OpenRouter aliases)\n    Returns:\n        Dict with list of available models\n    \"\"\"\n    logger.info(\"Listing available models\")\n    models = [",
         "detail": "backend.routers.models",
         "documentation": {}
     },
@@ -5409,7 +5595,7 @@
         "kind": 6,
         "importPath": "backend.routers.podcast",
         "description": "backend.routers.podcast",
-        "peekOfCode": "class PodcastGenerateRequest(BaseModel):\n    document_ids: List[str]\n    organization_id: str\nclass PodcastResponse(BaseModel):\n    episode_id: str\n    status: str\n    message: str\n@router.post(\"/generate\", summary=\"Start podcast generation (Background Task)\", response_model=PodcastResponse)\nasync def generate_podcast(\n    request: PodcastGenerateRequest,",
+        "peekOfCode": "class PodcastGenerateRequest(BaseModel):\n    document_ids: List[str]\nclass PodcastResponse(BaseModel):\n    episode_id: str\n    status: str\n    message: str\n@router.post(\"/generate\", summary=\"Start podcast generation (Background Task)\", response_model=PodcastResponse)\nasync def generate_podcast(\n    request: PodcastGenerateRequest,\n    background_tasks: BackgroundTasks,",
         "detail": "backend.routers.podcast",
         "documentation": {}
     },
@@ -5427,7 +5613,7 @@
         "kind": 5,
         "importPath": "backend.routers.podcast",
         "description": "backend.routers.podcast",
-        "peekOfCode": "router = APIRouter(prefix=\"/podcasts\", tags=[\"Podcasts\"])\nclass PodcastGenerateRequest(BaseModel):\n    document_ids: List[str]\n    organization_id: str\nclass PodcastResponse(BaseModel):\n    episode_id: str\n    status: str\n    message: str\n@router.post(\"/generate\", summary=\"Start podcast generation (Background Task)\", response_model=PodcastResponse)\nasync def generate_podcast(",
+        "peekOfCode": "router = APIRouter(prefix=\"/podcasts\", tags=[\"Podcasts\"])\nclass PodcastGenerateRequest(BaseModel):\n    document_ids: List[str]\nclass PodcastResponse(BaseModel):\n    episode_id: str\n    status: str\n    message: str\n@router.post(\"/generate\", summary=\"Start podcast generation (Background Task)\", response_model=PodcastResponse)\nasync def generate_podcast(\n    request: PodcastGenerateRequest,",
         "detail": "backend.routers.podcast",
         "documentation": {}
     },
@@ -5436,7 +5622,7 @@
         "kind": 5,
         "importPath": "backend.routers.report_suggestions",
         "description": "backend.routers.report_suggestions",
-        "peekOfCode": "router = APIRouter(prefix=\"/report-suggestions\", tags=[\"report-suggestions\"])\n@router.post(\"/suggest-formats\")\nasync def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):\n    \"\"\"\n    Trigger background task to generate format suggestions\n    This endpoint:\n    1. Checks if suggestions already exist for these documents\n    2. If yes, returns existing workflow_id\n    3. If no, creates new workflow and triggers background task\n    Frontend should poll /report-suggestions/get-suggestions with document_ids to check status",
+        "peekOfCode": "router = APIRouter(prefix=\"/report-suggestions\", tags=[\"report-suggestions\"])\n@router.post(\"/suggest-formats\")\nasync def suggest_formats(request: SuggestFormatsRequest, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user_keycloak)):\n    \"\"\"\n    Trigger background task to generate format suggestions\n    This endpoint:\n    1. Checks if suggestions already exist for these documents\n    2. If yes, returns existing workflow_id\n    3. If no, creates new workflow and triggers background task\n    Frontend should poll /report-suggestions/get-suggestions with document_ids to check status",
         "detail": "backend.routers.report_suggestions",
         "documentation": {}
     },
@@ -5445,7 +5631,7 @@
         "kind": 5,
         "importPath": "backend.routers.reports",
         "description": "backend.routers.reports",
-        "peekOfCode": "router = APIRouter(prefix=\"/reports\", tags=[\"reports\"])\n@router.post(\"/generate\")\nasync def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user)):\n    \"\"\"\n    Generate a report from documents using Map-Reduce with streaming\n    This endpoint:\n    1. Takes document IDs and a prompt (from frontend)\n    2. Uses Map-Reduce to process documents in parallel\n    3. Streams progress updates via Server-Sent Events\n    4. Returns final report in markdown format",
+        "peekOfCode": "router = APIRouter(prefix=\"/reports\", tags=[\"reports\"])\n@router.post(\"/generate\")\nasync def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user_keycloak)):\n    \"\"\"\n    Generate a report from documents using Map-Reduce with streaming\n    This endpoint:\n    1. Takes document IDs and a prompt (from frontend)\n    2. Uses Map-Reduce to process documents in parallel\n    3. Streams progress updates via Server-Sent Events\n    4. Returns final report in markdown format",
         "detail": "backend.routers.reports",
         "documentation": {}
     },
@@ -5454,7 +5640,7 @@
         "kind": 6,
         "importPath": "backend.routers.upload",
         "description": "backend.routers.upload",
-        "peekOfCode": "class YouTubeIngestionRequest(BaseModel):\n    \"\"\"Request model for YouTube URL ingestion\"\"\"\n    youtube_url: str\n    folder_name: str\n    user_id: Optional[str] = None\n    organization_id: Optional[str] = None\n@router.post(\"/youtube\")\nasync def ingest_youtube_video(\n    request: YouTubeIngestionRequest,\n    current_user: dict = Depends(get_current_user)",
+        "peekOfCode": "class YouTubeIngestionRequest(BaseModel):\n    \"\"\"Request model for YouTube URL ingestion\"\"\"\n    youtube_url: str\n    folder_name: str\n@router.post(\"/youtube\")\nasync def ingest_youtube_video(\n    request: YouTubeIngestionRequest,\n    current_user: dict = Depends(get_current_user_keycloak)\n):\n    \"\"\"",
         "detail": "backend.routers.upload",
         "documentation": {}
     },
@@ -5463,7 +5649,7 @@
         "kind": 5,
         "importPath": "backend.routers.upload",
         "description": "backend.routers.upload",
-        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\n@router.post(\"/documents\")\nasync def upload_documents(\n    files: List[UploadFile] = File(..., description=\"Multiple files to upload\"),\n    folder_name: str = Form(..., description=\"Folder name for organization\"),\n    user_id: Optional[str] = Form(None, description=\"Optional user ID\"),\n    organization_id: Optional[str] = Form(None, description=\"Optional organization ID\"),\n    current_user: dict = Depends(get_current_user)\n):\n    \"\"\"",
+        "peekOfCode": "router = APIRouter(prefix=\"/upload\", tags=[\"upload\"])\n@router.post(\"/documents\")\nasync def upload_documents(\n    files: List[UploadFile] = File(..., description=\"Multiple files to upload\"),\n    folder_name: str = Form(..., description=\"Folder name for organization\"),\n    current_user: dict = Depends(get_current_user_keycloak)\n):\n    \"\"\"\n    Upload multiple documents for ingestion (Celery background processing)\n    This endpoint:",
         "detail": "backend.routers.upload",
         "documentation": {}
     },

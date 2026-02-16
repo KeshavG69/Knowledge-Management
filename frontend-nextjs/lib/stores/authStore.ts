@@ -64,15 +64,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Store tokens in localStorage
       localStorage.setItem('access_token', response.access_token);
-      if (response.refresh_token) {
-        localStorage.setItem('refresh_token', response.refresh_token);
-      }
+      localStorage.setItem('refresh_token', response.refresh_token);
 
-      // Store user in localStorage for API access
-      localStorage.setItem('user', JSON.stringify(response.user));
+      // Fetch user info from /auth/me endpoint
+      await get().fetchUser();
 
-      // Store user in state
-      set({ user: response.user, isLoading: false });
+      set({ isLoading: false });
     } catch (error: any) {
       const errorMessage = formatErrorMessage(error);
       set({

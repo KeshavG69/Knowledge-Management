@@ -11,7 +11,7 @@ from services.ingestion_service import get_ingestion_service
 from clients.youtube_downloader import get_youtube_downloader
 from tasks.ingestion_tasks import process_document_ids_task, process_youtube_document_task
 from app.logger import logger
-from auth.dependencies import get_current_user
+from auth.keycloak_auth import get_current_user_keycloak
 from utils.file_utils import sanitize_filename, get_file_size_mb,get_file_extension
 
 router = APIRouter(prefix="/upload", tags=["upload"])
@@ -21,18 +21,17 @@ router = APIRouter(prefix="/upload", tags=["upload"])
 async def upload_documents(
     files: List[UploadFile] = File(..., description="Multiple files to upload"),
     folder_name: str = Form(..., description="Folder name for organization"),
-    user_id: Optional[str] = Form(None, description="Optional user ID"),
-    organization_id: Optional[str] = Form(None, description="Optional organization ID"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Upload multiple documents for ingestion (Celery background processing)
 
     This endpoint:
-    1. Validates input
-    2. Creates document records with status="processing" in MongoDB
-    3. Returns immediately with document_ids for frontend tracking
-    4. Dispatches Celery tasks to process each document:
+    1. Extracts user_id and organization_id from Keycloak token
+    2. Validates input
+    3. Creates document records with status="processing" in MongoDB
+    4. Returns immediately with document_ids for frontend tracking
+    5. Dispatches Celery tasks to process each document:
        - Uploads files to iDrive E2
        - Extracts raw content
        - Stores in MongoDB
@@ -43,13 +42,17 @@ async def upload_documents(
     Args:
         files: List of files to upload
         folder_name: Folder name for organization and filtering
-        user_id: Optional user ID for tracking
-        organization_id: Optional organization ID for tracking
+        current_user: Authenticated user from Keycloak (contains user_id and organization_id)
 
     Returns:
         Document IDs and Celery task ID for tracking
     """
     try:
+        # Extract user info from Keycloak token
+        user_id = current_user.get("id")  # Keycloak UUID string
+        organization_id = current_user.get("organization_id")  # Organization UUID string
+        username = current_user.get("username")
+
         # Validate input
         if not files:
             raise HTTPException(status_code=400, detail="No files provided")
@@ -57,14 +60,10 @@ async def upload_documents(
         if not folder_name or not folder_name.strip():
             raise HTTPException(status_code=400, detail="Folder name is required")
 
-        # Validate ObjectIds
-        if user_id and not ObjectId.is_valid(user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
+        if not organization_id:
+            raise HTTPException(status_code=400, detail="User must belong to an organization")
 
-        if organization_id and not ObjectId.is_valid(organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
-
-        logger.info(f"📤 Upload request: {len(files)} files, folder={folder_name}")
+        logger.info(f"📤 Upload from {username} (user={user_id[:8]}..., org={organization_id[:8]}...): {len(files)} files, folder={folder_name}")
 
         # Create document records with status="processing" FIRST (before Celery task)
         ingestion_service = get_ingestion_service()
@@ -140,23 +139,22 @@ class YouTubeIngestionRequest(BaseModel):
     """Request model for YouTube URL ingestion"""
     youtube_url: str
     folder_name: str
-    user_id: Optional[str] = None
-    organization_id: Optional[str] = None
 
 
 @router.post("/youtube")
 async def ingest_youtube_video(
     request: YouTubeIngestionRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Ingest YouTube video by URL (Celery background processing)
 
     This endpoint:
-    1. Validates YouTube URL format
-    2. Creates document record with status="processing" in MongoDB (fast!)
-    3. Returns immediately with document_id for frontend tracking
-    4. Dispatches Celery task to:
+    1. Extracts user_id and organization_id from Keycloak token
+    2. Validates YouTube URL format
+    3. Creates document record with status="processing" in MongoDB (fast!)
+    4. Returns immediately with document_id for frontend tracking
+    5. Dispatches Celery task to:
        - Download video from YouTube
        - Extract metadata and update document
        - Upload to iDrive E2
@@ -166,13 +164,18 @@ async def ingest_youtube_video(
        - Update status to "completed" or "failed"
 
     Args:
-        request: YouTubeIngestionRequest with URL and metadata
-        current_user: Authenticated user
+        request: YouTubeIngestionRequest with URL and folder_name
+        current_user: Authenticated user from Keycloak (contains user_id and organization_id)
 
     Returns:
         Document ID and Celery task ID for tracking
     """
     try:
+        # Extract user info from Keycloak token
+        user_id = current_user.get("id")
+        organization_id = current_user.get("organization_id")
+        username = current_user.get("username")
+
         # Validate input
         if not request.youtube_url or not request.youtube_url.strip():
             raise HTTPException(status_code=400, detail="YouTube URL is required")
@@ -180,19 +183,15 @@ async def ingest_youtube_video(
         if not request.folder_name or not request.folder_name.strip():
             raise HTTPException(status_code=400, detail="Folder name is required")
 
-        # Validate ObjectIds
-        if request.user_id and not ObjectId.is_valid(request.user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {request.user_id}")
-
-        if request.organization_id and not ObjectId.is_valid(request.organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {request.organization_id}")
+        if not organization_id:
+            raise HTTPException(status_code=400, detail="User must belong to an organization")
 
         # Validate YouTube URL
         youtube_downloader = get_youtube_downloader()
         if not youtube_downloader.validate_youtube_url(request.youtube_url):
             raise HTTPException(status_code=400, detail="Invalid YouTube URL")
 
-        logger.info(f"📺 YouTube ingestion request: {request.youtube_url}, folder={request.folder_name}")
+        logger.info(f"📺 YouTube ingestion from {username}: {request.youtube_url}, folder={request.folder_name}")
 
         # Create document record with status="processing" (fast - just DB write)
         ingestion_service = get_ingestion_service()
@@ -212,8 +211,8 @@ async def ingest_youtube_video(
             folder_name=request.folder_name.strip(),
             file_key=None,  # Will be set by worker after download
             file_size_mb=0,  # Unknown initially, will be updated by worker
-            user_id=request.user_id,
-            organization_id=request.organization_id,
+            user_id=user_id,
+            organization_id=organization_id,
             additional_metadata=additional_metadata
         )
 
@@ -224,8 +223,8 @@ async def ingest_youtube_video(
             document_id=document_id,
             youtube_url=request.youtube_url,
             folder_name=request.folder_name.strip(),
-            user_id=request.user_id,
-            organization_id=request.organization_id
+            user_id=user_id,
+            organization_id=organization_id
         )
 
         logger.info(f"✅ YouTube video dispatched to Celery (task_id: {task.id})")
@@ -250,7 +249,7 @@ async def ingest_youtube_video(
 
 
 @router.get("/documents/{document_id}")
-async def get_document(document_id: str, current_user: dict = Depends(get_current_user)):
+async def get_document(document_id: str, current_user: dict = Depends(get_current_user_keycloak)):
     """
     Get document by ID
 
@@ -290,15 +289,15 @@ async def list_documents(
     organization_id: Optional[str] = None,
     limit: int = 100,
     skip: int = 0,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     List documents with optional filters
 
     Args:
         folder_name: Optional folder name filter
-        user_id: Optional user ID filter
-        organization_id: Optional organization ID filter
+        user_id: Optional user ID filter (Keycloak UUID)
+        organization_id: Optional organization ID filter (Keycloak UUID)
         limit: Maximum number of documents to return (default: 100)
         skip: Number of documents to skip (default: 0)
 
@@ -306,13 +305,6 @@ async def list_documents(
         List of documents
     """
     try:
-        # Validate ObjectIds
-        if user_id and not ObjectId.is_valid(user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
-
-        if organization_id and not ObjectId.is_valid(organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
-
         ingestion_service = get_ingestion_service()
         documents = await ingestion_service.list_documents(
             folder_name=folder_name,
@@ -337,7 +329,7 @@ async def list_documents(
 async def delete_document(
     document_id: str,
     delete_from_storage: bool = True,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Delete document and its chunks from all systems
@@ -377,26 +369,19 @@ async def delete_document(
 async def list_folders(
     user_id: Optional[str] = None,
     organization_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     List all unique folder names (knowledge bases)
 
     Args:
-        user_id: Optional user ID filter
-        organization_id: Optional organization ID filter
+        user_id: Optional user ID filter (Keycloak UUID)
+        organization_id: Optional organization ID filter (Keycloak UUID)
 
     Returns:
         List of folder names
     """
     try:
-        # Validate ObjectIds
-        if user_id and not ObjectId.is_valid(user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
-
-        if organization_id and not ObjectId.is_valid(organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
-
         ingestion_service = get_ingestion_service()
         folders = await ingestion_service.list_folders(
             user_id=user_id,
@@ -420,7 +405,7 @@ async def delete_folder(
     user_id: Optional[str] = None,
     organization_id: Optional[str] = None,
     delete_from_storage: bool = True,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Delete entire folder and all its documents from all systems
@@ -428,21 +413,14 @@ async def delete_folder(
 
     Args:
         folder_name: Folder name to delete
-        user_id: Optional user ID filter
-        organization_id: Optional organization ID filter
+        user_id: Optional user ID filter (Keycloak UUID)
+        organization_id: Optional organization ID filter (Keycloak UUID)
         delete_from_storage: Whether to delete from iDrive E2 (default: True)
 
     Returns:
         Deletion result with count
     """
     try:
-        # Validate ObjectIds
-        if user_id and not ObjectId.is_valid(user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
-
-        if organization_id and not ObjectId.is_valid(organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
-
         ingestion_service = get_ingestion_service()
         result = await ingestion_service.delete_folder(
             folder_name=folder_name,
@@ -468,7 +446,7 @@ async def rename_folder(
     new_folder_name: str = Form(..., description="New folder name"),
     user_id: Optional[str] = Form(None, description="Optional user ID"),
     organization_id: Optional[str] = Form(None, description="Optional organization ID"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Rename folder across all systems
@@ -477,8 +455,8 @@ async def rename_folder(
     Args:
         folder_name: Current folder name
         new_folder_name: New folder name
-        user_id: Optional user ID filter
-        organization_id: Optional organization ID filter
+        user_id: Optional user ID filter (Keycloak UUID)
+        organization_id: Optional organization ID filter (Keycloak UUID)
 
     Returns:
         Rename result with counts
@@ -487,13 +465,6 @@ async def rename_folder(
         # Validate input
         if not new_folder_name or not new_folder_name.strip():
             raise HTTPException(status_code=400, detail="New folder name is required")
-
-        # Validate ObjectIds
-        if user_id and not ObjectId.is_valid(user_id):
-            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {user_id}")
-
-        if organization_id and not ObjectId.is_valid(organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
 
         ingestion_service = get_ingestion_service()
         result = await ingestion_service.rename_folder(

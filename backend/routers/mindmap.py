@@ -8,14 +8,14 @@ from bson import ObjectId
 from models.mindmap import MindMapRequest
 from services.mindmap_service import get_mindmap_service
 from app.logger import logger
-from auth.dependencies import get_current_user
+from auth.keycloak_auth import get_current_user_keycloak
 
 
 router = APIRouter(prefix="/mindmap", tags=["mindmap"])
 
 
 @router.post("/generate")
-async def generate_mindmap(request: MindMapRequest, current_user: dict = Depends(get_current_user)):
+async def generate_mindmap(request: MindMapRequest, current_user: dict = Depends(get_current_user_keycloak)):
     """
     Generate mind map from multiple documents (like NotebookLM)
 
@@ -52,6 +52,10 @@ async def generate_mindmap(request: MindMapRequest, current_user: dict = Depends
     ```
     """
     try:
+        # Extract user_id and organization_id from JWT token
+        user_id = current_user.get("id")
+        organization_id = current_user.get("organization_id")
+
         # Validate all document_ids
         for doc_id in request.document_ids:
             if not ObjectId.is_valid(doc_id):
@@ -64,7 +68,9 @@ async def generate_mindmap(request: MindMapRequest, current_user: dict = Depends
 
         mindmap_service = get_mindmap_service()
         result = await mindmap_service.generate_from_documents(
-            document_ids=request.document_ids
+            document_ids=request.document_ids,
+            user_id=user_id,
+            organization_id=organization_id
         )
 
         return {
@@ -81,7 +87,7 @@ async def generate_mindmap(request: MindMapRequest, current_user: dict = Depends
 
 
 @router.get("/{mind_map_id}")
-async def get_mindmap(mind_map_id: str, current_user: dict = Depends(get_current_user)):
+async def get_mindmap(mind_map_id: str, current_user: dict = Depends(get_current_user_keycloak)):
     """
     Get mind map by ID
 
@@ -120,39 +126,35 @@ async def get_mindmap(mind_map_id: str, current_user: dict = Depends(get_current
 
 
 @router.get("/list")
-async def list_mindmaps(
-    user_id: str,
-    organization_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def list_mindmaps(current_user: dict = Depends(get_current_user_keycloak)):
     """
-    List all mind maps for a user and organization
-
-    Args:
-        user_id: MongoDB user ID
-        organization_id: MongoDB organization ID
+    List all mind maps for current authenticated user and organization
 
     Returns:
         List of mind maps belonging to the user/organization
 
     Example:
-    GET /api/mindmap/list?user_id=507f1f77bcf86cd799439011&organization_id=507f1f77bcf86cd799439012
+    GET /api/mindmap/list
     """
     try:
-        # Validate IDs
-        if not ObjectId.is_valid(user_id):
+        # Extract user_id and organization_id from JWT token
+        user_id = current_user.get("id")  # Keycloak UUID string
+        organization_id = current_user.get("organization_id")  # MongoDB ObjectId string
+
+        if not user_id or not organization_id:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid user_id format: {user_id}"
+                detail="User must belong to an organization"
             )
 
+        # Validate organization_id format
         if not ObjectId.is_valid(organization_id):
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid organization_id format: {organization_id}"
             )
 
-        logger.info(f"📋 Listing mind maps for user: {user_id}, org: {organization_id}")
+        logger.info(f"📋 Listing mind maps for user: {user_id[:8]}..., org: {organization_id[:8]}...")
 
         mindmap_service = get_mindmap_service()
         mindmaps = await mindmap_service.list_mindmaps_by_user(user_id, organization_id)

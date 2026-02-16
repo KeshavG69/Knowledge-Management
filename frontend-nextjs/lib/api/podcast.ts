@@ -19,37 +19,12 @@ export interface PodcastGenerationResponse {
   message: string;
 }
 
-// Helper to get user info from localStorage
-const getUserParams = () => {
-  if (typeof window === 'undefined') return null;
-  
-  const userStr = localStorage.getItem('user');
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr);
-      if (user.organization_id) {
-        return {
-          organization_id: user.organization_id
-        };
-      }
-    } catch (e) {
-      console.error('Failed to parse user from localStorage:', e);
-    }
-  }
-  return null;
-};
-
 export const podcastApi = {
   // Start podcast generation
   generatePodcast: async (documentIds: string[]): Promise<PodcastGenerationResponse> => {
-    const userParams = getUserParams();
-    if (!userParams) {
-      throw new Error('User organization not found');
-    }
-
     const response = await apiClient.post<PodcastGenerationResponse>('/podcasts/generate', {
-      organization_id: userParams.organization_id,
       document_ids: documentIds
+      // organization_id extracted from JWT token by backend
     });
 
     return response.data;

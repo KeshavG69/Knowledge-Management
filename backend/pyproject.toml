@@ -67,5 +67,6 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "email-validator>=2.3.0",
     "pymupdf>=1.27.1",
+    "python-keycloak>=7.0.3",
 ]
 

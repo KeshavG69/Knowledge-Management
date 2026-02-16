@@ -64,8 +64,8 @@ class FormatSuggesterService:
         workflow_doc = {
             "type": "report_suggestions",
             "document_ids": doc_object_ids,
-            "user_id": ObjectId(user_id) if user_id else None,
-            "organization_id": ObjectId(organization_id) if organization_id else None,
+            "user_id": user_id,  # Keep as string (Keycloak UUID)
+            "organization_id": ObjectId(organization_id) if organization_id else None,  # Convert to ObjectId
             "status": "processing",
             "data": {},
             "created_at": datetime.now(timezone.utc),

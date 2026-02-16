@@ -241,7 +241,8 @@ Deliver comprehensive, well-explained answers that prioritize knowledge base sou
             memory_manager=memory_manager,
             enable_agentic_memory=True,
             enable_user_memories=True,
-            debug_mode=True
+            debug_mode=True,
+            max_tool_calls_from_history=0
         )
 
         logger.info(f"✅ Chat agent created for session: {session_id}")

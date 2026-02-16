@@ -11,7 +11,7 @@ from services.chat import create_chat_agent
 from services.agent_streaming import stream_agent_response
 from utils.streaming import create_sse_event_stream
 from app.logger import logger
-from auth.dependencies import get_current_user
+from auth.keycloak_auth import get_current_user_keycloak
 from clients.mongodb_client import get_mongodb_client
 import uuid
 import json
@@ -23,15 +23,14 @@ class ChatRequest(BaseModel):
     """Request model for chat endpoint"""
     message: str
     session_id: Optional[str] = None
-    user_id: Optional[str] = None
-    organization_id: Optional[str] = None
     document_ids: Optional[list[str]] = None
     file_names: Optional[list[str]] = None  # Titles of selected documents
     model: Optional[str] = "anthropic/claude-sonnet-4.5"
+    # user_id and organization_id are extracted from JWT token by backend
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):
+async def chat(request: ChatRequest, current_user: dict = Depends(get_current_user_keycloak)):
     """
     Send a message to the chat agent and get a streaming response
 
@@ -42,6 +41,10 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
         StreamingResponse with SSE events
     """
     try:
+        # Extract user_id and organization_id from JWT token
+        user_id = current_user.get("id")
+        organization_id = current_user.get("organization_id")
+
         # Validate input
         if not request.message or request.message.strip() == "":
             raise HTTPException(
@@ -60,8 +63,8 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
         # Create chat agent
         agent = await create_chat_agent(
             session_id=session_id,
-            user_id=request.user_id,
-            organization_id=request.organization_id,
+            user_id=user_id,
+            organization_id=organization_id,
             document_ids=request.document_ids,
             file_names=request.file_names,
             model=request.model,
@@ -96,7 +99,7 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
 @router.get("/chat/sessions")
 async def list_chat_sessions(
     user_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user_keycloak),
     limit: int = 50,
     skip: int = 0
 ) -> Dict[str, Any]:
@@ -209,7 +212,7 @@ async def list_chat_sessions(
 async def get_chat_session(
     session_id: str,
     user_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ) -> Dict[str, Any]:
     """
     Get full chat history for a specific session
@@ -374,7 +377,7 @@ async def get_chat_session(
 async def delete_chat_session(
     session_id: str,
     user_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ) -> Dict[str, Any]:
     """
     Delete a chat session
@@ -437,7 +440,7 @@ async def rename_chat_session(
     session_id: str,
     new_name: str,
     user_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_keycloak)
 ) -> Dict[str, Any]:
     """
     Rename a chat session

@@ -34,25 +34,6 @@ export interface MindMapListResponse {
   count: number;
 }
 
-// Helper to get user info from localStorage
-const getUserParams = () => {
-  const userStr = localStorage.getItem('user');
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr);
-      if (user.id && user.organization_id) {
-        return {
-          user_id: user.id,
-          organization_id: user.organization_id
-        };
-      }
-    } catch (e) {
-      console.error('Failed to parse user from localStorage:', e);
-    }
-  }
-  return null;
-};
-
 export const mindmapApi = {
   // Generate mind map from selected documents
   generate: async (documentIds: string[]): Promise<MindMapResponse> => {
@@ -70,17 +51,8 @@ export const mindmapApi = {
 
   // List all mind maps for current user and organization
   list: async (): Promise<MindMapResponse[]> => {
-    const userParams = getUserParams();
-    if (!userParams) {
-      throw new Error('User not authenticated');
-    }
-
-    const params = new URLSearchParams({
-      user_id: userParams.user_id,
-      organization_id: userParams.organization_id,
-    });
-
-    const response = await apiClient.get<MindMapListResponse>(`/mindmap/list?${params.toString()}`);
+    // user_id and organization_id are extracted from JWT token by backend
+    const response = await apiClient.get<MindMapListResponse>(`/mindmap/list`);
     return response.data.data;
   },
 };
