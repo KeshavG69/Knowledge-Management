@@ -5,6 +5,28 @@ import { documentsApi } from '../api/documents';
 // LocalStorage helpers
 const STORAGE_KEY_SELECTED_KB = 'soldieriq_selected_kb';
 const STORAGE_KEY_SELECTED_DOCS = 'soldieriq_selected_docs';
+const STORAGE_KEY_CACHE_VERSION = 'soldieriq_cache_version';
+const CURRENT_CACHE_VERSION = '2026-02-16'; // Increment this to force cache clear for all users
+
+// Check and clear cache if version mismatch
+const checkAndClearCache = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const storedVersion = localStorage.getItem(STORAGE_KEY_CACHE_VERSION);
+    if (storedVersion !== CURRENT_CACHE_VERSION) {
+      console.log('🧹 Cache version mismatch - clearing stale data');
+      localStorage.removeItem(STORAGE_KEY_SELECTED_KB);
+      localStorage.removeItem(STORAGE_KEY_SELECTED_DOCS);
+      localStorage.setItem(STORAGE_KEY_CACHE_VERSION, CURRENT_CACHE_VERSION);
+      console.log(`✅ Cache updated to version: ${CURRENT_CACHE_VERSION}`);
+    }
+  } catch (e) {
+    console.error('Failed to check cache version:', e);
+  }
+};
+
+// Run cache check immediately
+checkAndClearCache();
 
 const loadSelectedKB = (): string | null => {
   if (typeof window === 'undefined') return null;
