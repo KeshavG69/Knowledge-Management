@@ -19,6 +19,15 @@ import json
 router = APIRouter(tags=["chat"])
 
 
+class TAKCredentials(BaseModel):
+    """TAK server credentials from frontend"""
+    tak_host: str
+    tak_port: int
+    tak_username: str
+    tak_password: str
+    agent_callsign: Optional[str] = "SoldierIQ-Agent"
+
+
 class ChatRequest(BaseModel):
     """Request model for chat endpoint"""
     message: str
@@ -26,6 +35,7 @@ class ChatRequest(BaseModel):
     document_ids: Optional[list[str]] = None
     file_names: Optional[list[str]] = None  # Titles of selected documents
     model: Optional[str] = "anthropic/claude-sonnet-4.5"
+    tak_credentials: Optional[TAKCredentials] = None  # Optional TAK integration
     # user_id and organization_id are extracted from JWT token by backend
 
 
@@ -68,7 +78,7 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
             document_ids=request.document_ids,
             file_names=request.file_names,
             model=request.model,
-
+            tak_credentials=request.tak_credentials
         )
 
         # SSE headers
