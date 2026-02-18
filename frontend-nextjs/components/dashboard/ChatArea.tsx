@@ -12,6 +12,12 @@ interface SourceWithUrl extends DocumentSource {
   presignedUrl?: string;
 }
 
+interface Mission {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 export default function ChatArea() {
   const {
     messages,
@@ -29,6 +35,14 @@ export default function ChatArea() {
   const { selectedDocs, documents } = useDocumentStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Mission management state (local only, not linked to sessions)
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [currentMissionId, setCurrentMissionId] = useState<string | null>(null);
+  const [showMissionDropdown, setShowMissionDropdown] = useState(false);
+  const [showNewMissionModal, setShowNewMissionModal] = useState(false);
+  const [newMissionName, setNewMissionName] = useState("");
+  const missionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Track presigned URLs for sources by file_key
   const [sourceUrls, setSourceUrls] = useState<Map<string, string>>(new Map());
@@ -116,6 +130,85 @@ export default function ChatArea() {
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [inputMessage]);
+
+  // Load missions from localStorage on mount
+  useEffect(() => {
+    const savedMissions = localStorage.getItem('missions');
+    if (savedMissions) {
+      try {
+        const parsed = JSON.parse(savedMissions);
+        setMissions(parsed);
+      } catch (error) {
+        console.error("Failed to load missions:", error);
+      }
+    }
+
+    // Load current mission
+    const savedCurrentMission = localStorage.getItem('currentMissionId');
+    if (savedCurrentMission) {
+      setCurrentMissionId(savedCurrentMission);
+    }
+  }, []);
+
+  // Save missions to localStorage whenever they change
+  useEffect(() => {
+    if (missions.length > 0) {
+      localStorage.setItem('missions', JSON.stringify(missions));
+    }
+  }, [missions]);
+
+  // Save current mission whenever it changes
+  useEffect(() => {
+    if (currentMissionId) {
+      localStorage.setItem('currentMissionId', currentMissionId);
+    }
+  }, [currentMissionId]);
+
+  // Close mission dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (missionDropdownRef.current && !missionDropdownRef.current.contains(event.target as Node)) {
+        setShowMissionDropdown(false);
+      }
+    };
+
+    if (showMissionDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMissionDropdown]);
+
+  const handleSelectMission = (mission: Mission) => {
+    setCurrentMissionId(mission.id);
+    setShowMissionDropdown(false);
+  };
+
+  const handleCreateMission = () => {
+    if (!newMissionName.trim()) return;
+
+    // Create new mission
+    const newMission: Mission = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: newMissionName.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add to missions list
+    setMissions([newMission, ...missions]);
+
+    // Set as current mission
+    setCurrentMissionId(newMission.id);
+
+    // Close modal and reset
+    setShowNewMissionModal(false);
+    setNewMissionName("");
+  };
+
+  const getCurrentMissionName = () => {
+    if (!currentMissionId) return "Select Mission";
+    const currentMission = missions.find(m => m.id === currentMissionId);
+    return currentMission?.name || "Select Mission";
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -319,6 +412,72 @@ export default function ChatArea() {
           <div className="w-16 h-16 border-4 border-blue-400/20 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin"></div>
         </div>
       )}
+
+      {/* Mission Selector */}
+      <div className="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-6 py-3">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 tracking-wider">
+            MISSION:
+          </span>
+          <div className="relative flex-1 max-w-md" ref={missionDropdownRef}>
+            <button
+              onClick={() => setShowMissionDropdown(!showMissionDropdown)}
+              className="w-full flex items-center justify-between tactical-input px-3 py-2 text-sm hover:border-blue-400 dark:hover:border-amber-400 transition-colors"
+            >
+              <span className="truncate text-slate-800 dark:text-slate-100 font-medium">
+                {getCurrentMissionName()}
+              </span>
+              <svg
+                className={`w-4 h-4 text-slate-500 transition-transform ${showMissionDropdown ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showMissionDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-xl z-50 max-h-64 overflow-y-auto tactical-scrollbar">
+                {missions.length === 0 ? (
+                  <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 text-center">
+                    No missions found. Create one to get started.
+                  </div>
+                ) : (
+                  missions.map((mission) => (
+                    <button
+                      key={mission.id}
+                      onClick={() => handleSelectMission(mission)}
+                      className={`w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-200 dark:border-slate-800 ${
+                        mission.id === currentMissionId ? 'bg-blue-100 dark:bg-slate-800' : ''
+                      }`}
+                    >
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                        {mission.name}
+                      </div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-600 mt-1 font-mono">
+                        {new Date(mission.createdAt).toLocaleString()}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* New Mission Button */}
+          <button
+            onClick={() => setShowNewMissionModal(true)}
+            className="tactical-btn tactical-btn-primary p-2 flex items-center justify-center"
+            title="Create New Mission"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+      </div>
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
@@ -645,6 +804,57 @@ export default function ChatArea() {
 
       {/* Bottom border accent */}
       <div className="h-px bg-gradient-to-r from-transparent via-blue-400/30 dark:via-amber-400/30 to-transparent"></div>
+
+      {/* New Mission Modal */}
+      {showNewMissionModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-slate-900 border-2 border-blue-400 dark:border-amber-400 shadow-2xl max-w-md w-full mx-4">
+            <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+              <h3 className="text-lg font-bold text-blue-600 dark:text-amber-400 tracking-wider">
+                CREATE NEW MISSION
+              </h3>
+            </div>
+            <div className="p-6">
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 tracking-wider mb-2">
+                MISSION NAME:
+              </label>
+              <input
+                type="text"
+                value={newMissionName}
+                onChange={(e) => setNewMissionName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateMission();
+                  if (e.key === 'Escape') {
+                    setShowNewMissionModal(false);
+                    setNewMissionName("");
+                  }
+                }}
+                placeholder="Enter mission name..."
+                className="tactical-input w-full px-3 py-2 text-sm"
+                autoFocus
+              />
+            </div>
+            <div className="border-t border-slate-200 dark:border-slate-800 px-6 py-4 flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowNewMissionModal(false);
+                  setNewMissionName("");
+                }}
+                className="tactical-btn px-4 py-2 text-sm"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={handleCreateMission}
+                disabled={!newMissionName.trim()}
+                className="tactical-btn tactical-btn-primary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                CREATE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Video Clip Viewer Modal */}
       {videoViewer.isOpen && (
