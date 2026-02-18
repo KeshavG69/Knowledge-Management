@@ -201,7 +201,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2 mb-4">
           <div className="w-1 h-6 bg-blue-600 dark:bg-amber-400"></div>
           <h2 className="text-base font-bold text-blue-600 dark:text-amber-400 tracking-wider">
-            DOCUMENT REPOSITORY
+            REPOSITORY
           </h2>
         </div>
 
