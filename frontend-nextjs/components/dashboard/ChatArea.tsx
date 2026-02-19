@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useChatStore, DocumentSource } from "@/lib/stores/chatStore";
 import { useDocumentStore } from "@/lib/stores/documentStore";
-import { chatApi } from "@/lib/api/documents";
+import { chatApi, TAKCredentials } from "@/lib/api/documents";
+import { getTAKConfig } from "@/lib/api/tak";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import VideoClipViewer from "./VideoClipViewer";
@@ -26,10 +27,14 @@ export default function ChatArea() {
     isLoadingSession,
     inputMessage,
     selectedModel,
+    takCredentials,
+    takEnabled,
     setInputMessage,
     addMessage,
     updateLastMessage,
     setLoading,
+    setTAKCredentials,
+    setTAKEnabled,
   } = useChatStore();
 
   const { selectedDocs, documents } = useDocumentStore();
@@ -178,6 +183,38 @@ export default function ChatArea() {
     }
   }, [showMissionDropdown]);
 
+  // Fetch TAK configuration on mount
+  useEffect(() => {
+    const fetchTAKConfig = async () => {
+      try {
+        const config = await getTAKConfig();
+        if (config && config.tak_enabled) {
+          // Store TAK credentials with password from localStorage
+          // Note: Backend returns config without password for security
+          // Password is optional for public servers
+          const savedPassword = localStorage.getItem('tak_password') || "";
+
+          const credentials: TAKCredentials = {
+            tak_host: config.tak_host,
+            tak_port: config.tak_port,
+            tak_username: config.tak_username || "",
+            tak_password: savedPassword,
+            agent_callsign: config.agent_callsign,
+          };
+          setTAKCredentials(credentials);
+          setTAKEnabled(true);
+        }
+      } catch (error) {
+        // TAK not configured or error fetching - silently fail
+        console.log('TAK not configured or error fetching config');
+        setTAKCredentials(null);
+        setTAKEnabled(false);
+      }
+    };
+
+    fetchTAKConfig();
+  }, [setTAKCredentials, setTAKEnabled]);
+
   const handleSelectMission = (mission: Mission) => {
     setCurrentMissionId(mission.id);
     setShowMissionDropdown(false);
@@ -251,7 +288,8 @@ export default function ChatArea() {
         documentIds,
         sessionId,
         selectedModel,
-        fileNames
+        fileNames,
+        takEnabled && takCredentials ? takCredentials : undefined
       );
 
       const reader = stream.getReader();
@@ -755,13 +793,25 @@ export default function ChatArea() {
             </div>
 
             {/* System Status */}
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 dark:text-slate-600 tracking-wider">STATUS:</span>
-              <span className={`font-mono tracking-wider ${
-                isLoading ? "text-blue-600 dark:text-amber-400" : "text-tactical-green"
-              }`}>
-                {isLoading ? "PROCESSING" : "READY"}
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500 dark:text-slate-600 tracking-wider">STATUS:</span>
+                <span className={`font-mono tracking-wider ${
+                  isLoading ? "text-blue-600 dark:text-amber-400" : "text-tactical-green"
+                }`}>
+                  {isLoading ? "PROCESSING" : "READY"}
+                </span>
+              </div>
+
+              {/* TAK Status Indicator */}
+              {takEnabled && takCredentials && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/30 dark:bg-green-400/10 dark:border-green-400/30">
+                  <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-bold text-green-600 dark:text-green-400 tracking-wider">
+                    TAK ACTIVE
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

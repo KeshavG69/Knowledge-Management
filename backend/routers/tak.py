@@ -26,8 +26,8 @@ class TAKConfigRequest(BaseModel):
     tak_enabled: bool = False
     tak_host: str = Field(..., description="TAK server hostname")
     tak_port: int = Field(default=8089, ge=1, le=65535)
-    tak_username: str = Field(..., min_length=1)
-    tak_password: str = Field(..., min_length=1)
+    tak_username: str = Field(default="", description="TAK username (optional for public servers)")
+    tak_password: str = Field(default="", description="TAK password (optional for public servers)")
     agent_callsign: str = Field(default="SoldierIQ-Agent")
 
     class Config:

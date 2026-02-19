@@ -129,6 +129,15 @@ export const documentsApi = {
   },
 };
 
+// TAK Credentials type (matches backend TAKCredentials)
+export interface TAKCredentials {
+  tak_host: string;
+  tak_port: number;
+  tak_username: string;
+  tak_password: string;
+  agent_callsign: string;
+}
+
 export const chatApi = {
   // Send chat message with SSE streaming
   sendMessage: async (
@@ -136,7 +145,8 @@ export const chatApi = {
     documentIds: string[],
     sessionId: string,
     model: string,
-    fileNames?: string[]
+    fileNames?: string[],
+    takCredentials?: TAKCredentials
   ): Promise<ReadableStream> => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
@@ -156,6 +166,7 @@ export const chatApi = {
         file_names: fileNames,
         session_id: sessionId,
         model,
+        tak_credentials: takCredentials,
         // user_id and organization_id are extracted from JWT token by backend
       }),
     });
