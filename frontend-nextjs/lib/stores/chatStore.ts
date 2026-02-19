@@ -18,6 +18,15 @@ export interface DocumentSource extends SourceReference {
   keyframe_file_key?: string;
 }
 
+// TAK credentials for chat integration
+export interface TAKCredentials {
+  tak_host: string;
+  tak_port: number;
+  tak_username: string;
+  tak_password: string;
+  agent_callsign: string;
+}
+
 interface ChatState {
   messages: ChatMessage[];
   sessionId: string;
@@ -25,6 +34,8 @@ interface ChatState {
   isLoadingSession: boolean;
   inputMessage: string;
   selectedModel: string;
+  takCredentials: TAKCredentials | null;
+  takEnabled: boolean;
 
   // Actions
   setInputMessage: (message: string) => void;
@@ -36,6 +47,8 @@ interface ChatState {
   clearChat: () => void;
   startNewSession: () => void;
   loadSession: (sessionId: string, messages: ChatMessage[]) => void;
+  setTAKCredentials: (credentials: TAKCredentials | null) => void;
+  setTAKEnabled: (enabled: boolean) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -45,6 +58,8 @@ export const useChatStore = create<ChatState>((set) => ({
   isLoadingSession: false,
   inputMessage: '',
   selectedModel: 'anthropic/claude-sonnet-4.5', // Default model
+  takCredentials: null,
+  takEnabled: false,
 
   setInputMessage: (message) => set({ inputMessage: message }),
 
@@ -75,4 +90,8 @@ export const useChatStore = create<ChatState>((set) => ({
   startNewSession: () => set({ messages: [], sessionId: generateId() }),
 
   loadSession: (sessionId, messages) => set({ sessionId, messages }),
+
+  setTAKCredentials: (credentials) => set({ takCredentials: credentials }),
+
+  setTAKEnabled: (enabled) => set({ takEnabled: enabled }),
 }));

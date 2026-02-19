@@ -6,6 +6,7 @@ Creates agents for conversational knowledge base interaction
 from typing import Optional
 from agno.agent import Agent
 from utils.agno_tools import create_knowledge_retriever
+from utils.tak_tools import create_tak_marker_tool, create_tak_chat_tool, create_tak_route_tool
 from clients.ultimate_llm import get_llm_agno
 from clients.agent_memory import get_agent_db, get_memory_manager
 from app.logger import logger
@@ -18,6 +19,7 @@ async def create_chat_agent(
     document_ids: Optional[list[str]] = None,
     file_names: Optional[list[str]] = None,
     model: str = "google/gemini-2.5-pro",
+    tak_credentials: Optional[dict] = None,
 ) -> Agent:
     """
     Create a chat agent with knowledge base access
@@ -29,9 +31,10 @@ async def create_chat_agent(
         document_ids: Optional list of document IDs to filter search results
         file_names: Optional list of document titles/filenames to show in context
         model: LLM model name (default: google/gemini-2.5-pro via OpenRouter)
+        tak_credentials: Optional TAK server credentials for TAK integration
 
     Returns:
-        Agent: Configured chat agent with knowledge retrieval
+        Agent: Configured chat agent with knowledge retrieval and optional TAK tools
     """
     try:
         logger.info(f"Creating chat agent for session: {session_id}")
@@ -50,6 +53,50 @@ async def create_chat_agent(
             document_ids=document_ids,
             num_documents=10
         )
+
+        # Create TAK tools if credentials provided
+        tak_tools = []
+        if tak_credentials:
+            logger.info("🎯 TAK credentials provided - creating TAK tools")
+            try:
+                # Extract credentials
+                tak_host = tak_credentials.tak_host
+                tak_port = tak_credentials.tak_port
+                tak_username = tak_credentials.tak_username
+                tak_password = tak_credentials.tak_password
+                agent_callsign = tak_credentials.agent_callsign or "SoldierIQ-Agent"
+
+                # Create TAK tools
+                place_marker = create_tak_marker_tool(
+                    tak_host=tak_host,
+                    tak_port=tak_port,
+                    tak_username=tak_username,
+                    tak_password=tak_password,
+                    agent_callsign=agent_callsign
+                )
+
+                send_message = create_tak_chat_tool(
+                    tak_host=tak_host,
+                    tak_port=tak_port,
+                    tak_username=tak_username,
+                    tak_password=tak_password,
+                    agent_uid=f"soldieriq-{session_id[:8]}",
+                    agent_callsign=agent_callsign
+                )
+
+                create_route = create_tak_route_tool(
+                    tak_host=tak_host,
+                    tak_port=tak_port,
+                    tak_username=tak_username,
+                    tak_password=tak_password
+                )
+
+                tak_tools = [place_marker, send_message, create_route]
+                logger.info(f"✅ Created {len(tak_tools)} TAK tools")
+
+            except Exception as e:
+                logger.error(f"❌ Failed to create TAK tools: {e}")
+                # Continue without TAK tools if creation fails
 
         # Agent instructions
         instructions = [
@@ -113,6 +160,48 @@ ALWAYS REPLY IN A CONFIDENT MANNER BE CONFIDENT IN THE INFORMATION YOU PROVIDE
 - If no relevant information is found, be honest about it
 - Format your responses in markdown for better readability
 </tool_usage_guidelines>""",
+        ])
+
+        # Add TAK-specific instructions if TAK tools are enabled
+        if tak_tools:
+            instructions.append("""<tak_integration>
+**TAK (Team Awareness Kit) Integration - You have access to TAK network tools:**
+
+You can interact with the TAK (Team Awareness Kit) network to place markers, send messages, and create routes. This is a geospatial situational awareness platform used by military and tactical teams.
+
+**Available TAK Tools:**
+
+1. **place_tak_marker(latitude, longitude, callsign, message=None)**
+   - Places a marker on the TAK network at specified coordinates
+   - Use when user wants to mark a location or share coordinates
+   - Coordinates must be in decimal degrees (lat: -90 to 90, lon: -180 to 180)
+   - Example: "Place a marker at 37.7749, -122.4194 called 'Meeting Point'"
+
+2. **send_tak_message(message)**
+   - Sends a broadcast chat message to all TAK users
+   - Use when user wants to send alerts or messages to the team
+   - Example: "Send a message to the team about the meeting"
+
+3. **create_tak_route(waypoints, route_name)**
+   - Creates a route with multiple waypoints on TAK
+   - Waypoints format: [{"lat": 37.7749, "lon": -122.4194}, ...]
+   - Use when user wants to plan a route or show a path
+   - Example: "Create a route from HQ to checkpoint Alpha"
+
+**When to use TAK tools:**
+- User explicitly mentions TAK, ATAK, or iTAK
+- User asks to place markers, send messages, or create routes
+- User provides coordinates and wants to share them with the team
+- User wants to broadcast information to tactical units
+
+**Important:**
+- Always validate coordinates before placing markers
+- Confirm with user before sending messages or placing markers
+- Provide clear feedback on what was sent to TAK
+- TAK tools work independently of knowledge base search
+</tak_integration>""")
+
+        instructions.extend([
             """<mandatory_search_policy>
 **CRITICAL: ALWAYS search the knowledge base when users ask about files or documents - NEVER rely on conversation history:**
 
@@ -230,8 +319,9 @@ Deliver comprehensive, well-explained answers that prioritize knowledge base sou
             name="Knowledge Assistant",
             model=llm,
             session_id=session_id,
-            user_id=user_id ,
+            user_id=user_id,
             knowledge_retriever=knowledge_retriever,
+            tools=tak_tools if tak_tools else None,  # Add TAK tools if available
             instructions=instructions,
             markdown=True,
             add_history_to_context=True,
@@ -245,7 +335,8 @@ Deliver comprehensive, well-explained answers that prioritize knowledge base sou
             max_tool_calls_from_history=0
         )
 
-        logger.info(f"✅ Chat agent created for session: {session_id}")
+        tak_status = f" with {len(tak_tools)} TAK tools" if tak_tools else ""
+        logger.info(f"✅ Chat agent created for session: {session_id}{tak_status}")
         return agent
 
     except Exception as e:

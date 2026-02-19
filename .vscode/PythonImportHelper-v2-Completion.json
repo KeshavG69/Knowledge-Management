@@ -264,6 +264,14 @@
         "documentation": {}
     },
     {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "BinaryIO",
         "importPath": "typing",
         "description": "typing",
@@ -345,6 +353,14 @@
     },
     {
         "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -617,6 +633,14 @@
     },
     {
         "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -961,6 +985,38 @@
     },
     {
         "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1500,6 +1556,38 @@
         "documentation": {}
     },
     {
+        "label": "HTTPException",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "Depends",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "status",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
+        "label": "APIRouter",
+        "importPath": "fastapi",
+        "description": "fastapi",
+        "isExtraImport": true,
+        "detail": "fastapi",
+        "documentation": {}
+    },
+    {
         "label": "UploadFile",
         "importPath": "fastapi",
         "description": "fastapi",
@@ -1569,6 +1657,38 @@
         "description": "starlette.responses",
         "isExtraImport": true,
         "detail": "starlette.responses",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "app.logger",
+        "description": "app.logger",
+        "isExtraImport": true,
+        "detail": "app.logger",
         "documentation": {}
     },
     {
@@ -2213,6 +2333,14 @@
         "documentation": {}
     },
     {
+        "label": "tak",
+        "importPath": "routers",
+        "description": "routers",
+        "isExtraImport": true,
+        "detail": "routers",
+        "documentation": {}
+    },
+    {
         "label": "BaseSettings",
         "importPath": "pydantic_settings",
         "description": "pydantic_settings",
@@ -2318,6 +2446,54 @@
         "documentation": {}
     },
     {
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -2403,6 +2579,22 @@
         "description": "datetime",
         "isExtraImport": true,
         "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "ObjectId",
+        "importPath": "bson",
+        "description": "bson",
+        "isExtraImport": true,
+        "detail": "bson",
         "documentation": {}
     },
     {
@@ -2871,6 +3063,22 @@
         "documentation": {}
     },
     {
+        "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
         "label": "bcrypt",
         "kind": 6,
         "isExtraImport": true,
@@ -3270,6 +3478,15 @@
         "documentation": {}
     },
     {
+        "label": "socket",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "socket",
+        "description": "socket",
+        "detail": "socket",
+        "documentation": {}
+    },
+    {
         "label": "OpenAIChat",
         "importPath": "agno.models.openai",
         "description": "agno.models.openai",
@@ -3563,6 +3780,14 @@
         "documentation": {}
     },
     {
+        "label": "get_current_user_keycloak",
+        "importPath": "auth.keycloak_auth",
+        "description": "auth.keycloak_auth",
+        "isExtraImport": true,
+        "detail": "auth.keycloak_auth",
+        "documentation": {}
+    },
+    {
         "label": "create_chat_agent",
         "importPath": "services.chat",
         "description": "services.chat",
@@ -3604,6 +3829,22 @@
     },
     {
         "label": "MongoDBClient",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
+        "importPath": "clients.mongodb_client",
+        "description": "clients.mongodb_client",
+        "isExtraImport": true,
+        "detail": "clients.mongodb_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_mongodb_client",
         "importPath": "clients.mongodb_client",
         "description": "clients.mongodb_client",
         "isExtraImport": true,
@@ -3796,6 +4037,38 @@
         "documentation": {}
     },
     {
+        "label": "save_tak_config",
+        "importPath": "utils.tak_config_utils",
+        "description": "utils.tak_config_utils",
+        "isExtraImport": true,
+        "detail": "utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_tak_config",
+        "importPath": "utils.tak_config_utils",
+        "description": "utils.tak_config_utils",
+        "isExtraImport": true,
+        "detail": "utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "delete_tak_config",
+        "importPath": "utils.tak_config_utils",
+        "description": "utils.tak_config_utils",
+        "isExtraImport": true,
+        "detail": "utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "is_tak_enabled",
+        "importPath": "utils.tak_config_utils",
+        "description": "utils.tak_config_utils",
+        "isExtraImport": true,
+        "detail": "utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
         "label": "get_ingestion_service",
         "importPath": "services.ingestion_service",
         "description": "services.ingestion_service",
@@ -3916,6 +4189,14 @@
         "documentation": {}
     },
     {
+        "label": "Agent",
+        "importPath": "agno.agent",
+        "description": "agno.agent",
+        "isExtraImport": true,
+        "detail": "agno.agent",
+        "documentation": {}
+    },
+    {
         "label": "RunEvent",
         "importPath": "agno.run.agent",
         "description": "agno.run.agent",
@@ -3945,6 +4226,30 @@
         "description": "utils.agno_tools",
         "isExtraImport": true,
         "detail": "utils.agno_tools",
+        "documentation": {}
+    },
+    {
+        "label": "create_tak_marker_tool",
+        "importPath": "utils.tak_tools",
+        "description": "utils.tak_tools",
+        "isExtraImport": true,
+        "detail": "utils.tak_tools",
+        "documentation": {}
+    },
+    {
+        "label": "create_tak_chat_tool",
+        "importPath": "utils.tak_tools",
+        "description": "utils.tak_tools",
+        "isExtraImport": true,
+        "detail": "utils.tak_tools",
+        "documentation": {}
+    },
+    {
+        "label": "create_tak_route_tool",
+        "importPath": "utils.tak_tools",
+        "description": "utils.tak_tools",
+        "isExtraImport": true,
+        "detail": "utils.tak_tools",
         "documentation": {}
     },
     {
@@ -4082,6 +4387,22 @@
         "description": "clients.video_processor_client",
         "isExtraImport": true,
         "detail": "clients.video_processor_client",
+        "documentation": {}
+    },
+    {
+        "label": "TAKClient",
+        "importPath": "clients.tak_client",
+        "description": "clients.tak_client",
+        "isExtraImport": true,
+        "detail": "clients.tak_client",
+        "documentation": {}
+    },
+    {
+        "label": "CoTBuilder",
+        "importPath": "clients.cot_builder",
+        "description": "clients.cot_builder",
+        "isExtraImport": true,
+        "detail": "clients.cot_builder",
         "documentation": {}
     },
     {
@@ -5024,6 +5345,15 @@
         "documentation": {}
     },
     {
+        "label": "CoTBuilder",
+        "kind": 6,
+        "importPath": "backend.clients.cot_builder",
+        "description": "backend.clients.cot_builder",
+        "peekOfCode": "class CoTBuilder:\n    \"\"\"Build CoT XML messages for TAK server\"\"\"\n    @staticmethod\n    def build_marker(\n        lat: float,\n        lon: float,\n        callsign: str,\n        message: Optional[str] = None,\n        uid: Optional[str] = None,\n        stale_minutes: int = 60",
+        "detail": "backend.clients.cot_builder",
+        "documentation": {}
+    },
+    {
         "label": "GroqWhisperClient",
         "kind": 6,
         "importPath": "backend.clients.groq_whisper_client",
@@ -5174,6 +5504,33 @@
         "description": "backend.clients.pinecone_client",
         "peekOfCode": "def get_pinecone_client() -> PineconeClient:\n    \"\"\"\n    Create a fresh PineconeClient instance (no caching to avoid multiprocessing issues in Celery)\n    Returns:\n        PineconeClient: Fresh client instance\n    \"\"\"\n    return PineconeClient()",
         "detail": "backend.clients.pinecone_client",
+        "documentation": {}
+    },
+    {
+        "label": "TAKClient",
+        "kind": 6,
+        "importPath": "backend.clients.tak_client",
+        "description": "backend.clients.tak_client",
+        "peekOfCode": "class TAKClient:\n    \"\"\"\n    Simple TAK client for sending CoT (Cursor on Target) messages.\n    Supports username/password authentication for private TAK servers.\n    Usage:\n        # Public server (no auth)\n        client = TAKClient(host=\"137.184.101.250\", port=8087)\n        # Private server (with auth)\n        client = TAKClient(\n            host=\"tak.company.com\",",
+        "detail": "backend.clients.tak_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_tak_client",
+        "kind": 2,
+        "importPath": "backend.clients.tak_client",
+        "description": "backend.clients.tak_client",
+        "peekOfCode": "def get_tak_client(\n    host: str = None,\n    port: int = None,\n    username: Optional[str] = None,\n    password: Optional[str] = None\n) -> TAKClient:\n    \"\"\"\n    Get or create singleton TAK client instance.\n    Args:\n        host: TAK server host (only used on first call)",
+        "detail": "backend.clients.tak_client",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.clients.tak_client",
+        "description": "backend.clients.tak_client",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass TAKClient:\n    \"\"\"\n    Simple TAK client for sending CoT (Cursor on Target) messages.\n    Supports username/password authentication for private TAK servers.\n    Usage:\n        # Public server (no auth)\n        client = TAKClient(host=\"137.184.101.250\", port=8087)\n        # Private server (with auth)\n        client = TAKClient(",
+        "detail": "backend.clients.tak_client",
         "documentation": {}
     },
     {
@@ -5537,11 +5894,20 @@
         "documentation": {}
     },
     {
+        "label": "TAKCredentials",
+        "kind": 6,
+        "importPath": "backend.routers.chat",
+        "description": "backend.routers.chat",
+        "peekOfCode": "class TAKCredentials(BaseModel):\n    \"\"\"TAK server credentials from frontend\"\"\"\n    tak_host: str\n    tak_port: int\n    tak_username: str\n    tak_password: str\n    agent_callsign: Optional[str] = \"SoldierIQ-Agent\"\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str",
+        "detail": "backend.routers.chat",
+        "documentation": {}
+    },
+    {
         "label": "ChatRequest",
         "kind": 6,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n    # user_id and organization_id are extracted from JWT token by backend\n@router.post(\"/chat\")\nasync def chat(request: ChatRequest, current_user: dict = Depends(get_current_user_keycloak)):",
+        "peekOfCode": "class ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n    tak_credentials: Optional[TAKCredentials] = None  # Optional TAK integration\n    # user_id and organization_id are extracted from JWT token by backend\n@router.post(\"/chat\")",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -5550,7 +5916,7 @@
         "kind": 5,
         "importPath": "backend.routers.chat",
         "description": "backend.routers.chat",
-        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"\n    message: str\n    session_id: Optional[str] = None\n    document_ids: Optional[list[str]] = None\n    file_names: Optional[list[str]] = None  # Titles of selected documents\n    model: Optional[str] = \"anthropic/claude-sonnet-4.5\"\n    # user_id and organization_id are extracted from JWT token by backend\n@router.post(\"/chat\")",
+        "peekOfCode": "router = APIRouter(tags=[\"chat\"])\nclass TAKCredentials(BaseModel):\n    \"\"\"TAK server credentials from frontend\"\"\"\n    tak_host: str\n    tak_port: int\n    tak_username: str\n    tak_password: str\n    agent_callsign: Optional[str] = \"SoldierIQ-Agent\"\nclass ChatRequest(BaseModel):\n    \"\"\"Request model for chat endpoint\"\"\"",
         "detail": "backend.routers.chat",
         "documentation": {}
     },
@@ -5633,6 +5999,42 @@
         "description": "backend.routers.reports",
         "peekOfCode": "router = APIRouter(prefix=\"/reports\", tags=[\"reports\"])\n@router.post(\"/generate\")\nasync def generate_report(request: GenerateReportRequest, current_user: dict = Depends(get_current_user_keycloak)):\n    \"\"\"\n    Generate a report from documents using Map-Reduce with streaming\n    This endpoint:\n    1. Takes document IDs and a prompt (from frontend)\n    2. Uses Map-Reduce to process documents in parallel\n    3. Streams progress updates via Server-Sent Events\n    4. Returns final report in markdown format",
         "detail": "backend.routers.reports",
+        "documentation": {}
+    },
+    {
+        "label": "TAKConfigRequest",
+        "kind": 6,
+        "importPath": "backend.routers.tak",
+        "description": "backend.routers.tak",
+        "peekOfCode": "class TAKConfigRequest(BaseModel):\n    \"\"\"Request model for creating/updating TAK configuration\"\"\"\n    tak_enabled: bool = False\n    tak_host: str = Field(..., description=\"TAK server hostname\")\n    tak_port: int = Field(default=8089, ge=1, le=65535)\n    tak_username: str = Field(default=\"\", description=\"TAK username (optional for public servers)\")\n    tak_password: str = Field(default=\"\", description=\"TAK password (optional for public servers)\")\n    agent_callsign: str = Field(default=\"SoldierIQ-Agent\")\n    class Config:\n        json_schema_extra = {",
+        "detail": "backend.routers.tak",
+        "documentation": {}
+    },
+    {
+        "label": "TAKConfigResponse",
+        "kind": 6,
+        "importPath": "backend.routers.tak",
+        "description": "backend.routers.tak",
+        "peekOfCode": "class TAKConfigResponse(BaseModel):\n    \"\"\"Response model for TAK configuration (excludes password)\"\"\"\n    organization_id: str\n    tak_enabled: bool\n    tak_host: str\n    tak_port: int\n    tak_username: str\n    agent_callsign: str\n    class Config:\n        json_schema_extra = {",
+        "detail": "backend.routers.tak",
+        "documentation": {}
+    },
+    {
+        "label": "TAKStatusResponse",
+        "kind": 6,
+        "importPath": "backend.routers.tak",
+        "description": "backend.routers.tak",
+        "peekOfCode": "class TAKStatusResponse(BaseModel):\n    \"\"\"Response for TAK status check\"\"\"\n    tak_configured: bool\n    tak_enabled: bool\n# ==================== ENDPOINTS ====================\n@router.post(\"/config\", response_model=TAKConfigResponse, status_code=status.HTTP_201_CREATED)\nasync def configure_tak(\n    config: TAKConfigRequest,\n    current_user: dict = Depends(get_current_user_keycloak)\n):",
+        "detail": "backend.routers.tak",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
+        "importPath": "backend.routers.tak",
+        "description": "backend.routers.tak",
+        "peekOfCode": "router = APIRouter(prefix=\"/tak\", tags=[\"TAK Configuration\"])\n# ==================== REQUEST/RESPONSE MODELS ====================\nclass TAKConfigRequest(BaseModel):\n    \"\"\"Request model for creating/updating TAK configuration\"\"\"\n    tak_enabled: bool = False\n    tak_host: str = Field(..., description=\"TAK server hostname\")\n    tak_port: int = Field(default=8089, ge=1, le=65535)\n    tak_username: str = Field(default=\"\", description=\"TAK username (optional for public servers)\")\n    tak_password: str = Field(default=\"\", description=\"TAK password (optional for public servers)\")\n    agent_callsign: str = Field(default=\"SoldierIQ-Agent\")",
+        "detail": "backend.routers.tak",
         "documentation": {}
     },
     {
@@ -6002,6 +6404,105 @@
         "description": "backend.utils.streaming",
         "peekOfCode": "def create_sse_event_stream(\n    events: AsyncIterator[Dict[str, Any]],\n) -> AsyncIterator[str]:\n    \"\"\"\n    Convert structured events into SSE frames with keepalive heartbeats\n    Args:\n        events: Async iterator of event dictionaries\n    Yields:\n        str: SSE formatted strings\n    \"\"\"",
         "detail": "backend.utils.streaming",
+        "documentation": {}
+    },
+    {
+        "label": "save_tak_config",
+        "kind": 2,
+        "importPath": "backend.utils.tak_config_utils",
+        "description": "backend.utils.tak_config_utils",
+        "peekOfCode": "def save_tak_config(\n    organization_id: str,\n    tak_host: str,\n    tak_port: int,\n    tak_username: str,\n    tak_password: str,\n    tak_enabled: bool = True,\n    agent_callsign: str = \"SoldierIQ-Agent\"\n) -> str:\n    \"\"\"",
+        "detail": "backend.utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_tak_config",
+        "kind": 2,
+        "importPath": "backend.utils.tak_config_utils",
+        "description": "backend.utils.tak_config_utils",
+        "peekOfCode": "def get_tak_config(organization_id: str) -> Optional[Dict[str, Any]]:\n    \"\"\"\n    Get TAK configuration for an organization.\n    Args:\n        organization_id: Organization ID (ObjectId as string)\n    Returns:\n        Dict with TAK config or None if not found\n    \"\"\"\n    try:\n        mongo_client = get_mongodb_client()",
+        "detail": "backend.utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "delete_tak_config",
+        "kind": 2,
+        "importPath": "backend.utils.tak_config_utils",
+        "description": "backend.utils.tak_config_utils",
+        "peekOfCode": "def delete_tak_config(organization_id: str) -> bool:\n    \"\"\"\n    Delete TAK configuration for an organization.\n    Args:\n        organization_id: Organization ID (ObjectId as string)\n    Returns:\n        bool: True if deleted, False otherwise\n    \"\"\"\n    try:\n        mongo_client = get_mongodb_client()",
+        "detail": "backend.utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "is_tak_enabled",
+        "kind": 2,
+        "importPath": "backend.utils.tak_config_utils",
+        "description": "backend.utils.tak_config_utils",
+        "peekOfCode": "def is_tak_enabled(organization_id: str) -> bool:\n    \"\"\"\n    Check if TAK is enabled for an organization.\n    Args:\n        organization_id: Organization ID (ObjectId as string)\n    Returns:\n        bool: True if TAK is enabled, False otherwise\n    \"\"\"\n    config = get_tak_config(organization_id)\n    return config.get(\"tak_enabled\", False) if config else False",
+        "detail": "backend.utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "get_tak_credentials",
+        "kind": 2,
+        "importPath": "backend.utils.tak_config_utils",
+        "description": "backend.utils.tak_config_utils",
+        "peekOfCode": "def get_tak_credentials(organization_id: str) -> Optional[Dict[str, str]]:\n    \"\"\"\n    Get TAK credentials for use in chat endpoint.\n    Returns credentials needed to create TAK tools.\n    Args:\n        organization_id: Organization ID (ObjectId as string)\n    Returns:\n        Dict with tak_host, tak_port, tak_username, tak_password, agent_callsign\n        or None if TAK not configured/enabled\n    \"\"\"",
+        "detail": "backend.utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "TAK_CONFIGURATION_COLLECTION",
+        "kind": 5,
+        "importPath": "backend.utils.tak_config_utils",
+        "description": "backend.utils.tak_config_utils",
+        "peekOfCode": "TAK_CONFIGURATION_COLLECTION = \"tak_configuration\"\ndef save_tak_config(\n    organization_id: str,\n    tak_host: str,\n    tak_port: int,\n    tak_username: str,\n    tak_password: str,\n    tak_enabled: bool = True,\n    agent_callsign: str = \"SoldierIQ-Agent\"\n) -> str:",
+        "detail": "backend.utils.tak_config_utils",
+        "documentation": {}
+    },
+    {
+        "label": "create_tak_marker_tool",
+        "kind": 2,
+        "importPath": "backend.utils.tak_tools",
+        "description": "backend.utils.tak_tools",
+        "peekOfCode": "def create_tak_marker_tool(\n    tak_host: str = DEFAULT_TAK_HOST,\n    tak_port: int = DEFAULT_TAK_PORT,\n    tak_username: Optional[str] = None,\n    tak_password: Optional[str] = None,\n    agent_callsign: str = \"SoldierIQ-Agent\"\n):\n    \"\"\"\n    Create a tool for placing markers on TAK network\n    Args:",
+        "detail": "backend.utils.tak_tools",
+        "documentation": {}
+    },
+    {
+        "label": "create_tak_chat_tool",
+        "kind": 2,
+        "importPath": "backend.utils.tak_tools",
+        "description": "backend.utils.tak_tools",
+        "peekOfCode": "def create_tak_chat_tool(\n    tak_host: str = DEFAULT_TAK_HOST,\n    tak_port: int = DEFAULT_TAK_PORT,\n    tak_username: Optional[str] = None,\n    tak_password: Optional[str] = None,\n    agent_uid: str = \"soldieriq-agent\",\n    agent_callsign: str = \"SoldierIQ-Agent\"\n):\n    \"\"\"\n    Create a tool for sending chat messages on TAK network",
+        "detail": "backend.utils.tak_tools",
+        "documentation": {}
+    },
+    {
+        "label": "create_tak_route_tool",
+        "kind": 2,
+        "importPath": "backend.utils.tak_tools",
+        "description": "backend.utils.tak_tools",
+        "peekOfCode": "def create_tak_route_tool(\n    tak_host: str = DEFAULT_TAK_HOST,\n    tak_port: int = DEFAULT_TAK_PORT,\n    tak_username: Optional[str] = None,\n    tak_password: Optional[str] = None\n):\n    \"\"\"\n    Create a tool for creating routes on TAK network\n    Args:\n        tak_host: TAK server hostname",
+        "detail": "backend.utils.tak_tools",
+        "documentation": {}
+    },
+    {
+        "label": "DEFAULT_TAK_HOST",
+        "kind": 5,
+        "importPath": "backend.utils.tak_tools",
+        "description": "backend.utils.tak_tools",
+        "peekOfCode": "DEFAULT_TAK_HOST = \"137.184.101.250\"\nDEFAULT_TAK_PORT = 8087\ndef create_tak_marker_tool(\n    tak_host: str = DEFAULT_TAK_HOST,\n    tak_port: int = DEFAULT_TAK_PORT,\n    tak_username: Optional[str] = None,\n    tak_password: Optional[str] = None,\n    agent_callsign: str = \"SoldierIQ-Agent\"\n):\n    \"\"\"",
+        "detail": "backend.utils.tak_tools",
+        "documentation": {}
+    },
+    {
+        "label": "DEFAULT_TAK_PORT",
+        "kind": 5,
+        "importPath": "backend.utils.tak_tools",
+        "description": "backend.utils.tak_tools",
+        "peekOfCode": "DEFAULT_TAK_PORT = 8087\ndef create_tak_marker_tool(\n    tak_host: str = DEFAULT_TAK_HOST,\n    tak_port: int = DEFAULT_TAK_PORT,\n    tak_username: Optional[str] = None,\n    tak_password: Optional[str] = None,\n    agent_callsign: str = \"SoldierIQ-Agent\"\n):\n    \"\"\"\n    Create a tool for placing markers on TAK network",
+        "detail": "backend.utils.tak_tools",
         "documentation": {}
     },
     {
