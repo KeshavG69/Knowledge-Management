@@ -3,6 +3,7 @@ Agno Tools for TAK Integration
 Tools for AI agent to interact with TAK network
 """
 
+import asyncio
 from typing import Optional
 from agno.agent import Agent
 from clients.tak_client import TAKClient
@@ -12,6 +13,67 @@ from app.logger import logger
 # For testing: public FreeTAKServer
 DEFAULT_TAK_HOST = "137.184.101.250"
 DEFAULT_TAK_PORT = 8087
+
+
+async def _send_cot_async(
+    cot_xml: str,
+    tak_host: str,
+    tak_port: int,
+    tak_username: Optional[str] = None,
+    tak_password: Optional[str] = None
+) -> bool:
+    """
+    Helper function to send a single CoT message to TAK server.
+
+    Args:
+        cot_xml: CoT XML message to send
+        tak_host: TAK server host
+        tak_port: TAK server port
+        tak_username: Optional username for auth
+        tak_password: Optional password for auth
+
+    Returns:
+        True if sent successfully, False otherwise
+    """
+    async with TAKClient(
+        host=tak_host,
+        port=tak_port,
+        username=tak_username,
+        password=tak_password
+    ) as client:
+        return await client.send_cot(cot_xml)
+
+
+async def _send_multiple_cot_async(
+    cot_messages: list[str],
+    tak_host: str,
+    tak_port: int,
+    tak_username: Optional[str] = None,
+    tak_password: Optional[str] = None
+) -> bool:
+    """
+    Helper function to send multiple CoT messages to TAK server.
+
+    Args:
+        cot_messages: List of CoT XML messages to send
+        tak_host: TAK server host
+        tak_port: TAK server port
+        tak_username: Optional username for auth
+        tak_password: Optional password for auth
+
+    Returns:
+        True if all sent successfully, False otherwise
+    """
+    async with TAKClient(
+        host=tak_host,
+        port=tak_port,
+        username=tak_username,
+        password=tak_password
+    ) as client:
+        for cot_xml in cot_messages:
+            if not await client.send_cot(cot_xml):
+                return False
+        return True
 
 
 def create_tak_marker_tool(
@@ -84,21 +146,14 @@ def create_tak_marker_tool(
                 message=message
             )
 
-            # Connect and send
-            client = TAKClient(
-                host=tak_host,
-                port=tak_port,
-                username=tak_username,
-                password=tak_password
-            )
-            if not client.connect():
-                return {
-                    "success": False,
-                    "error": f"Failed to connect to TAK server at {tak_host}:{tak_port}"
-                }
-
-            success = client.send_cot(cot_xml)
-            client.disconnect()
+            # Send to TAK server
+            success = asyncio.run(_send_cot_async(
+                cot_xml=cot_xml,
+                tak_host=tak_host,
+                tak_port=tak_port,
+                tak_username=tak_username,
+                tak_password=tak_password
+            ))
 
             if success:
                 logger.info(f"✅ TAK marker placed successfully: {callsign}")
@@ -180,21 +235,14 @@ def create_tak_chat_tool(
                 message=message
             )
 
-            # Connect and send
-            client = TAKClient(
-                host=tak_host,
-                port=tak_port,
-                username=tak_username,
-                password=tak_password
-            )
-            if not client.connect():
-                return {
-                    "success": False,
-                    "error": f"Failed to connect to TAK server at {tak_host}:{tak_port}"
-                }
-
-            success = client.send_cot(cot_xml)
-            client.disconnect()
+            # Send to TAK server
+            success = asyncio.run(_send_cot_async(
+                cot_xml=cot_xml,
+                tak_host=tak_host,
+                tak_port=tak_port,
+                tak_username=tak_username,
+                tak_password=tak_password
+            ))
 
             if success:
                 logger.info(f"✅ TAK message sent successfully")
@@ -299,22 +347,14 @@ def create_tak_route_tool(
                 route_name=route_name
             )
 
-            # Connect to TAK server
-            client = TAKClient(host=tak_host, port=tak_port)
-            if not client.connect():
-                return {
-                    "success": False,
-                    "error": f"Failed to connect to TAK server at {tak_host}:{tak_port}"
-                }
-
-            # Send all waypoint messages
-            success = True
-            for cot_xml in cot_messages:
-                if not client.send_cot(cot_xml):
-                    success = False
-                    break
-
-            client.disconnect()
+            # Send all waypoint messages to TAK server
+            success = asyncio.run(_send_multiple_cot_async(
+                cot_messages=cot_messages,
+                tak_host=tak_host,
+                tak_port=tak_port,
+                tak_username=tak_username,
+                tak_password=tak_password
+            ))
 
             if success:
                 logger.info(f"✅ TAK route created successfully: {route_name}")

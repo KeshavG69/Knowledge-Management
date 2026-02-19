@@ -34,7 +34,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     document_ids: Optional[list[str]] = None
     file_names: Optional[list[str]] = None  # Titles of selected documents
-    model: Optional[str] = "anthropic/claude-sonnet-4.5"
+    model: Optional[str] = "anthropic/claude-sonnet-4.5"  # Use "functiongemma:270m" for hybrid mode
     tak_credentials: Optional[TAKCredentials] = None  # Optional TAK integration
     # user_id and organization_id are extracted from JWT token by backend
 
