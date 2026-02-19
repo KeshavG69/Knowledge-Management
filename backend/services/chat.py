@@ -31,6 +31,7 @@ async def create_chat_agent(
         document_ids: Optional list of document IDs to filter search results
         file_names: Optional list of document titles/filenames to show in context
         model: LLM model name (default: google/gemini-2.5-pro via OpenRouter)
+               Special case: "functiongemma:270m" enables hybrid mode with FunctionGemma for tool calling
         tak_credentials: Optional TAK server credentials for TAK integration
 
     Returns:
@@ -39,8 +40,18 @@ async def create_chat_agent(
     try:
         logger.info(f"Creating chat agent for session: {session_id}")
 
-        # Get LLM (Agno-compatible)
-        llm = get_llm_agno(model=model)
+        # Check if hybrid mode (FunctionGemma for tool calling + better model for output)
+        if model == "functiongemma:270m":
+            logger.info("🔀 Hybrid mode enabled: FunctionGemma for tool calling + Gemma 3 27B for output")
+            # Primary model: FunctionGemma for reasoning and tool calling (slow but hidden)
+            primary_llm = get_llm_agno(model="functiongemma:270m", provider="functiongemma")
+            # Output model: Better model for final response generation (fast, visible to user)
+            output_llm = get_llm_agno(model="google/gemma-3-4b-it", provider="openrouter")
+            use_hybrid = True
+        else:
+            # Standard mode: single model for everything
+            llm = get_llm_agno(model=model)
+            use_hybrid = False
 
         # Get database and memory manager
         db_instance = get_agent_db()
@@ -317,15 +328,16 @@ Deliver comprehensive, well-explained answers that prioritize knowledge base sou
         # Create agent
         agent = Agent(
             name="Knowledge Assistant",
-            model=llm,
+            model=primary_llm if use_hybrid else llm,
+            output_model=output_llm if use_hybrid else None,  # Only set output_model in hybrid mode
             session_id=session_id,
             user_id=user_id,
             knowledge_retriever=knowledge_retriever,
-            tools=tak_tools if tak_tools else None,  # Add TAK tools if available
+            tools=tak_tools if tak_tools else None,
             instructions=instructions,
             markdown=True,
             add_history_to_context=True,
-            num_history_runs=3,  # Keep last 3 conversation turns
+            num_history_runs=3,
             add_datetime_to_context=True,
             db=db_instance,
             memory_manager=memory_manager,
@@ -336,7 +348,8 @@ Deliver comprehensive, well-explained answers that prioritize knowledge base sou
         )
 
         tak_status = f" with {len(tak_tools)} TAK tools" if tak_tools else ""
-        logger.info(f"✅ Chat agent created for session: {session_id}{tak_status}")
+        mode_info = " (Hybrid: FunctionGemma + Gemma 3 27B)" if use_hybrid else ""
+        logger.info(f"✅ Chat agent created for session: {session_id}{tak_status}{mode_info}")
         return agent
 
     except Exception as e:

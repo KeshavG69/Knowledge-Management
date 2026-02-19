@@ -128,7 +128,13 @@ async def stream_agent_response(
                 }
                 continue
 
-            if agno_event in {RunEvent.run_content.value, RunEvent.run_intermediate_content.value}:
+            # Skip intermediate content (primary model output in hybrid mode with output_model)
+            if agno_event == RunEvent.run_intermediate_content.value:
+                logger.info(f"⏭️ Skipping intermediate content (primary model): {extract_text(payload.get('content'))[:50]}...")
+                continue
+
+            # Only stream final content (output_model response or single model response)
+            if agno_event == RunEvent.run_content.value:
                 delta_text = extract_text(payload.get("content"))
                 if delta_text:
                     accumulated_content.append(delta_text)

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     GROQ_API_KEY: str = ""
     ELEVENLABS_API_KEY: str = ""
+    FUNCTION_API_KEY: str = ""  
 
 
     # iDrive E2 Storage

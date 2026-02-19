@@ -15,6 +15,7 @@ const AVAILABLE_MODELS: Model[] = [
   { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash" },
   { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro" },
   { id: "anthropic/claude-haiku-4.5", name: "Claude Haiku 4.5" },
+  { id: "functiongemma:270m", name: "FunctionGemma 270M (Hybrid)" },
 ];
 
 export default function ModelSelector() {
