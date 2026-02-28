@@ -6,7 +6,7 @@ ENV MODEL_NAME="Keshav069/functiongemma_finetune_tak"
 ENV QUANTIZATION="gguf"
 ENV GGUF_FILE="functiongemma-270m-it.BF16.gguf"
 ENV PORT=8080
-ENV VLLM_DEVICE="cpu"
+ENV CUDA_VISIBLE_DEVICES=""
 
 # Expose port
 EXPOSE 8080
