@@ -71,5 +71,6 @@ dependencies = [
     "pytak[with-crypto]>=7.2.1",
     "pyopenssl>=25.3.0",
     "cryptography>=46.0.5",
+    "mlx-lm>=0.30.7",
 ]
 
