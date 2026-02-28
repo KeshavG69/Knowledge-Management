@@ -4238,30 +4238,6 @@
         "documentation": {}
     },
     {
-        "label": "load",
-        "importPath": "mlx_lm",
-        "description": "mlx_lm",
-        "isExtraImport": true,
-        "detail": "mlx_lm",
-        "documentation": {}
-    },
-    {
-        "label": "generate",
-        "importPath": "mlx_lm",
-        "description": "mlx_lm",
-        "isExtraImport": true,
-        "detail": "mlx_lm",
-        "documentation": {}
-    },
-    {
-        "label": "make_sampler",
-        "importPath": "mlx_lm.sample_utils",
-        "description": "mlx_lm.sample_utils",
-        "isExtraImport": true,
-        "detail": "mlx_lm.sample_utils",
-        "documentation": {}
-    },
-    {
         "label": "Dataset",
         "importPath": "datasets",
         "description": "datasets",
@@ -6298,33 +6274,6 @@
         "description": "backend.scripts.generate_training_data",
         "peekOfCode": "PROMPT_MULTI_TOOLS = \"\"\"Generate {num_examples} examples where the user needs {num_tools} tools used IN PARALLEL.\nTools to use: {tool_names}\nContext: Military/tactical system. User requests should naturally require all {num_tools} tools at once.\nExamples of multi-tool scenarios:\n- Search knowledge + place marker + send message: \"Find intel on area X, mark it, and alert the team\"\n- Search + create route + send message: \"Find patrol procedures, plan route from A to B, notify team\"\n- Place marker + send message: \"Mark enemy position at coordinates and alert everyone\"\n- All 4 tools: \"Search for mission brief, mark objective coordinates, create route, and broadcast mission start\"\nReturn JSON array:\n[",
         "detail": "backend.scripts.generate_training_data",
-        "documentation": {}
-    },
-    {
-        "label": "main",
-        "kind": 2,
-        "importPath": "backend.scripts.mlx_inference_functiongemma_v3",
-        "description": "backend.scripts.mlx_inference_functiongemma_v3",
-        "peekOfCode": "def main():\n    print(\"=\" * 80)\n    print(\"🚀 FunctionGemma MLX Inference (OpenAI Format)\")\n    print(\"=\" * 80)\n    print(f\"\\n📦 Loading model: {MODEL_ID}\\n\")\n    # Load model\n    model, tokenizer = load(MODEL_ID)\n    print(\"✅ Model loaded!\\n\")\n    # Create sampler - very low temperature to reduce repetition\n    sampler = make_sampler(temp=0.1, top_p=0.9)",
-        "detail": "backend.scripts.mlx_inference_functiongemma_v3",
-        "documentation": {}
-    },
-    {
-        "label": "MODEL_ID",
-        "kind": 5,
-        "importPath": "backend.scripts.mlx_inference_functiongemma_v3",
-        "description": "backend.scripts.mlx_inference_functiongemma_v3",
-        "peekOfCode": "MODEL_ID = \"Keshav069/functiongemma_finetune_tak\"\n# Tool definitions in OpenAI function calling format\nTOOLS = [\n    {\n        \"type\": \"function\",\n        \"function\": {\n            \"name\": \"search_knowledge_base\",\n            \"description\": \"Search the knowledge base using semantic search. Use this tool to find information from uploaded documents, PDFs, videos, and images.\",\n            \"parameters\": {\n                \"type\": \"object\",",
-        "detail": "backend.scripts.mlx_inference_functiongemma_v3",
-        "documentation": {}
-    },
-    {
-        "label": "TOOLS",
-        "kind": 5,
-        "importPath": "backend.scripts.mlx_inference_functiongemma_v3",
-        "description": "backend.scripts.mlx_inference_functiongemma_v3",
-        "peekOfCode": "TOOLS = [\n    {\n        \"type\": \"function\",\n        \"function\": {\n            \"name\": \"search_knowledge_base\",\n            \"description\": \"Search the knowledge base using semantic search. Use this tool to find information from uploaded documents, PDFs, videos, and images.\",\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"query\": {\"type\": \"string\", \"description\": \"Search query to find relevant documents\"},",
-        "detail": "backend.scripts.mlx_inference_functiongemma_v3",
         "documentation": {}
     },
     {
