@@ -1,12 +1,12 @@
-# vLLM Dockerfile for FunctionGemma GGUF deployment on Railway
-FROM vllm/vllm-openai:latest
+# vLLM CPU Dockerfile for FunctionGemma GGUF deployment on Railway
+FROM public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:latest
 
 # Set environment variables
 ENV MODEL_NAME="Keshav069/functiongemma_finetune_tak"
 ENV QUANTIZATION="gguf"
 ENV GGUF_FILE="functiongemma-270m-it.BF16.gguf"
 ENV PORT=8080
-ENV CUDA_VISIBLE_DEVICES=""
+ENV VLLM_CPU_KVCACHE_SPACE=4
 
 # Expose port
 EXPOSE 8080
@@ -16,7 +16,6 @@ CMD python3 -m vllm.entrypoints.openai.api_server \
     --model $MODEL_NAME \
     --quantization $QUANTIZATION \
     --gguf-file $GGUF_FILE \
-    --device cpu \
     --host 0.0.0.0 \
     --port $PORT \
     --trust-remote-code \
