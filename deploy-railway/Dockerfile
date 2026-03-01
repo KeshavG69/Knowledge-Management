@@ -12,12 +12,4 @@ ENV VLLM_CPU_KVCACHE_SPACE=4
 EXPOSE 8080
 
 # Start vLLM server with GGUF model in CPU mode
-CMD python3 -m vllm.entrypoints.openai.api_server \
-    --model $MODEL_NAME \
-    --quantization $QUANTIZATION \
-    --gguf-file $GGUF_FILE \
-    --host 0.0.0.0 \
-    --port $PORT \
-    --trust-remote-code \
-    --max-model-len 2048 \
-    --dtype bfloat16
+CMD ["sh", "-c", "vllm serve ${MODEL_NAME} --quantization ${QUANTIZATION} --gguf-file ${GGUF_FILE} --host 0.0.0.0 --port ${PORT} --trust-remote-code --max-model-len 2048 --dtype bfloat16"]
