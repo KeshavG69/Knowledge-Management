@@ -278,7 +278,7 @@ export default function ChatArea() {
       // Extract file names from selected documents
       const fileNames = documentIds
         .map(docId => {
-          const doc = documents.find(d => d._id === docId);
+          const doc = documents.find(d => d.id === docId);
           return doc?.file_name;
         })
         .filter((name): name is string => name !== undefined);

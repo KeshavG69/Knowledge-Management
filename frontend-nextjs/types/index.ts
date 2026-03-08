@@ -9,7 +9,7 @@ export interface User {
 
 // Document Types
 export interface Document {
-  _id: string;
+  id: string;  // Changed from _id (MongoDB) to id (PostgreSQL)
   file_name: string;
   folder_name?: string;
   user_id: string;

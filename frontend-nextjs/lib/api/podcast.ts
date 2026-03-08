@@ -1,7 +1,7 @@
 import apiClient from './client';
 
 export interface PodcastEpisode {
-  _id: string;
+  id: string;  // Changed from _id (MongoDB) to id (PostgreSQL)
   organization_id: string;
   document_ids: string[];
   title?: string;

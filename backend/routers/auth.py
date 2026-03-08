@@ -6,7 +6,7 @@ All authentication handled via Keycloak.
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from bson import ObjectId
+import uuid
 
 # Keycloak Authentication imports
 from auth.keycloak_auth import get_current_user_keycloak, get_keycloak_client, get_keycloak_admin
@@ -78,20 +78,20 @@ async def signup(user_data: SignupRequest):
     Register a new user in Keycloak with organization_id attribute
 
     Flow:
-    1. Generate unique ObjectId for organization
+    1. Generate unique UUID for organization
     2. Create user in Keycloak with organization_id as custom attribute
     3. User can login immediately (no email verification required)
     4. Admin assigns roles individually via Keycloak UI or API
 
     Note: organization_name can be duplicate (just a display label)
-          organization_id is the unique identifier (MongoDB ObjectId)
+          organization_id is the unique identifier (UUID)
     """
     try:
         keycloak_admin = get_keycloak_admin()
 
-        # Generate unique ObjectId for organization (MongoDB format)
+        # Generate unique UUID for organization
         # Each user gets their own org by default; admin can update later to group users
-        organization_id = str(ObjectId())
+        organization_id = str(uuid.uuid4())
         organization_name = f"{user_data.firstName} {user_data.lastName}'s Organization"
 
         # Prepare user data

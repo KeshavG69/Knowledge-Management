@@ -6,11 +6,11 @@ Saves results to workflows collection with type="report_suggestions"
 
 import asyncio
 import json
+import uuid
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from bson import ObjectId
 
-from clients.mongodb_client import get_mongodb_client
+from clients.postgres_client import get_postgres_client
 from clients.ultimate_llm import get_llm
 from app.logger import logger
 
@@ -20,7 +20,7 @@ class FormatSuggesterService:
 
     def __init__(self):
         """Initialize format suggester service"""
-        self.mongodb_client = get_mongodb_client()
+        self.postgres_client = get_postgres_client()
         self.llm = get_llm(model="google/gemini-3-flash-preview", provider="openrouter")
 
     async def get_or_create_suggestions(
@@ -36,46 +36,39 @@ class FormatSuggesterService:
         If yes, returns existing workflow_id. If no, creates new task.
 
         Args:
-            document_ids: List of document IDs
-            user_id: Optional user ID
-            organization_id: Optional organization ID
+            document_ids: List of document IDs (UUIDs)
+            user_id: Optional user ID (UUID)
+            organization_id: Optional organization ID (UUID)
 
         Returns:
-            workflow_id: MongoDB workflow ID for tracking
+            workflow_id: PostgreSQL workflow ID (UUID) for tracking
         """
-        # Convert to ObjectIds for query
-        doc_object_ids = [ObjectId(doc_id) for doc_id in document_ids]
-
         # Check if suggestions already exist for these documents
-        existing = await self.mongodb_client.async_find_document(
-            collection="workflows",
-            query={
-                "type": "report_suggestions",
-                "document_ids": {"$all": doc_object_ids},
-                "$expr": {"$eq": [{"$size": "$document_ids"}, len(doc_object_ids)]}  # Exact match
-            }
+        existing = await self.postgres_client.find_workflow_by_documents(
+            workflow_type="report_suggestions",
+            document_ids=document_ids
         )
 
         if existing:
-            logger.info(f"✅ Found existing suggestions: {existing['_id']}")
-            return str(existing["_id"])
+            logger.info(f"✅ Found existing suggestions: {existing['id']}")
+            return str(existing["id"])
 
         # Create new workflow document with "processing" status
+        workflow_id = str(uuid.uuid4())
+
         workflow_doc = {
+            "id": workflow_id,
             "type": "report_suggestions",
-            "document_ids": doc_object_ids,
-            "user_id": user_id,  # Keep as string (Keycloak UUID)
-            "organization_id": ObjectId(organization_id) if organization_id else None,  # Convert to ObjectId
+            "document_ids": document_ids,  # Already UUIDs
+            "user_id": user_id,  # Keycloak UUID string
+            "organization_id": organization_id,  # UUID string
             "status": "processing",
             "data": {},
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
 
-        workflow_id = await self.mongodb_client.async_insert_document(
-            collection="workflows",
-            document=workflow_doc
-        )
+        await self.postgres_client.insert_workflow(workflow_doc)
 
         logger.info(f"🚀 Created new suggestions workflow: {workflow_id}")
         return workflow_id
@@ -94,10 +87,10 @@ class FormatSuggesterService:
         REDUCE Phase: Generate format suggestions from analyses
 
         Args:
-            workflow_id: MongoDB workflow ID to update
-            document_ids: List of document IDs to analyze
-            user_id: Optional user ID
-            organization_id: Optional organization ID
+            workflow_id: PostgreSQL workflow ID (UUID) to update
+            document_ids: List of document IDs (UUIDs) to analyze
+            user_id: Optional user ID (UUID)
+            organization_id: Optional organization ID (UUID)
         """
         try:
             logger.info(f"🔄 Starting format suggestions for workflow: {workflow_id}")
@@ -112,18 +105,15 @@ class FormatSuggesterService:
             suggestions = await self._reduce_create_suggestions(analyses)
 
             # Update workflow with completed suggestions
-            await self.mongodb_client.async_update_document(
-                collection="workflows",
-                query={"_id": ObjectId(workflow_id)},
-                update={
-                    "$set": {
-                        "status": "completed",
-                        "data": {
-                            "suggestions": suggestions,
-                            "analysis_count": len(analyses)
-                        },
-                        "updated_at": datetime.now(timezone.utc)
-                    }
+            await self.postgres_client.update_workflow(
+                workflow_id=workflow_id,
+                updates={
+                    "status": "completed",
+                    "data": {
+                        "suggestions": suggestions,
+                        "analysis_count": len(analyses)
+                    },
+                    "updated_at": datetime.now(timezone.utc)
                 }
             )
 
@@ -133,17 +123,14 @@ class FormatSuggesterService:
             logger.error(f"❌ Format suggestions failed: {str(e)}")
 
             # Update workflow with error status
-            await self.mongodb_client.async_update_document(
-                collection="workflows",
-                query={"_id": ObjectId(workflow_id)},
-                update={
-                    "$set": {
-                        "status": "failed",
-                        "data": {
-                            "error": str(e)
-                        },
-                        "updated_at": datetime.now(timezone.utc)
-                    }
+            await self.postgres_client.update_workflow(
+                workflow_id=workflow_id,
+                updates={
+                    "status": "failed",
+                    "data": {
+                        "error": str(e)
+                    },
+                    "updated_at": datetime.now(timezone.utc)
                 }
             )
 
@@ -169,17 +156,14 @@ class FormatSuggesterService:
             """Analyze a single document with semaphore"""
             async with semaphore:
                 try:
-                    # Query MongoDB directly for raw_content
-                    document = await self.mongodb_client.async_find_document(
-                        collection="documents",
-                        query={"_id": ObjectId(doc_id)}
-                    )
+                    # Query PostgreSQL for document
+                    document = await self.postgres_client.find_document_by_id(doc_id)
 
                     if not document:
                         return {"document_id": doc_id, "analysis": "Document not found", "success": False}
 
                     raw_content = document.get("raw_content", "")
-                    filename = document.get("filename", "Unknown")
+                    filename = document.get("file_name", "Unknown")
 
                     if not raw_content:
                         return {"document_id": doc_id, "filename": filename, "analysis": "No content found", "success": False}
@@ -309,23 +293,16 @@ Be creative and specific!"""
         Get format suggestions by document IDs (for frontend polling)
 
         Args:
-            document_ids: List of document IDs
+            document_ids: List of document IDs (UUIDs)
 
         Returns:
             Dict with status and suggestions
         """
         try:
-            # Convert to ObjectIds
-            doc_object_ids = [ObjectId(doc_id) for doc_id in document_ids]
-
             # Find workflow for these documents
-            workflow = await self.mongodb_client.async_find_document(
-                collection="workflows",
-                query={
-                    "type": "report_suggestions",
-                    "document_ids": {"$all": doc_object_ids},
-                    "$expr": {"$eq": [{"$size": "$document_ids"}, len(doc_object_ids)]}
-                }
+            workflow = await self.postgres_client.find_workflow_by_documents(
+                workflow_type="report_suggestions",
+                document_ids=document_ids
             )
 
             if not workflow:

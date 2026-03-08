@@ -3,7 +3,7 @@ Report Suggestions Router - API endpoints for AI-powered format suggestions
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from bson import ObjectId
+import uuid
 
 from models.report_models import SuggestFormatsRequest
 from services.format_suggester import get_format_suggester_service
@@ -55,17 +55,22 @@ async def suggest_formats(request: SuggestFormatsRequest, background_tasks: Back
         user_id = current_user.get("id")
         organization_id = current_user.get("organization_id")
 
-        # Validate all document_ids
+        # Validate all document_ids are UUIDs
         for doc_id in request.document_ids:
-            if not ObjectId.is_valid(doc_id):
+            try:
+                uuid.UUID(doc_id)
+            except ValueError:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid document_id format: {doc_id}"
                 )
 
         # Validate organization_id format
-        if organization_id and not ObjectId.is_valid(organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
+        if organization_id:
+            try:
+                uuid.UUID(organization_id)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
 
         logger.info(f"📊 Format suggestions requested for {len(request.document_ids)} documents")
 
@@ -146,9 +151,11 @@ async def get_suggestions(request: SuggestFormatsRequest, current_user: dict = D
     ```
     """
     try:
-        # Validate all document_ids
+        # Validate all document_ids are UUIDs
         for doc_id in request.document_ids:
-            if not ObjectId.is_valid(doc_id):
+            try:
+                uuid.UUID(doc_id)
+            except ValueError:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid document_id format: {doc_id}"

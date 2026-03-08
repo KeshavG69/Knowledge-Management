@@ -3,7 +3,7 @@ Mind Map Router - API endpoints for mind map generation
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from bson import ObjectId
+import uuid
 
 from models.mindmap import MindMapRequest
 from services.mindmap_service import get_mindmap_service
@@ -56,9 +56,11 @@ async def generate_mindmap(request: MindMapRequest, current_user: dict = Depends
         user_id = current_user.get("id")
         organization_id = current_user.get("organization_id")
 
-        # Validate all document_ids
+        # Validate all document_ids are UUIDs
         for doc_id in request.document_ids:
-            if not ObjectId.is_valid(doc_id):
+            try:
+                uuid.UUID(doc_id)
+            except ValueError:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid document_id format: {doc_id}"
@@ -94,14 +96,16 @@ async def get_mindmap(mind_map_id: str, current_user: dict = Depends(get_current
     Returns the saved mind map with nodes and edges
 
     Args:
-        mind_map_id: MongoDB mind map ID
+        mind_map_id: Mind map UUID
 
     Returns:
         Mind map data
     """
     try:
-        # Validate mind_map_id
-        if not ObjectId.is_valid(mind_map_id):
+        # Validate mind_map_id is a UUID
+        try:
+            uuid.UUID(mind_map_id)
+        except ValueError:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid mind_map_id format: {mind_map_id}"
@@ -139,7 +143,7 @@ async def list_mindmaps(current_user: dict = Depends(get_current_user_keycloak))
     try:
         # Extract user_id and organization_id from JWT token
         user_id = current_user.get("id")  # Keycloak UUID string
-        organization_id = current_user.get("organization_id")  # MongoDB ObjectId string
+        organization_id = current_user.get("organization_id")  # UUID string
 
         if not user_id or not organization_id:
             raise HTTPException(
@@ -147,8 +151,10 @@ async def list_mindmaps(current_user: dict = Depends(get_current_user_keycloak))
                 detail="User must belong to an organization"
             )
 
-        # Validate organization_id format
-        if not ObjectId.is_valid(organization_id):
+        # Validate organization_id format is a UUID
+        try:
+            uuid.UUID(organization_id)
+        except ValueError:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid organization_id format: {organization_id}"
