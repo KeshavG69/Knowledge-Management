@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from app.settings import settings
 from app.middleware import  SecurityHeadersMiddleware
 from app.logger import logger
-from routers import health, upload, chat, models, auth, mindmap, report_suggestions, reports, flashcards, podcast, tak
+from routers import health, upload, chat, models, auth, mindmap, report_suggestions, reports, flashcards, podcast, tak, simple_chat
 
 
 @asynccontextmanager
@@ -72,6 +72,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(health.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(simple_chat.router, prefix="/api")
 app.include_router(models.router, prefix="/api")
 app.include_router(mindmap.router, prefix="/api")
 app.include_router(report_suggestions.router, prefix="/api")
