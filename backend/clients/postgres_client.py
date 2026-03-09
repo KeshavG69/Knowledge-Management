@@ -274,7 +274,11 @@ class PostgresClient:
 
         for key, value in updates.items():
             set_clauses.append(f"{key} = ${param_index}")
-            params.append(value)
+            # Convert dict to JSON string for JSONB columns (like 'metadata')
+            if isinstance(value, dict):
+                params.append(json.dumps(value))
+            else:
+                params.append(value)
             param_index += 1
 
         # Add updated_at
@@ -473,14 +477,75 @@ class PostgresClient:
         logger.info(f"✅ Podcast inserted: {result}")
         return str(result)
 
+    async def find_podcast(
+        self,
+        organization_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        podcast_id: str = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Find a podcast by ID
+
+        Args:
+            organization_id: Organization UUID (optional for additional filtering)
+            user_id: User UUID (optional for additional filtering)
+            podcast_id: Podcast UUID (required)
+
+        Returns:
+            Podcast dict or None if not found
+        """
+        pool = await self.get_pool()
+
+        # Build query dynamically based on provided filters
+        conditions = ["id = $1"]
+        params = [uuid.UUID(podcast_id)]
+        param_index = 2
+
+        if organization_id:
+            conditions.append(f"organization_id = ${param_index}")
+            params.append(uuid.UUID(organization_id))
+            param_index += 1
+
+        if user_id:
+            conditions.append(f"user_id = ${param_index}")
+            params.append(uuid.UUID(user_id))
+
+        query = f"""
+            SELECT * FROM podcasts
+            WHERE {' AND '.join(conditions)}
+        """
+
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(query, *params)
+
+        if row:
+            result = dict(row)
+            # Convert UUID objects to strings
+            for key, value in result.items():
+                if isinstance(value, uuid.UUID):
+                    result[key] = str(value)
+            return result
+        return None
+
     async def update_podcast(
         self,
-        organization_id: str,
-        user_id: str,
         podcast_id: str,
-        updates: Dict[str, Any]
+        updates: Dict[str, Any],
+        organization_id: Optional[str] = None,
+        user_id: Optional[str] = None
     ) -> int:
-        """Update a podcast"""
+        """
+        Update a podcast
+
+        Args:
+            podcast_id: Podcast UUID (required)
+            updates: Dictionary of fields to update
+            organization_id: Organization UUID (optional for additional filtering)
+            user_id: User UUID (optional for additional filtering)
+
+        Returns:
+            Number of rows updated
+        """
         pool = await self.get_pool()
 
         set_clauses = []
@@ -489,23 +554,35 @@ class PostgresClient:
 
         for key, value in updates.items():
             set_clauses.append(f"{key} = ${param_index}")
-            params.append(value)
+            # Convert dict to JSON string for JSONB columns (like 'script')
+            if isinstance(value, dict):
+                params.append(json.dumps(value))
+            else:
+                params.append(value)
             param_index += 1
 
         set_clauses.append(f"updated_at = ${param_index}")
         params.append(datetime.utcnow())
         param_index += 1
 
-        params.extend([
-            uuid.UUID(podcast_id),
-            uuid.UUID(organization_id),
-            uuid.UUID(user_id)
-        ])
+        # Build WHERE clause dynamically
+        where_conditions = [f"id = ${param_index}"]
+        params.append(uuid.UUID(podcast_id))
+        param_index += 1
+
+        if organization_id:
+            where_conditions.append(f"organization_id = ${param_index}")
+            params.append(uuid.UUID(organization_id))
+            param_index += 1
+
+        if user_id:
+            where_conditions.append(f"user_id = ${param_index}")
+            params.append(uuid.UUID(user_id))
 
         query = f"""
             UPDATE podcasts
             SET {', '.join(set_clauses)}
-            WHERE id = ${param_index} AND organization_id = ${param_index + 1} AND user_id = ${param_index + 2}
+            WHERE {' AND '.join(where_conditions)}
         """
 
         async with pool.acquire() as conn:
@@ -576,11 +653,11 @@ class PostgresClient:
         param_index = 2
 
         for key, value in updates.items():
-            if key == 'data':
-                set_clauses.append(f"{key} = ${param_index}")
+            set_clauses.append(f"{key} = ${param_index}")
+            # Convert dict to JSON string for JSONB columns (like 'data')
+            if isinstance(value, dict):
                 params.append(json.dumps(value))
             else:
-                set_clauses.append(f"{key} = ${param_index}")
                 params.append(value)
             param_index += 1
 
