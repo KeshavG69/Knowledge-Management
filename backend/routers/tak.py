@@ -55,7 +55,7 @@ class TAKConfigResponse(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "organization_id": "507f1f77bcf86cd799439012",
+                "organization_id": "123e4567-e89b-12d3-a456-426614174000",
                 "tak_enabled": True,
                 "tak_host": "tak.company.com",
                 "tak_port": 8089,
@@ -101,8 +101,8 @@ async def configure_tak(
         # TODO: Add password encryption here before saving
         # For now, storing as plain text (should be encrypted in production!)
 
-        # Save configuration
-        config_id = save_tak_config(
+        # Save configuration (async call)
+        config_id = await save_tak_config(
             organization_id=organization_id,
             tak_host=config.tak_host,
             tak_port=config.tak_port,
@@ -149,7 +149,7 @@ async def get_tak_configuration(
                 detail="User must belong to an organization"
             )
 
-        config = get_tak_config(organization_id)
+        config = await get_tak_config(organization_id)
 
         if not config:
             raise HTTPException(
@@ -194,7 +194,7 @@ async def get_tak_status(
                 tak_enabled=False
             )
 
-        config = get_tak_config(organization_id)
+        config = await get_tak_config(organization_id)
 
         return TAKStatusResponse(
             tak_configured=config is not None,
@@ -227,7 +227,7 @@ async def delete_tak_configuration(
                 detail="User must belong to an organization"
             )
 
-        success = delete_tak_config(organization_id)
+        success = await delete_tak_config(organization_id)
 
         if not success:
             raise HTTPException(

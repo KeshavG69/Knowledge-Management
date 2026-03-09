@@ -5,11 +5,11 @@ Generates flashcards using Map-Reduce pattern
 
 import asyncio
 import json
+import uuid
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from bson import ObjectId
 
-from clients.mongodb_client import get_mongodb_client
+from clients.postgres_client import get_postgres_client
 from clients.ultimate_llm import get_llm
 from app.logger import logger
 
@@ -19,7 +19,7 @@ class FlashcardGeneratorService:
 
     def __init__(self):
         """Initialize flashcard generator service"""
-        self.mongodb_client = get_mongodb_client()
+        self.postgres_client = get_postgres_client()
         self.llm = get_llm(model="google/gemini-3-flash-preview", provider="openrouter")
 
     async def generate_flashcards(
@@ -93,17 +93,14 @@ class FlashcardGeneratorService:
         async def extract_from_one_document(doc_id: str) -> Dict[str, Any]:
             async with semaphore:
                 try:
-                    # Query MongoDB for document
-                    document = await self.mongodb_client.async_find_document(
-                        collection="documents",
-                        query={"_id": ObjectId(doc_id)}
-                    )
+                    # Query PostgreSQL for document
+                    document = await self.postgres_client.find_document_by_id(doc_id)
 
                     if not document:
                         logger.warning(f"⚠️ Document {doc_id} not found")
                         return {"document_id": doc_id, "concepts": "", "success": False}
 
-                    filename = document.get("filename", "Unknown")
+                    filename = document.get("file_name", "Unknown")
                     raw_content = document.get("raw_content", "")
 
                     if not raw_content:
@@ -234,24 +231,27 @@ Return ONLY a JSON object in this exact format (no markdown, no code fences):
         flashcard_data: Dict[str, Any],
         user_id: Optional[str],
         organization_id: Optional[str]
-    ) -> ObjectId:
+    ) -> str:
         """
-        Save flashcard set to workflows collection
+        Save flashcard set to workflows table in PostgreSQL
 
         Args:
-            document_ids: List of document IDs
+            document_ids: List of document IDs (UUIDs)
             flashcard_data: Generated flashcard data
-            user_id: Optional user ID
-            organization_id: Optional organization ID
+            user_id: Optional user ID (UUID)
+            organization_id: Optional organization ID (UUID)
 
         Returns:
-            Inserted workflow ID
+            Inserted workflow ID (UUID as string)
         """
+        workflow_id = str(uuid.uuid4())
+
         workflow_doc = {
+            "id": workflow_id,
             "type": "flashcards",
-            "document_ids": [ObjectId(doc_id) for doc_id in document_ids],
-            "user_id": user_id,  # Keep as string (Keycloak UUID)
-            "organization_id": ObjectId(organization_id) if organization_id else None,  # Convert to ObjectId
+            "document_ids": document_ids,  # Already UUIDs
+            "user_id": user_id,  # Keycloak UUID string
+            "organization_id": organization_id,  # UUID string
             "status": "completed",
             "data": {
                 "title": flashcard_data["title"],
@@ -263,10 +263,7 @@ Return ONLY a JSON object in this exact format (no markdown, no code fences):
             "updated_at": datetime.now(timezone.utc)
         }
 
-        workflow_id = await self.mongodb_client.async_insert_document(
-            collection="workflows",
-            document=workflow_doc
-        )
+        await self.postgres_client.insert_workflow(workflow_doc)
 
         logger.info(f"✅ Saved flashcard set to workflows: {workflow_id}")
         return workflow_id

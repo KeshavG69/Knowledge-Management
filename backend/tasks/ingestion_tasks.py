@@ -1,6 +1,6 @@
 """
 Document Ingestion Celery Tasks
-Processes documents using existing MongoDB document IDs
+Processes documents using existing PostgreSQL document UUIDs
 """
 import gc
 import base64
@@ -22,13 +22,13 @@ def process_document_ids_task(
 
     Args:
         documents_data: List of dicts with:
-            - document_id: MongoDB document ID (already created)
+            - document_id: PostgreSQL document UUID (already created)
             - content_b64: Base64-encoded file content
             - filename: Original filename
             - content_type: MIME type
         folder_name: Folder name
-        user_id: User ID
-        organization_id: Organization ID
+        user_id: User ID (UUID)
+        organization_id: Organization ID (UUID)
 
     Returns:
         Dict with task IDs
@@ -95,14 +95,14 @@ def process_single_document_task(
 
     Args:
         self: Celery task instance
-        document_id: MongoDB document ID (already created with status="processing")
+        document_id: PostgreSQL document UUID (already created with status="processing")
         file_key: iDrive E2 file path (organization_id/folder/document_id.ext)
         content_b64: Base64-encoded file content
         filename: Original filename
         content_type: MIME type
         folder_name: Folder name
-        user_id: User ID
-        organization_id: Organization ID
+        user_id: User ID (UUID)
+        organization_id: Organization ID (UUID)
 
     Returns:
         Processing result
@@ -183,19 +183,19 @@ def process_youtube_document_task(
 
     Args:
         self: Celery task instance
-        document_id: MongoDB document ID (already created with status="processing")
+        document_id: PostgreSQL document UUID (already created with status="processing")
         youtube_url: YouTube video URL
         folder_name: Folder name
-        user_id: User ID
-        organization_id: Organization ID
+        user_id: User ID (UUID)
+        organization_id: Organization ID (UUID)
 
     Returns:
         Processing result
     """
     from clients.youtube_downloader import YouTubeDownloader
-    from clients.mongodb_client import get_mongodb_client
-    from bson import ObjectId
+    from clients.postgres_client import get_postgres_client
     from datetime import datetime
+    import asyncio
 
     ingestion_service = None
     temp_file_path = None
@@ -222,28 +222,26 @@ def process_youtube_document_task(
             file_key = f"{folder_name}/{document_id}{extension}"
 
         # Update document with actual filename, file_key, and metadata
-        mongodb = get_mongodb_client()
+        postgres = get_postgres_client()
 
-        mongodb.update_document(
-            collection="documents",
-            query={"_id": ObjectId(document_id)},
-            update={
+        # Run async update in sync context
+        asyncio.run(postgres.update_document(
+            organization_id=organization_id,
+            user_id=user_id,
+            document_id=document_id,
+            updates={
                 "file_name": actual_filename,
                 "file_key": file_key,
                 "file_size_mb": file_size_mb,
-                "additional_metadata": {
-                    "source": "youtube",
-                    "youtube_url": youtube_url,
-                    "youtube_video_id": metadata.get("video_id"),
-                    "youtube_title": metadata.get("title"),
-                    "youtube_uploader": metadata.get("uploader"),
-                    "youtube_duration": metadata.get("duration"),
-                    "youtube_upload_date": metadata.get("upload_date"),
-                    "youtube_description": metadata.get("description"),
-                },
+                "youtube_video_id": metadata.get("video_id"),
+                "youtube_title": metadata.get("title"),
+                "youtube_uploader": metadata.get("uploader"),
+                "youtube_duration": metadata.get("duration"),
+                "youtube_upload_date": metadata.get("upload_date"),
+                "youtube_description": metadata.get("description"),
                 "updated_at": datetime.utcnow()
             }
-        )
+        ))
 
         logger.info(f"📝 Updated document with actual filename: {actual_filename}")
 

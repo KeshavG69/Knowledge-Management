@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     KEYCLOAK_ADMIN_USERNAME: str = "admin"
     KEYCLOAK_ADMIN_PASSWORD: str = "admin"
 
+    POSTGRES_URL: str =""
+    POSTGRES_GRAPH_URL: str =""
+    POSTGRES_VECTOR_URL: str=""
+
     # Observability
 
 

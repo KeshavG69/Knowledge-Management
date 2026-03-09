@@ -4,13 +4,13 @@ Supports multiple documents (like NotebookLM)
 Returns mind map data as JSON for React component visualization
 """
 
+import uuid
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 from langchain_core.prompts import ChatPromptTemplate
-from bson import ObjectId
 
 from models.mindmap import MindMap, DocumentSummary
-from clients.mongodb_client import get_mongodb_client
+from clients.postgres_client import get_postgres_client
 from app.logger import logger
 from clients.ultimate_llm import get_llm
 
@@ -25,7 +25,7 @@ class MindMapService:
         self.structured_llm = self.llm.with_structured_output(MindMap)
         self.summary_llm = self.llm.with_structured_output(DocumentSummary)
 
-        self.mongodb_client = get_mongodb_client()
+        self.postgres_client = get_postgres_client()
 
     async def generate_from_documents(
         self,
@@ -56,13 +56,10 @@ class MindMapService:
         logger.info(f"🧠 Generating mind map for {len(document_ids)} documents")
 
         try:
-            # Step 1: Fetch all documents from MongoDB
+            # Step 1: Fetch all documents from PostgreSQL
             documents = []
             for doc_id in document_ids:
-                document = await self.mongodb_client.async_find_document(
-                    collection="documents",
-                    query={"_id": ObjectId(doc_id)}
-                )
+                document = await self.postgres_client.find_document_by_id(doc_id)
                 if document:
                     documents.append(document)
                 else:
@@ -97,12 +94,15 @@ class MindMapService:
                 "edges": [edge.model_dump() for edge in mind_map.edges]
             }
 
-            # Step 5: Save to MongoDB (unified workflows collection)
+            # Step 5: Save to PostgreSQL workflows table
+            mind_map_id = str(uuid.uuid4())
+
             workflow_doc = {
+                "id": mind_map_id,
                 "type": "mindmap",
-                "document_ids": [ObjectId(doc_id) for doc_id in document_ids],
-                "user_id": user_id,  # Keep as string (Keycloak UUID)
-                "organization_id": ObjectId(organization_id) if organization_id else None,  # Convert to ObjectId
+                "document_ids": document_ids,  # Already UUIDs
+                "user_id": user_id,  # Keycloak UUID string
+                "organization_id": organization_id,  # UUID string
                 "status": "completed",
                 "data": {
                     "summary": doc_summary.summary,
@@ -115,12 +115,9 @@ class MindMapService:
                 "updated_at": datetime.now(timezone.utc)
             }
 
-            mind_map_id = await self.mongodb_client.async_insert_document(
-                collection="workflows",
-                document=workflow_doc
-            )
+            await self.postgres_client.insert_workflow(workflow_doc)
 
-            logger.info(f"✅ Mind map saved to MongoDB: {mind_map_id}")
+            logger.info(f"✅ Mind map saved to PostgreSQL: {mind_map_id}")
 
             return {
                 "mind_map_id": str(mind_map_id),
@@ -141,7 +138,7 @@ class MindMapService:
         Intelligently combine content from multiple documents
 
         Args:
-            documents: List of document dicts from MongoDB
+            documents: List of document dicts from PostgreSQL
 
         Returns:
             Combined content string
@@ -149,7 +146,7 @@ class MindMapService:
         combined_parts = []
 
         for i, doc in enumerate(documents, 1):
-            filename = doc.get("filename", f"Document {i}")
+            filename = doc.get("file_name", f"Document {i}")
             content = doc.get("raw_content", "")
 
             if content:
@@ -166,37 +163,28 @@ class MindMapService:
 
     async def get_mindmap(self, mind_map_id: str) -> Optional[Dict[str, Any]]:
         """
-        Retrieve mind map by ID from workflows collection
+        Retrieve mind map by ID from workflows table
 
         Args:
-            mind_map_id: MongoDB workflow ID
+            mind_map_id: PostgreSQL workflow ID (UUID)
 
         Returns:
             Mind map document with JSON data
         """
         try:
-            workflow = await self.mongodb_client.async_find_document(
-                collection="workflows",
-                query={"_id": ObjectId(mind_map_id), "type": "mindmap"}
+            workflow = await self.postgres_client.find_workflow_by_id(
+                workflow_id=mind_map_id,
+                workflow_type="mindmap"
             )
 
             if workflow:
-                # Convert ObjectIds to strings
-                workflow["_id"] = str(workflow["_id"])
-                workflow["document_ids"] = [str(doc_id) for doc_id in workflow.get("document_ids", [])]
-
-                if workflow.get("user_id"):
-                    workflow["user_id"] = str(workflow["user_id"])
-                if workflow.get("organization_id"):
-                    workflow["organization_id"] = str(workflow["organization_id"])
-
                 # Extract data from nested structure
                 data = workflow.get("data", {})
 
                 # Format for frontend (flatten structure)
                 return {
-                    "mind_map_id": workflow["_id"],
-                    "document_ids": workflow["document_ids"],
+                    "mind_map_id": workflow["id"],
+                    "document_ids": workflow.get("document_ids", []),
                     "user_id": workflow.get("user_id"),
                     "organization_id": workflow.get("organization_id"),
                     "status": workflow.get("status"),
@@ -218,43 +206,31 @@ class MindMapService:
 
     async def list_mindmaps_by_user(self, user_id: str, organization_id: str) -> List[Dict[str, Any]]:
         """
-        List all mind maps for a specific user and organization from workflows collection
+        List all mind maps for a specific user and organization from workflows table
 
         Args:
-            user_id: MongoDB user ID
-            organization_id: MongoDB organization ID
+            user_id: User ID (UUID)
+            organization_id: Organization ID (UUID)
 
         Returns:
             List of mind maps
         """
         try:
-            # user_id = string (Keycloak UUID), organization_id = ObjectId
-            workflows = await self.mongodb_client.async_find_documents(
-                collection="workflows",
-                query={
-                    "type": "mindmap",
-                    "user_id": user_id,  # String comparison
-                    "organization_id": ObjectId(organization_id)  # ObjectId comparison
-                }
+            workflows = await self.postgres_client.find_workflows_by_user(
+                workflow_type="mindmap",
+                user_id=user_id,
+                organization_id=organization_id
             )
 
             mindmaps = []
             for workflow in workflows:
-                workflow["_id"] = str(workflow["_id"])
-                workflow["document_ids"] = [str(doc_id) for doc_id in workflow.get("document_ids", [])]
-
-                if workflow.get("user_id"):
-                    workflow["user_id"] = str(workflow["user_id"])
-                if workflow.get("organization_id"):
-                    workflow["organization_id"] = str(workflow["organization_id"])
-
                 # Extract data from nested structure
                 data = workflow.get("data", {})
 
                 # Format for frontend (flatten structure)
                 mindmaps.append({
-                    "mind_map_id": workflow["_id"],
-                    "document_ids": workflow["document_ids"],
+                    "mind_map_id": workflow["id"],
+                    "document_ids": workflow.get("document_ids", []),
                     "user_id": workflow.get("user_id"),
                     "organization_id": workflow.get("organization_id"),
                     "status": workflow.get("status"),

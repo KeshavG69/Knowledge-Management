@@ -4,11 +4,11 @@ Generates multi-speaker podcast scripts from documents using MapReduce (Gemini v
 """
 
 import asyncio
+import uuid
 from typing import List, Dict, Any, Optional
 from langchain_core.prompts import ChatPromptTemplate
 
-from bson import ObjectId
-from clients.mongodb_client import get_mongodb_client
+from clients.postgres_client import get_postgres_client
 from models.podcast import PodcastScript, PodcastSegment
 from clients.ultimate_llm import get_llm
 from app.logger import logger
@@ -37,11 +37,11 @@ class PodcastService:
         """Initialize podcast service"""
 
         self.llm_flash = get_llm(model="google/gemini-3-flash-preview", provider="openrouter")
-        
+
         # Structured output for final script (ensure valid JSON)
         self.structured_llm = self.llm_flash.with_structured_output(PodcastScript)
-        
-        self.mongodb_client = get_mongodb_client()
+
+        self.postgres_client = get_postgres_client()
         self.idrive = get_idrivee2_client()
 
         if settings.ELEVENLABS_API_KEY and AsyncElevenLabs:
@@ -64,18 +64,11 @@ class PodcastService:
             raise ValueError("No document IDs provided for script generation")
             
         logger.info(f"🎙️ Fetching {len(document_ids)} documents for podcast generation...")
-        
-        # Fetch documents from MongoDB
+
+        # Fetch documents from PostgreSQL
         documents = []
         for doc_id in document_ids:
-            if not ObjectId.is_valid(doc_id):
-                logger.warning(f"Invalid ObjectId: {doc_id}")
-                continue
-                
-            doc = await self.mongodb_client.async_find_document(
-                collection="documents",
-                query={"_id": ObjectId(doc_id)}
-            )
+            doc = await self.postgres_client.find_document_by_id(doc_id)
             if doc:
                 documents.append(doc)
             else:
@@ -113,8 +106,8 @@ class PodcastService:
                 content = doc.get("raw_content", "")
                 if not content:
                     return ""
-                
-                filename = doc.get("filename", "Unknown Doc")
+
+                filename = doc.get("file_name", "Unknown Doc")
                 try:
                     # We use the standard LLM (string output) for summaries, not structured
                     result = await self.llm_flash.ainvoke(
@@ -188,18 +181,17 @@ class PodcastService:
         try:
             # 1. Generate Script
             script = await self.generate_script(document_ids)
-            
+
             # Update status if podcast_id provided
             if podcast_id:
-                await self.mongodb_client.async_update_document(
-                    collection="podcasts",
-                    query={"_id": ObjectId(podcast_id)},
-                    update={"$set": {
-                        "status": "script_generated", 
+                await self.postgres_client.update_podcast(
+                    podcast_id=podcast_id,
+                    updates={
+                        "status": "script_generated",
                         "title": script.title,
                         "summary": script.summary,
                         "script": script.model_dump()
-                    }}
+                    }
                 )
 
             # 2. Generate Audio
@@ -207,21 +199,19 @@ class PodcastService:
             if not self.elevenlabs:
                 logger.warning("ElevenLabs not configured, skipping audio generation")
                 if podcast_id:
-                     await self.mongodb_client.async_update_document(
-                        collection="podcasts",
-                        query={"_id": ObjectId(podcast_id)},
-                        update={"$set": {"status": "completed", "error_message": "Audio skipped (No API Key)"}}
+                    await self.postgres_client.update_podcast(
+                        podcast_id=podcast_id,
+                        updates={"status": "completed", "error_message": "Audio skipped (No API Key)"}
                     )
             else:
                 audio_file_key = await self._generate_audio(script.segments, organization_id, podcast_id)
-                # _generate_audio now handles the final update if podcast_id is passed? 
+                # _generate_audio now handles the final update if podcast_id is passed?
                 # Actually let's keep _generate_audio focused on audio and do the final update here.
-                
+
                 if podcast_id:
-                     await self.mongodb_client.async_update_document(
-                        collection="podcasts",
-                        query={"_id": ObjectId(podcast_id)},
-                        update={"$set": {"status": "completed", "audio_file_key": audio_file_key}}
+                    await self.postgres_client.update_podcast(
+                        podcast_id=podcast_id,
+                        updates={"status": "completed", "audio_file_key": audio_file_key}
                     )
 
             return {
@@ -234,10 +224,9 @@ class PodcastService:
         except Exception as e:
             logger.error(f"Podcast generation failed: {e}")
             if podcast_id:
-                await self.mongodb_client.async_update_document(
-                    collection="podcasts",
-                    query={"_id": ObjectId(podcast_id)},
-                    update={"$set": {"status": "failed", "error_message": str(e)}}
+                await self.postgres_client.update_podcast(
+                    podcast_id=podcast_id,
+                    updates={"status": "failed", "error_message": str(e)}
                 )
             raise e
 
@@ -294,8 +283,8 @@ class PodcastService:
         # Upload to iDrive E2
         # Use provided ID or generate
         if not podcast_id:
-             podcast_id = str(ObjectId())
-             
+            podcast_id = str(uuid.uuid4())
+
         file_key = f"podcasts/{organization_id}/{podcast_id}/full_episode.mp3"
         await self.idrive.upload_file(buffer, file_key, "audio/mpeg")
         

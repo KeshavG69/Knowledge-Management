@@ -4,8 +4,8 @@ from typing import List, Dict, Any, Optional
 from services.podcast_service import get_podcast_service, PodcastService
 from app.logger import logger
 
-from clients.mongodb_client import get_mongodb_client, MongoDBClient
-from bson import ObjectId
+from clients.postgres_client import get_postgres_client
+import uuid
 from datetime import datetime
 from auth.keycloak_auth import get_current_user_keycloak
 
@@ -24,7 +24,6 @@ async def generate_podcast(
     request: PodcastGenerateRequest,
     background_tasks: BackgroundTasks,
     service: PodcastService = Depends(get_podcast_service),
-    mongodb: MongoDBClient = Depends(get_mongodb_client),
     current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
@@ -32,8 +31,9 @@ async def generate_podcast(
     Returns an episode_id to track progress.
     """
     try:
-        # Extract organization_id from JWT token
+        # Extract organization_id and user_id from JWT token
         organization_id = current_user.get("organization_id")
+        user_id = current_user.get("id")
 
         if not organization_id:
             raise HTTPException(status_code=400, detail="User must belong to an organization")
@@ -44,16 +44,23 @@ async def generate_podcast(
         if not request.document_ids:
             raise HTTPException(status_code=400, detail="No document IDs provided")
 
-        # Create initial PodcastEpisode record (As Dict, no Pydantic model needed per user)
+        # Generate UUID for episode
+        episode_id = str(uuid.uuid4())
+
+        # Create initial PodcastEpisode record in PostgreSQL
         episode = {
+            "id": episode_id,
             "organization_id": organization_id,
+            "user_id": user_id,
             "document_ids": request.document_ids,
             "status": "processing",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
         }
 
-        # Insert into MongoDB to get ID
-        episode_id = await mongodb.async_insert_document("podcasts", episode)
+        # Insert into PostgreSQL
+        postgres = get_postgres_client()
+        await postgres.insert_podcast(episode)
 
         # Add to background tasks
         background_tasks.add_task(
@@ -76,20 +83,30 @@ async def generate_podcast(
 @router.get("/{episode_id}", summary="Get podcast status/result")
 async def get_podcast(
     episode_id: str,
-    mongodb: MongoDBClient = Depends(get_mongodb_client),
     current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
     Get the status and result of a podcast generation task.
     """
-    if not ObjectId.is_valid(episode_id):
-        raise HTTPException(status_code=400, detail="Invalid Podcast ID")
-        
-    podcast = await mongodb.async_find_document("podcasts", {"_id": ObjectId(episode_id)})
-    
+    # Validate UUID
+    try:
+        uuid.UUID(episode_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid Podcast ID format")
+
+    # Extract user info from JWT token
+    organization_id = current_user.get("organization_id")
+    user_id = current_user.get("id")
+
+    # Get from PostgreSQL
+    postgres = get_postgres_client()
+    podcast = await postgres.find_podcast(
+        organization_id=organization_id,
+        user_id=user_id,
+        podcast_id=episode_id
+    )
+
     if not podcast:
         raise HTTPException(status_code=404, detail="Podcast not found")
-        
-    # Convert _id to string for JSON response
-    podcast["id"] = str(podcast.pop("_id"))
+
     return podcast

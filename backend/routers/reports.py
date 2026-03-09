@@ -4,7 +4,7 @@ Reports Router - API endpoints for report generation
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
-from bson import ObjectId
+import uuid
 
 from models.report_models import GenerateReportRequest
 from services.report_generator import get_report_generator_service
@@ -66,17 +66,22 @@ async def generate_report(request: GenerateReportRequest, current_user: dict = D
         user_id = current_user.get("id")
         organization_id = current_user.get("organization_id")
 
-        # Validate all document_ids
+        # Validate all document_ids are UUIDs
         for doc_id in request.document_ids:
-            if not ObjectId.is_valid(doc_id):
+            try:
+                uuid.UUID(doc_id)
+            except ValueError:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid document_id format: {doc_id}"
                 )
 
         # Validate organization_id format
-        if organization_id and not ObjectId.is_valid(organization_id):
-            raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
+        if organization_id:
+            try:
+                uuid.UUID(organization_id)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid organization_id format: {organization_id}")
 
         # Validate prompt
         if not request.prompt or not request.prompt.strip():

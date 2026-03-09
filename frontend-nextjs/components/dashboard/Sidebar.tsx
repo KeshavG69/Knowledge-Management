@@ -319,7 +319,7 @@ export default function Sidebar() {
               const isDeleting = deletingKB === folderName;
 
               // Check if any or all documents in folder are selected
-              const folderDocIds = folderDocs.map(d => d._id);
+              const folderDocIds = folderDocs.map(d => d.id);
               const allFolderDocsSelected = folderDocIds.length > 0 && folderDocIds.every(id => selectedDocs.has(id));
               const anyFolderDocsSelected = folderDocIds.some(id => selectedDocs.has(id));
               const someFolderDocsSelected = anyFolderDocsSelected && !allFolderDocsSelected;
@@ -416,11 +416,11 @@ export default function Sidebar() {
                   {isExpanded && folderDocs.length > 0 && (
                     <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-300 dark:border-slate-700/30 pl-3">
                       {folderDocs.map((doc, docIdx) => {
-                        const isDeleting = deletingDocId === doc._id;
+                        const isDeleting = deletingDocId === doc.id;
                         const isFailed = doc.status === 'failed';
                         return (
                         <div
-                          key={doc._id}
+                          key={doc.id}
                           className={`relative bg-slate-100 dark:bg-slate-800/30 border border-slate-300 dark:border-slate-700/40 transition-all duration-200 group ${isDeleting ? 'opacity-60' : isFailed ? 'opacity-50' : 'hover:border-blue-400 dark:hover:border-amber-400/30 hover:bg-slate-200 dark:hover:bg-slate-800/50'}`}
                           style={{
                             clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)',
@@ -429,8 +429,8 @@ export default function Sidebar() {
                           <div className="flex items-start gap-2 p-2">
                             <input
                               type="checkbox"
-                              checked={selectedDocs.has(doc._id)}
-                              onChange={() => toggleDocSelection(doc._id)}
+                              checked={selectedDocs.has(doc.id)}
+                              onChange={() => toggleDocSelection(doc.id)}
                               className="tactical-checkbox mt-1"
                               disabled={doc.status === 'processing' || isFailed || isDeleting}
                             />
@@ -473,7 +473,7 @@ export default function Sidebar() {
                             </div>
                             {!isDeleting && (
                               <button
-                                onClick={() => handleDeleteDoc(doc._id)}
+                                onClick={() => handleDeleteDoc(doc.id)}
                                 className={`text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1 flex-shrink-0 ${isFailed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                 title="Delete document"
                               >

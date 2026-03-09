@@ -4,11 +4,11 @@ Generates comprehensive reports using Map-Reduce pattern
 """
 
 import asyncio
+import uuid
 from typing import List, Dict, Any, Optional, AsyncGenerator
 from datetime import datetime
-from bson import ObjectId
 
-from clients.mongodb_client import get_mongodb_client
+from clients.postgres_client import get_postgres_client
 from clients.ultimate_llm import get_llm
 from app.logger import logger
 
@@ -18,7 +18,7 @@ class ReportGeneratorService:
 
     def __init__(self):
         """Initialize report generator service"""
-        self.mongodb_client = get_mongodb_client()
+        self.postgres_client = get_postgres_client()
         self.llm = get_llm(model="google/gemini-3-flash-preview", provider="openrouter")
 
     async def generate_report_stream(
@@ -104,17 +104,14 @@ class ReportGeneratorService:
             """Summarize a single document with semaphore"""
             async with semaphore:
                 try:
-                    # Query MongoDB for raw_content
-                    document = await self.mongodb_client.async_find_document(
-                        collection="documents",
-                        query={"_id": ObjectId(doc_id)}
-                    )
+                    # Query PostgreSQL for document
+                    document = await self.postgres_client.find_document_by_id(doc_id)
 
                     if not document:
                         return {"document_id": doc_id, "summary": "Document not found", "success": False}
 
                     raw_content = document.get("raw_content", "")
-                    filename = document.get("filename", "Unknown")
+                    filename = document.get("file_name", "Unknown")
 
                     if not raw_content:
                         return {"document_id": doc_id, "filename": filename, "summary": "No content found", "success": False}

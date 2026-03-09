@@ -114,7 +114,7 @@ const startBackgroundPolling = (
       // Update documents in store with latest status
       const currentDocs = get().documents;
       const updatedDocs = currentDocs.map((doc: Document) => {
-        const updatedDoc = statusChecks.find(d => d._id === doc._id);
+        const updatedDoc = statusChecks.find(d => d.id === doc.id);
         return updatedDoc || doc;
       });
       set({ documents: updatedDocs });
@@ -193,7 +193,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // Clean up selectedDocs: remove any IDs that don't exist in fetched documents
       // This handles stale IDs from: previous users, deleted documents, wrong organization, etc.
       const currentSelectedDocs = get().selectedDocs;
-      const validDocIds = new Set((Array.isArray(docs) ? docs : []).map(d => d._id));
+      const validDocIds = new Set((Array.isArray(docs) ? docs : []).map(d => d.id));
       const cleanedSelectedDocs = new Set<string>();
 
       currentSelectedDocs.forEach(docId => {
@@ -234,7 +234,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // Optimistic update: Add placeholder documents immediately (no isLoading, keeps existing docs)
       const existingDocs = get().documents;
       const placeholderDocs = files.map((file, index) => ({
-        _id: `temp_${Date.now()}_${index}`, // Temporary ID
+        id: `temp_${Date.now()}_${index}`, // Temporary ID
         file_name: file.name,
         folder_name: folderName,
         user_id: '',
@@ -260,9 +260,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const uploadedDocs = get().documents.filter(
         d => d.folder_name === folderName &&
              d.status === 'processing' &&
-             !d._id.startsWith('temp_') // Real IDs from backend
+             !d.id.startsWith('temp_') // Real IDs from backend
       );
-      const uploadedDocIds = uploadedDocs.map(d => d._id);
+      const uploadedDocIds = uploadedDocs.map(d => d.id);
 
       if (uploadedDocIds.length === 0) {
         // No processing documents found, might already be completed
@@ -294,7 +294,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // Optimistic update: Add placeholder document
       const existingDocs = get().documents;
       const placeholderDoc = {
-        _id: `temp_yt_${Date.now()}`,
+        id: `temp_yt_${Date.now()}`,
         file_name: 'YouTube Video',
         folder_name: folderName,
         user_id: '',
@@ -356,7 +356,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const { documents, selectedDocs } = get();
       const kbDocIds = documents
         .filter(doc => doc.folder_name === folderName)
-        .map(doc => doc._id);
+        .map(doc => doc.id);
 
       if (kbDocIds.length > 0) {
         const newSelectedDocs = new Set(selectedDocs);
@@ -398,7 +398,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const docIds = Array.isArray(documents)
       ? documents
           .filter(d => d.status !== 'failed' && d.status !== 'processing') // Exclude failed and processing files
-          .map(d => d._id)
+          .map(d => d.id)
       : [];
     const selectedDocs = new Set(docIds);
     saveSelectedDocs(selectedDocs);
@@ -417,7 +417,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       ? documents
           .filter(d => d.folder_name === folderName)
           .filter(d => d.status !== 'failed' && d.status !== 'processing') // Exclude failed and processing files
-          .map(d => d._id)
+          .map(d => d.id)
       : [];
     const newSelected = new Set(selectedDocs);
     folderDocIds.forEach(id => newSelected.add(id));
@@ -428,7 +428,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   deselectFolderDocs: (folderName) => {
     const { documents, selectedDocs } = get();
     const folderDocIds = Array.isArray(documents)
-      ? documents.filter(d => d.folder_name === folderName).map(d => d._id)
+      ? documents.filter(d => d.folder_name === folderName).map(d => d.id)
       : [];
     const newSelected = new Set(selectedDocs);
     folderDocIds.forEach(id => newSelected.delete(id));

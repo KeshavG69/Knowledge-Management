@@ -5,8 +5,8 @@ Upload Router - Document ingestion endpoints
 from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from pydantic import BaseModel
-from bson import ObjectId
 import base64
+import uuid
 from services.ingestion_service import get_ingestion_service
 from clients.youtube_downloader import get_youtube_downloader
 from tasks.ingestion_tasks import process_document_ids_task, process_youtube_document_task
@@ -29,14 +29,15 @@ async def upload_documents(
     This endpoint:
     1. Extracts user_id and organization_id from Keycloak token
     2. Validates input
-    3. Creates document records with status="processing" in MongoDB
+    3. Creates document records with status="processing" in PostgreSQL
     4. Returns immediately with document_ids for frontend tracking
     5. Dispatches Celery tasks to process each document:
        - Uploads files to iDrive E2
        - Extracts raw content
-       - Stores in MongoDB
+       - Stores in PostgreSQL
        - Chunks content semantically
-       - Stores chunks in Pinecone
+       - Stores chunks in pgvector
+       - Extracts entities/relationships to Apache AGE graph
        - Updates status to "completed" or "failed"
 
     Args:
@@ -78,24 +79,26 @@ async def upload_documents(
 
             file_size_mb = get_file_size_mb(content)
 
-            # Create document record with status="processing" (without file_key initially)
-            document_id = await ingestion_service._create_document_with_status(
-                file_name=file.filename,
-                folder_name=folder_name.strip(),
-                file_key=None,  # Will be updated with document_id
-                file_size_mb=file_size_mb,
-                user_id=user_id,
-                organization_id=organization_id,
-                additional_metadata=None
-            )
+            # Generate document_id first
+            document_id = str(uuid.uuid4())
 
             # Build file_key using document_id and original extension
-            
             extension = get_file_extension(file.filename)
             if organization_id:
                 file_key = f"{organization_id}/{folder_name.strip()}/{document_id}{extension}"
             else:
                 file_key = f"{folder_name.strip()}/{document_id}{extension}"
+
+            # Create document record with status="processing" (WITH file_key)
+            await ingestion_service._create_document_with_status(
+                file_name=file.filename,
+                folder_name=folder_name.strip(),
+                file_key=file_key,  # Now we have the correct file_key
+                file_size_mb=file_size_mb,
+                user_id=user_id,
+                organization_id=organization_id,
+                additional_metadata={"id": document_id}  # Pass the document_id
+            )
 
             documents_data.append({
                 "document_id": document_id,
@@ -124,6 +127,7 @@ async def upload_documents(
                 "total_files": len(files),
                 "document_ids": [doc["document_id"] for doc in documents_data],
                 "file_names": [doc["filename"] for doc in documents_data],
+                "file_keys": [doc["file_key"] for doc in documents_data],
                 "folder_name": folder_name.strip(),
                 "task_id": task.id,
                 "status": "processing"
@@ -152,7 +156,7 @@ async def ingest_youtube_video(
     This endpoint:
     1. Extracts user_id and organization_id from Keycloak token
     2. Validates YouTube URL format
-    3. Creates document record with status="processing" in MongoDB (fast!)
+    3. Creates document record with status="processing" in PostgreSQL (fast!)
     4. Returns immediately with document_id for frontend tracking
     5. Dispatches Celery task to:
        - Download video from YouTube
@@ -160,7 +164,8 @@ async def ingest_youtube_video(
        - Upload to iDrive E2
        - Extract frames and transcription
        - Chunk content semantically
-       - Store chunks in Pinecone
+       - Store chunks in pgvector
+       - Extract entities/relationships to Apache AGE graph
        - Update status to "completed" or "failed"
 
     Args:
@@ -254,18 +259,28 @@ async def get_document(document_id: str, current_user: dict = Depends(get_curren
     Get document by ID
 
     Args:
-        document_id: MongoDB document ID
+        document_id: Document UUID
 
     Returns:
         Document data
     """
     try:
-        # Validate document_id
-        if not ObjectId.is_valid(document_id):
+        # Extract user info from Keycloak token
+        user_id = current_user.get("id")
+        organization_id = current_user.get("organization_id")
+
+        # Validate document_id is a valid UUID
+        try:
+            uuid.UUID(document_id)
+        except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid document_id format: {document_id}")
 
         ingestion_service = get_ingestion_service()
-        document = await ingestion_service.get_document(document_id)
+        document = await ingestion_service.get_document(
+            document_id=document_id,
+            organization_id=organization_id,
+            user_id=user_id
+        )
 
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
@@ -332,23 +347,31 @@ async def delete_document(
     current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
-    Delete document and its chunks from all systems
+    Delete document and its chunks from all systems (PostgreSQL, pgvector, Apache AGE, iDrive E2)
 
     Args:
-        document_id: MongoDB document ID
+        document_id: Document UUID
         delete_from_storage: Whether to delete from iDrive E2 (default: True)
 
     Returns:
         Deletion result
     """
     try:
-        # Validate document_id
-        if not ObjectId.is_valid(document_id):
+        # Extract user info from Keycloak token
+        user_id = current_user.get("id")
+        organization_id = current_user.get("organization_id")
+
+        # Validate document_id is a valid UUID
+        try:
+            uuid.UUID(document_id)
+        except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid document_id format: {document_id}")
 
         ingestion_service = get_ingestion_service()
         result = await ingestion_service.delete_document(
             document_id=document_id,
+            organization_id=organization_id,
+            user_id=user_id,
             delete_from_storage=delete_from_storage
         )
 
@@ -409,7 +432,7 @@ async def delete_folder(
 ):
     """
     Delete entire folder and all its documents from all systems
-    (MongoDB + Pinecone + iDrive E2)
+    (PostgreSQL + pgvector + Apache AGE + iDrive E2)
 
     Args:
         folder_name: Folder name to delete
@@ -449,8 +472,8 @@ async def rename_folder(
     current_user: dict = Depends(get_current_user_keycloak)
 ):
     """
-    Rename folder across all systems
-    (MongoDB + Pinecone metadata)
+    Rename folder in PostgreSQL
+    (pgvector and Apache AGE don't store folder_name)
 
     Args:
         folder_name: Current folder name
