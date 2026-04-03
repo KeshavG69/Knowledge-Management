@@ -55,7 +55,7 @@ class AGEGraphClient:
         self.age_graph.query = lambda q: _original_query(q.strip().rstrip(';'))
 
         # Initialize LLM for entity extraction (smaller model for cost efficiency)
-        self.extraction_llm = get_llm(model="nvidia/nemotron-3-nano-30b-a3b", provider="openrouter")
+        self.extraction_llm = get_llm(model="gpt-4.1", provider="openai")
 
         # Initialize LLM for Cypher query generation (GPT-4o for better accuracy)
         self.query_llm = get_llm(model="gpt-4.1", provider="openai")
@@ -84,11 +84,12 @@ class AGEGraphClient:
         user_id: str,
         filename: str,
         chunks: List[str],
-        chunk_metadatas: Optional[List[Dict[str, Any]]] = None
+        chunk_metadatas: Optional[List[Dict[str, Any]]] = None,
+        max_concurrency: int = 5
     ) -> Dict[str, Any]:
         """
         Add document chunks to the graph with automatic entity/relationship extraction using LLM
-        Each chunk is processed separately for better entity extraction (chunk-level extraction)
+        Chunks are processed concurrently (up to max_concurrency at a time) for speed.
 
         Args:
             document_id: Document UUID
@@ -97,6 +98,7 @@ class AGEGraphClient:
             filename: Document filename
             chunks: List of text chunks
             chunk_metadatas: Optional list of metadata dicts for each chunk
+            max_concurrency: Max parallel LLM extraction calls (default 5)
 
         Returns:
             Dict with extraction statistics:
@@ -106,52 +108,36 @@ class AGEGraphClient:
                 "total_nodes": int,
                 "total_relationships": int
             }
-
-        Example:
-            stats = await client.add_chunks_as_graph(
-                document_id=doc_id,
-                organization_id=org_id,
-                user_id=user_id,
-                filename="report.pdf",
-                chunks=["chunk 1 text...", "chunk 2 text..."],
-                chunk_metadatas=[{"chunk_index": 0}, {"chunk_index": 1}]
-            )
         """
+        import asyncio
+
         try:
-            total_nodes = 0
-            total_relationships = 0
-            chunks_processed = 0
+            logger.info(f"🤖 Processing {len(chunks)} chunks from {filename} for graph extraction (concurrency={max_concurrency})...")
 
-            logger.info(f"🤖 Processing {len(chunks)} chunks from {filename} for graph extraction...")
+            semaphore = asyncio.Semaphore(max_concurrency)
+            db_lock = asyncio.Lock()
 
-            # Process each chunk separately for better entity extraction (chunk-level)
-            for idx, chunk_text in enumerate(chunks):
-                # Get chunk metadata
+            async def process_chunk(idx: int, chunk_text: str):
                 chunk_meta = chunk_metadatas[idx] if chunk_metadatas and idx < len(chunk_metadatas) else {}
                 chunk_index = chunk_meta.get("chunk_index", idx)
 
-                # Create LangChain Document with multi-tenancy metadata
-                doc_metadata = {
-                    "document_id": document_id,
-                    "organization_id": organization_id,
-                    "user_id": user_id,
-                    "filename": filename,
-                    "chunk_index": chunk_index,
-                    **chunk_meta
-                }
-
                 document = Document(
                     page_content=chunk_text,
-                    metadata=doc_metadata
+                    metadata={
+                        "document_id": document_id,
+                        "organization_id": organization_id,
+                        "user_id": user_id,
+                        "filename": filename,
+                        "chunk_index": chunk_index,
+                        **chunk_meta
+                    }
                 )
 
                 try:
-                    # Extract entities and relationships using LLM for this chunk
-                    graph_documents = self.llm_transformer.convert_to_graph_documents([document])
+                    async with semaphore:
+                        graph_documents = await self.llm_transformer.aconvert_to_graph_documents([document])
 
-                    # Add multi-tenancy and chunk metadata to all nodes and relationships
                     for graph_doc in graph_documents:
-                        # Add metadata to all nodes
                         for node in graph_doc.nodes:
                             node.properties["organization_id"] = organization_id
                             node.properties["user_id"] = user_id
@@ -159,29 +145,31 @@ class AGEGraphClient:
                             node.properties["chunk_index"] = chunk_index
                             node.properties["filename"] = filename
 
-                        # Add metadata to all relationships
                         for relationship in graph_doc.relationships:
                             relationship.properties["organization_id"] = organization_id
                             relationship.properties["user_id"] = user_id
                             relationship.properties["document_id"] = document_id
                             relationship.properties["chunk_index"] = chunk_index
 
-                        # Count entities and relationships
-                        total_nodes += len(graph_doc.nodes)
-                        total_relationships += len(graph_doc.relationships)
+                    # Serialize DB writes to avoid connection race conditions
+                    async with db_lock:
+                        self.age_graph.add_graph_documents(graph_documents)
 
-                    # Add to AGE graph
-                    self.age_graph.add_graph_documents(graph_documents)
-                    chunks_processed += 1
-
-                    logger.info(f"  ✅ Chunk {chunk_index}: {len(graph_documents[0].nodes)} nodes, {len(graph_documents[0].relationships)} relationships")
+                    nodes = len(graph_documents[0].nodes) if graph_documents else 0
+                    rels = len(graph_documents[0].relationships) if graph_documents else 0
+                    logger.info(f"  ✅ Chunk {chunk_index}: {nodes} nodes, {rels} relationships")
+                    return (nodes, rels, True)
 
                 except Exception as chunk_error:
                     logger.error(f"  ❌ Failed to process chunk {chunk_index}: {str(chunk_error)}")
-                    # Continue processing other chunks even if one fails
-                    continue
+                    return (0, 0, False)
 
-            # Refresh schema after adding new data
+            results = await asyncio.gather(*[process_chunk(idx, text) for idx, text in enumerate(chunks)])
+
+            total_nodes = sum(r[0] for r in results)
+            total_relationships = sum(r[1] for r in results)
+            chunks_processed = sum(1 for r in results if r[2])
+
             self.refresh_schema()
 
             stats = {
