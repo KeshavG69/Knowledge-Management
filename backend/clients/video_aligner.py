@@ -5,6 +5,7 @@ Thread-safe singleton implementation
 """
 
 import base64
+import bisect
 import cv2
 import threading
 import asyncio
@@ -13,6 +14,9 @@ import numpy as np
 from langchain_core.prompts import ChatPromptTemplate
 from clients.ultimate_llm import get_llm
 from app.logger import logger
+
+# SSIM threshold: if two adjacent keyframes are this similar, reuse VLM description
+VLM_DEDUP_SSIM_THRESHOLD = 0.92
 
 
 class VideoAligner:
@@ -32,7 +36,6 @@ class VideoAligner:
     def __init__(self):
         """Initialize video aligner"""
         if not hasattr(self, '_initialized'):
-            self._alignment_lock = threading.Lock()
             self._initialized = True
             logger.info("✅ Video aligner initialized")
 
@@ -65,45 +68,44 @@ class VideoAligner:
         Raises:
             Exception: If alignment/blending fails
         """
-        with self._alignment_lock:
-            try:
-                logger.info(
-                    f"🔗 Aligning {len(transcript_segments)} transcript segments "
-                    f"with {len(scenes)} scenes (parallel with max 5 concurrent)"
+        try:
+            logger.info(
+                f"🔗 Aligning {len(transcript_segments)} transcript segments "
+                f"with {len(scenes)} scenes (parallel with max 25 concurrent)"
+            )
+
+            # Validate that all lists have matching lengths
+            if len(scenes) != len(key_frames_data) or len(scenes) != len(color_frames):
+                logger.error(
+                    f"❌ Mismatch in data lengths: {len(scenes)} scenes, "
+                    f"{len(key_frames_data)} key_frames, {len(color_frames)} color_frames"
+                )
+                raise ValueError(
+                    f"Data length mismatch: scenes={len(scenes)}, "
+                    f"key_frames={len(key_frames_data)}, frames={len(color_frames)}"
                 )
 
-                # Validate that all lists have matching lengths
-                if len(scenes) != len(key_frames_data) or len(scenes) != len(color_frames):
-                    logger.error(
-                        f"❌ Mismatch in data lengths: {len(scenes)} scenes, "
-                        f"{len(key_frames_data)} key_frames, {len(color_frames)} color_frames"
-                    )
-                    raise ValueError(
-                        f"Data length mismatch: scenes={len(scenes)}, "
-                        f"key_frames={len(key_frames_data)}, frames={len(color_frames)}"
-                    )
+            if len(scenes) == 0:
+                logger.warning("⚠️ No scenes detected in video")
+                return []
 
-                if len(scenes) == 0:
-                    logger.warning("⚠️ No scenes detected in video")
-                    return []
+            # Process all scenes in parallel with semaphore limit
+            aligned_chunks = self._process_scenes_parallel(
+                scenes,
+                transcript_segments,
+                key_frames_data,
+                color_frames
+            )
 
-                # Process all scenes in parallel with semaphore limit of 5
-                aligned_chunks = self._process_scenes_parallel(
-                    scenes,
-                    transcript_segments,
-                    key_frames_data,
-                    color_frames
-                )
+            logger.info(f"✅ Created {len(aligned_chunks)} aligned chunks")
 
-                logger.info(f"✅ Created {len(aligned_chunks)} aligned chunks")
+            return aligned_chunks
 
-                return aligned_chunks
-
-            except Exception as e:
-                logger.error(f"❌ Alignment and blending failed: {str(e)}")
-                import traceback
-                logger.error(f"Traceback: {traceback.format_exc()}")
-                raise Exception(f"Alignment and blending failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ Alignment and blending failed: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise Exception(f"Alignment and blending failed: {str(e)}")
 
     def _process_scenes_parallel(
         self,
@@ -149,9 +151,24 @@ class VideoAligner:
                 transcript_texts.append(transcript_text)
             logger.info(f"✅ Prepared {num_scenes} transcript texts")
 
-            # Step 2: Batch all VLM descriptions (25 concurrent)
-            logger.info(f"🎨 Step 2/3: Processing {num_scenes} VLM descriptions (25 concurrent)...")
+            # Step 2: Batch VLM descriptions — skip visually similar adjacent frames
+            logger.info(f"🎨 Step 2/3: Processing VLM descriptions (dedup + 25 concurrent)...")
             semaphore_vlm = asyncio.Semaphore(25)
+
+            # Pre-compute which frames need VLM vs. can reuse previous
+            needs_vlm = [True] * num_scenes  # first frame always needs VLM
+            reuse_from = [None] * num_scenes
+            skipped = 0
+            for i in range(1, num_scenes):
+                ssim = self._compute_ssim(color_frames[i - 1], color_frames[i])
+                if ssim >= VLM_DEDUP_SSIM_THRESHOLD:
+                    needs_vlm[i] = False
+                    # Find the original frame this chain reuses from
+                    reuse_from[i] = reuse_from[i - 1] if reuse_from[i - 1] is not None else i - 1
+                    skipped += 1
+
+            if skipped > 0:
+                logger.info(f"⏭️ Skipping VLM for {skipped}/{num_scenes} visually similar frames (SSIM >= {VLM_DEDUP_SSIM_THRESHOLD})")
 
             async def describe_one_frame(i: int):
                 async with semaphore_vlm:
@@ -160,9 +177,29 @@ class VideoAligner:
                         key_frames_data[i]['timestamp']
                     )
 
-            vlm_tasks = [describe_one_frame(i) for i in range(num_scenes)]
-            visual_descriptions = await asyncio.gather(*vlm_tasks)
-            logger.info(f"✅ Completed {num_scenes} VLM descriptions")
+            # Only call VLM for unique frames
+            vlm_tasks = {}
+            for i in range(num_scenes):
+                if needs_vlm[i]:
+                    vlm_tasks[i] = describe_one_frame(i)
+
+            vlm_results = {}
+            if vlm_tasks:
+                indices = list(vlm_tasks.keys())
+                results = await asyncio.gather(*vlm_tasks.values())
+                for idx, result in zip(indices, results):
+                    vlm_results[idx] = result
+
+            # Build full visual_descriptions array, reusing where needed
+            visual_descriptions = []
+            for i in range(num_scenes):
+                if needs_vlm[i]:
+                    visual_descriptions.append(vlm_results[i])
+                else:
+                    source = reuse_from[i]
+                    visual_descriptions.append(vlm_results.get(source, "[Reused visual description]"))
+
+            logger.info(f"✅ Completed VLM descriptions: {len(vlm_tasks)} unique + {skipped} reused")
 
             # Step 3: Simple concatenation (no LLM blending - 2x faster!)
             logger.info(f"🔗 Step 3/3: Blending {num_scenes} content (concatenation)...")
@@ -216,29 +253,57 @@ class VideoAligner:
         scene_end: float
     ) -> List[Dict]:
         """
-        Find transcript segments that overlap with scene time range
+        Find transcript segments that overlap with scene time range.
+        Uses binary search for O(log n + k) instead of O(n) per scene.
 
         Overlap logic: !(seg_end < scene_start OR seg_start > scene_end)
 
         Args:
-            segments: List of transcript segments
+            segments: List of transcript segments (sorted by start time)
             scene_start: Scene start time in seconds
             scene_end: Scene end time in seconds
 
         Returns:
             List of overlapping segments
         """
+        if not segments:
+            return []
+
+        # Binary search: find first segment whose end >= scene_start
+        seg_ends = [seg['end'] for seg in segments]
+        left = bisect.bisect_left(seg_ends, scene_start)
+
         overlapping = []
-
-        for seg in segments:
-            seg_start = seg['start']
-            seg_end = seg['end']
-
-            # Check for overlap
-            if not (seg_end < scene_start or seg_start > scene_end):
-                overlapping.append(seg)
+        for i in range(left, len(segments)):
+            seg = segments[i]
+            if seg['start'] > scene_end:
+                break  # All remaining segments start after scene ends
+            overlapping.append(seg)
 
         return overlapping
+
+    @staticmethod
+    def _compute_ssim(frame_a: np.ndarray, frame_b: np.ndarray) -> float:
+        """Compute structural similarity between two frames (grayscale)."""
+        gray_a = cv2.cvtColor(frame_a, cv2.COLOR_BGR2GRAY) if len(frame_a.shape) == 3 else frame_a
+        gray_b = cv2.cvtColor(frame_b, cv2.COLOR_BGR2GRAY) if len(frame_b.shape) == 3 else frame_b
+
+        # Resize to same dimensions if needed
+        if gray_a.shape != gray_b.shape:
+            h = min(gray_a.shape[0], gray_b.shape[0])
+            w = min(gray_a.shape[1], gray_b.shape[1])
+            gray_a = cv2.resize(gray_a, (w, h))
+            gray_b = cv2.resize(gray_b, (w, h))
+
+        # Simple SSIM approximation using mean/std correlation
+        mu_a, mu_b = gray_a.mean(), gray_b.mean()
+        sigma_a, sigma_b = gray_a.std(), gray_b.std()
+        cov = ((gray_a.astype(float) - mu_a) * (gray_b.astype(float) - mu_b)).mean()
+
+        c1, c2 = (0.01 * 255) ** 2, (0.03 * 255) ** 2
+        ssim = ((2 * mu_a * mu_b + c1) * (2 * cov + c2)) / \
+               ((mu_a ** 2 + mu_b ** 2 + c1) * (sigma_a ** 2 + sigma_b ** 2 + c2))
+        return float(ssim)
 
     async def _describe_frame_with_vlm_async(
         self,

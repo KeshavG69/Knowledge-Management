@@ -15,6 +15,38 @@ from app.settings import settings
 from app.logger import logger
 
 
+class LazySchemaAGEGraph(AGEGraph):
+    """AGEGraph subclass that skips schema refresh at init time.
+    Schema is refreshed lazily on first query or explicit refresh_schema() call.
+    This saves 4+ remote DB round trips (~2 min on Railway) at startup."""
+
+    def __init__(self, graph_name: str, conf: Dict[str, Any], create: bool = True) -> None:
+        import psycopg2
+
+        self.graph_name = graph_name
+        self.connection = psycopg2.connect(**conf)
+
+        with self._get_cursor() as curs:
+            graph_id_query = "SELECT graphid FROM ag_catalog.ag_graph WHERE name = '{}'".format(graph_name)
+            curs.execute(graph_id_query)
+            data = curs.fetchone()
+
+            if data is None:
+                if create:
+                    curs.execute("SELECT ag_catalog.create_graph('{}');".format(graph_name))
+                    self.connection.commit()
+                else:
+                    raise Exception(f'Graph "{graph_name}" does not exist and create=False')
+                curs.execute(graph_id_query)
+                data = curs.fetchone()
+
+            self.graphid = data.graphid
+
+        # Skip refresh_schema() — will be called lazily when needed
+        self.schema = ""
+        self.structured_schema = {"node_props": {}, "rel_props": {}, "relationships": [], "metadata": {}}
+
+
 class AGEGraphClient:
     """Client for Apache AGE graph operations using LangChain"""
 
@@ -38,8 +70,8 @@ class AGEGraphClient:
         self.port = int(host_port[1]) if len(host_port) > 1 else 5432
         self.database = host_port_db[1] if len(host_port_db) > 1 else "soldieriq"
 
-        # Initialize AGEGraph with connection parameters
-        self.age_graph = AGEGraph(
+        # Initialize AGEGraph — skips schema refresh for fast startup
+        self.age_graph = LazySchemaAGEGraph(
             graph_name="knowledge_graph",
             conf={
                 "database": self.database,
@@ -54,28 +86,183 @@ class AGEGraphClient:
         _original_query = self.age_graph.query
         self.age_graph.query = lambda q: _original_query(q.strip().rstrip(';'))
 
-        # Initialize LLM for entity extraction (smaller model for cost efficiency)
-        self.extraction_llm = get_llm(model="gpt-4.1", provider="openai")
+        # Initialize LLM for entity extraction (mini model — sufficient for NER, ~80% cheaper)
+        self.extraction_llm = get_llm(model="gpt-4.1-mini", provider="openai")
 
-        # Initialize LLM for Cypher query generation (GPT-4o for better accuracy)
-        self.query_llm = get_llm(model="gpt-4.1", provider="openai")
-
-        # LLMGraphTransformer with ignore_tool_usage to bypass JSON schema requirement
+        # LLMGraphTransformer for entity extraction
+        # gpt-4.1-mini supports tool calling, so use structured output (more reliable than text parsing)
         self.llm_transformer = LLMGraphTransformer(
             llm=self.extraction_llm,
-            ignore_tool_usage=True  # Bypass structured output, use text parsing instead
         )
 
-        # Initialize GraphCypherQAChain for natural language queries
-        self.query_chain = GraphCypherQAChain.from_llm(
-            llm=self.query_llm,  # Use GPT-4o for better Cypher generation
-            graph=self.age_graph,
-            return_direct=True,  # Return raw Cypher results, no LLM interpretation
-            verbose=True,
-            allow_dangerous_requests=True  # Required for security acknowledgment
-        )
+        # Query chain is lazy-loaded — needs schema, so refreshes on first use
+        self._query_chain = None
+        self._query_chain_lock = __import__('threading').Lock()
 
-        logger.info(f"✅ Apache AGE graph client initialized: knowledge_graph")
+        logger.info(f"✅ Apache AGE graph client initialized: knowledge_graph (schema deferred)")
+
+    def _batched_add_graph_documents(self, graph_documents: List) -> None:
+        """
+        Write all graph documents to AGE in a single transaction with
+        all SQL statements concatenated into one execute() call.
+        This reduces N round trips to 1.
+        """
+        import psycopg2
+
+        # Build all SQL statements first
+        statements = []
+        for doc in graph_documents:
+            for node in doc.nodes:
+                node.properties["id"] = node.id
+                label = self.age_graph.clean_graph_labels(node.type)
+                props = self.age_graph._format_properties(node.properties)
+                cypher = f'MERGE (n:`{label}` {{`id`: "{node.id}"}}) SET n = {props}'
+                statements.append(self.age_graph._wrap_query(cypher, "knowledge_graph"))
+
+            for edge in doc.relationships:
+                edge.source.properties["id"] = edge.source.id
+                edge.target.properties["id"] = edge.target.id
+                inputs = {
+                    "f_label": self.age_graph.clean_graph_labels(edge.source.type),
+                    "f_properties": self.age_graph._format_properties(edge.source.properties),
+                    "t_label": self.age_graph.clean_graph_labels(edge.target.type),
+                    "t_properties": self.age_graph._format_properties(edge.target.properties),
+                    "r_label": self.age_graph.clean_graph_labels(edge.type).upper(),
+                    "r_properties": self.age_graph._format_properties(edge.properties),
+                }
+                cypher = (
+                    f'MERGE (from:`{inputs["f_label"]}` {inputs["f_properties"]}) '
+                    f'MERGE (to:`{inputs["t_label"]}` {inputs["t_properties"]}) '
+                    f'MERGE (from)-[:`{inputs["r_label"]}` {inputs["r_properties"]}]->(to)'
+                )
+                statements.append(self.age_graph._wrap_query(cypher, "knowledge_graph"))
+
+        logger.info(f"  📤 Sending {len(statements)} SQL statements in single execute...")
+
+        # Execute all statements in one network call
+        conn = self.age_graph.connection
+        with conn.cursor() as curs:
+            try:
+                combined_sql = "; ".join(statements)
+                curs.execute(combined_sql)
+                conn.commit()
+            except psycopg2.Error as e:
+                conn.rollback()
+                raise e
+
+    def _fast_schema_refresh(self):
+        """
+        Fast schema refresh using ag_catalog metadata tables + sampled triples.
+        Gets labels from catalog (~1ms) and samples relationship patterns (~2s)
+        instead of LangChain's full graph scan (2+ min on remote DB).
+        """
+        import psycopg2
+        try:
+            conn = self.age_graph.connection
+            with conn.cursor() as curs:
+                # Get node labels from catalog (instant, no graph scan)
+                curs.execute("""
+                    SELECT name FROM ag_catalog.ag_label
+                    WHERE graph = (SELECT graphid FROM ag_catalog.ag_graph WHERE name = 'knowledge_graph')
+                    AND kind = 'v' AND name != '_ag_label_vertex'
+                """)
+                node_labels = [row[0] for row in curs.fetchall()]
+
+                # Get edge labels from catalog
+                curs.execute("""
+                    SELECT name FROM ag_catalog.ag_label
+                    WHERE graph = (SELECT graphid FROM ag_catalog.ag_graph WHERE name = 'knowledge_graph')
+                    AND kind = 'e' AND name != '_ag_label_edge'
+                """)
+                edge_labels = [row[0] for row in curs.fetchall()]
+
+            # Sample relationship patterns (source_label)-[edge_label]->(target_label)
+            # This is critical — without this, the LLM hallucinates relationships
+            triples = []
+            triple_schema = []
+            for e_label in edge_labels[:30]:  # Cap to avoid too many queries
+                try:
+                    query = f"""
+                        MATCH (a)-[e:`{e_label}`]->(b)
+                        WITH a, e, b LIMIT 1
+                        RETURN DISTINCT labels(a) AS from, type(e) AS edge, labels(b) AS to
+                    """
+                    results = self.age_graph.query(query)
+                    for r in results:
+                        src = r.get("from", ["Unknown"])[0] if isinstance(r.get("from"), list) else r.get("from", "Unknown")
+                        edge = r.get("edge", e_label)
+                        tgt = r.get("to", ["Unknown"])[0] if isinstance(r.get("to"), list) else r.get("to", "Unknown")
+                        triples.append(f"(:{src})-[:{edge}]->(:{tgt})")
+                        triple_schema.append({"start": src, "type": edge, "end": tgt})
+                except Exception:
+                    pass  # Skip edges with no data
+
+            # Build schema string with relationship patterns
+            triples_str = "\n            ".join(triples) if triples else "None"
+            self.age_graph.schema = f"""
+            Node labels: {', '.join(node_labels) if node_labels else 'None'}
+            Relationship patterns:
+            {triples_str}
+            All nodes have properties: id, organization_id, user_id, document_id, filename
+            All edges have properties: organization_id, user_id, document_id
+            """
+            self.age_graph.structured_schema = {
+                "node_props": {label: [] for label in node_labels},
+                "rel_props": {label: [] for label in edge_labels},
+                "relationships": triple_schema,
+                "metadata": {},
+            }
+            logger.info(f"✅ Fast schema: {len(node_labels)} node labels, {len(edge_labels)} edge labels, {len(triples)} relationship patterns")
+        except psycopg2.Error as e:
+            logger.warning(f"⚠️ Fast schema failed: {e}, falling back to full refresh")
+            self.age_graph.refresh_schema()
+
+    @property
+    def query_chain(self):
+        """Lazy-load GraphCypherQAChain on first access. Thread-safe — if pre-warm is
+        already initializing this, concurrent callers wait instead of double-initing."""
+        if self._query_chain is None:
+            with self._query_chain_lock:
+                if self._query_chain is None:  # Double-check after acquiring lock
+                    logger.info("🔗 Initializing GraphCypherQAChain (fast schema + query LLM)...")
+                    self._fast_schema_refresh()
+                    query_llm = get_llm(model="google/gemini-3-flash-preview", provider="openrouter")
+
+                    # Custom prompt for Apache AGE (not Neo4j)
+                    from langchain_core.prompts import PromptTemplate
+                    cypher_prompt = PromptTemplate(
+                        input_variables=["schema", "question"],
+                        template="""Generate a Cypher query for Apache AGE (PostgreSQL graph extension).
+
+OUTPUT: Only pure Cypher. No SQL wrapper, no explanations, no markdown.
+
+RULES:
+- ONE MATCH clause only
+- EVERY RETURN field MUST use AS alias (no dots in column names)
+- NO map projections, list comprehensions, OPTIONAL MATCH, UNION, WITH
+- Use backticks for multi-word labels: MATCH (n:`Mountain_peak`)
+- Do NOT assume specific node labels — labels vary per document (Concept, Technology, etc.)
+- Always match by document_id property, not by label:
+  GOOD: MATCH (a)-[r]->(b) WHERE a.document_id = 'xxx' RETURN a.id AS source, type(r) AS rel, b.id AS target
+  BAD:  MATCH (c:Country) WHERE ... (label may not exist)
+
+Schema (for reference — labels vary per document):
+{schema}
+
+Question:
+{question}"""
+                    )
+
+                    self._query_chain = GraphCypherQAChain.from_llm(
+                        llm=query_llm,
+                        graph=self.age_graph,
+                        cypher_prompt=cypher_prompt,
+                        return_direct=True,
+                        verbose=True,
+                        allow_dangerous_requests=True
+                    )
+                    logger.info("✅ GraphCypherQAChain ready")
+        return self._query_chain
 
     async def add_chunks_as_graph(
         self,
@@ -85,11 +272,13 @@ class AGEGraphClient:
         filename: str,
         chunks: List[str],
         chunk_metadatas: Optional[List[Dict[str, Any]]] = None,
-        max_concurrency: int = 5
+        max_concurrency: int = 20,
+        batch_size: int = 3
     ) -> Dict[str, Any]:
         """
-        Add document chunks to the graph with automatic entity/relationship extraction using LLM
-        Chunks are processed concurrently (up to max_concurrency at a time) for speed.
+        Add document chunks to the graph with automatic entity/relationship extraction using LLM.
+        Small chunks are batched together (batch_size) to reduce LLM calls.
+        Batches are processed with high concurrency (max_concurrency=20).
 
         Args:
             document_id: Document UUID
@@ -98,41 +287,47 @@ class AGEGraphClient:
             filename: Document filename
             chunks: List of text chunks
             chunk_metadatas: Optional list of metadata dicts for each chunk
-            max_concurrency: Max parallel LLM extraction calls (default 5)
+            max_concurrency: Max parallel LLM extraction calls (default 20)
+            batch_size: Number of small chunks to combine per LLM call (default 3)
 
         Returns:
-            Dict with extraction statistics:
-            {
-                "total_chunks": int,
-                "chunks_processed": int,
-                "total_nodes": int,
-                "total_relationships": int
-            }
+            Dict with extraction statistics
         """
         import asyncio
 
         try:
-            logger.info(f"🤖 Processing {len(chunks)} chunks from {filename} for graph extraction (concurrency={max_concurrency})...")
+            # Batch small chunks together to reduce LLM calls
+            # e.g. 31 chunks with batch_size=3 → 11 LLM calls instead of 31
+            batched_docs = []
+            for i in range(0, len(chunks), batch_size):
+                batch_texts = chunks[i:i + batch_size]
+                batch_indices = list(range(i, min(i + batch_size, len(chunks))))
 
-            semaphore = asyncio.Semaphore(max_concurrency)
-            db_lock = asyncio.Lock()
-
-            async def process_chunk(idx: int, chunk_text: str):
-                chunk_meta = chunk_metadatas[idx] if chunk_metadatas and idx < len(chunk_metadatas) else {}
-                chunk_index = chunk_meta.get("chunk_index", idx)
+                combined_text = "\n\n---\n\n".join(batch_texts)
+                first_meta = chunk_metadatas[i] if chunk_metadatas and i < len(chunk_metadatas) else {}
 
                 document = Document(
-                    page_content=chunk_text,
+                    page_content=combined_text,
                     metadata={
                         "document_id": document_id,
                         "organization_id": organization_id,
                         "user_id": user_id,
                         "filename": filename,
-                        "chunk_index": chunk_index,
-                        **chunk_meta
+                        "chunk_indices": batch_indices,
+                        **{k: v for k, v in first_meta.items() if k != "chunk_index"}
                     }
                 )
+                batched_docs.append((batch_indices, document))
 
+            num_batches = len(batched_docs)
+            logger.info(
+                f"🤖 Processing {len(chunks)} chunks from {filename} "
+                f"({num_batches} batches of ~{batch_size}, concurrency={max_concurrency})..."
+            )
+
+            semaphore = asyncio.Semaphore(max_concurrency)
+
+            async def process_batch(batch_idx: int, chunk_indices: List[int], document: Document):
                 try:
                     async with semaphore:
                         graph_documents = await self.llm_transformer.aconvert_to_graph_documents([document])
@@ -142,44 +337,57 @@ class AGEGraphClient:
                             node.properties["organization_id"] = organization_id
                             node.properties["user_id"] = user_id
                             node.properties["document_id"] = document_id
-                            node.properties["chunk_index"] = chunk_index
                             node.properties["filename"] = filename
 
                         for relationship in graph_doc.relationships:
                             relationship.properties["organization_id"] = organization_id
                             relationship.properties["user_id"] = user_id
                             relationship.properties["document_id"] = document_id
-                            relationship.properties["chunk_index"] = chunk_index
 
-                    # Serialize DB writes to avoid connection race conditions
-                    async with db_lock:
-                        self.age_graph.add_graph_documents(graph_documents)
+                    nodes = sum(len(gd.nodes) for gd in graph_documents)
+                    rels = sum(len(gd.relationships) for gd in graph_documents)
+                    logger.info(f"  ✅ Batch {batch_idx} (chunks {chunk_indices}): {nodes} nodes, {rels} relationships")
+                    return (graph_documents, nodes, rels, True)
 
-                    nodes = len(graph_documents[0].nodes) if graph_documents else 0
-                    rels = len(graph_documents[0].relationships) if graph_documents else 0
-                    logger.info(f"  ✅ Chunk {chunk_index}: {nodes} nodes, {rels} relationships")
-                    return (nodes, rels, True)
+                except Exception as batch_error:
+                    logger.error(f"  ❌ Failed batch {batch_idx} (chunks {chunk_indices}): {str(batch_error)}")
+                    return ([], 0, 0, False)
 
-                except Exception as chunk_error:
-                    logger.error(f"  ❌ Failed to process chunk {chunk_index}: {str(chunk_error)}")
-                    return (0, 0, False)
+            results = await asyncio.gather(*[
+                process_batch(i, indices, doc)
+                for i, (indices, doc) in enumerate(batched_docs)
+            ])
 
-            results = await asyncio.gather(*[process_chunk(idx, text) for idx, text in enumerate(chunks)])
+            # Collect all graph documents and write to DB in one shot
+            all_graph_docs = []
+            total_nodes = 0
+            total_relationships = 0
+            batches_processed = 0
+            for graph_docs, nodes, rels, success in results:
+                total_nodes += nodes
+                total_relationships += rels
+                if success:
+                    batches_processed += 1
+                    all_graph_docs.extend(graph_docs)
 
-            total_nodes = sum(r[0] for r in results)
-            total_relationships = sum(r[1] for r in results)
-            chunks_processed = sum(1 for r in results if r[2])
-
-            self.refresh_schema()
+            if all_graph_docs:
+                logger.info(f"💾 Writing {total_nodes} nodes + {total_relationships} relationships to AGE graph (single transaction)...")
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, self._batched_add_graph_documents, all_graph_docs)
+                logger.info(f"✅ All graph documents written to AGE")
 
             stats = {
                 "total_chunks": len(chunks),
-                "chunks_processed": chunks_processed,
+                "chunks_processed": batches_processed * batch_size,
                 "total_nodes": total_nodes,
                 "total_relationships": total_relationships
             }
 
-            logger.info(f"✅ Graph extraction complete for {filename}: {chunks_processed}/{len(chunks)} chunks, {total_nodes} nodes, {total_relationships} relationships")
+            logger.info(
+                f"✅ Graph extraction complete for {filename}: "
+                f"{batches_processed}/{num_batches} batches, "
+                f"{total_nodes} nodes, {total_relationships} relationships"
+            )
             return stats
 
         except Exception as e:

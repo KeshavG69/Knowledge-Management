@@ -9,6 +9,32 @@ from app.logger import logger
 from routers import health, upload, chat, models, auth, mindmap, report_suggestions, reports, flashcards, podcast, tak, simple_chat
 
 
+def _prewarm_clients():
+    """Pre-warm heavy clients in a background thread so first request is fast."""
+    import threading
+
+    def _warm():
+        try:
+            from services.ingestion_service import get_ingestion_service
+            logger.info("🔥 Pre-warming IngestionService (pgvector, chunker, unstructured)...")
+            svc = get_ingestion_service()
+            logger.info("✅ IngestionService pre-warmed")
+
+            logger.info("🔥 Pre-warming AGE graph client (LLM connections)...")
+            _ = svc.age_graph_client  # Triggers lazy init
+            logger.info("✅ AGE graph client pre-warmed")
+
+            logger.info("🔥 Pre-warming GraphCypherQAChain (schema refresh + query LLM)...")
+            from clients.age_graph_client import get_age_graph_client
+            client = get_age_graph_client()
+            _ = client.query_chain  # Triggers schema refresh + chain init
+            logger.info("✅ Query chain pre-warmed — first chat query will be fast")
+        except Exception as e:
+            logger.warning(f"⚠️ Pre-warm failed (non-fatal): {e}")
+
+    threading.Thread(target=_warm, daemon=True).start()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -17,6 +43,9 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting SoldierIQ Backend...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
+
+    # Pre-warm heavy clients in background so first dashboard load is fast
+    _prewarm_clients()
 
     yield
 

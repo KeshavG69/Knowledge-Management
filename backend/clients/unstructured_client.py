@@ -3,8 +3,6 @@ Unstructured API Client for complex document extraction
 Fresh instance per task for Celery compatibility
 """
 
-import os
-import tempfile
 from pathlib import Path
 from unstructured_client import UnstructuredClient as UnstructuredAPIClient
 from unstructured_client.models import shared
@@ -59,70 +57,33 @@ class UnstructuredClient:
             Exception: If extraction fails
         """
         try:
-            extension = Path(filename).suffix.lower()
+            # Pass bytes directly to Unstructured API — no temp file needed
+            req = {
+                "partition_parameters": {
+                    "files": {
+                        "content": file_content,
+                        "file_name": filename,
+                    },
+                    "strategy": shared.Strategy.FAST,
+                    "split_pdf_page": False,
+                    "split_pdf_allow_failed": False,
+                    "split_pdf_concurrency_level": 1,
+                }
+            }
 
-            # Write to temp file
-            with tempfile.NamedTemporaryFile(
-                delete=False,
-                suffix=extension
-            ) as tmp_file:
-                tmp_file.write(file_content)
-                tmp_file_path = tmp_file.name
+            res = self.client.general.partition(request=req)
 
-            try:
-                # Read file and partition with HI_RES strategy
-                with open(tmp_file_path, "rb") as f:
-                    # Correct API structure: dictionary with nested partition_parameters
-                    req = {
-                        "partition_parameters": {
-                            "files": {
-                                "content": f.read(),
-                                "file_name": filename,
-                            },
-                            "strategy": shared.Strategy.FAST,  # Fast strategy for speed
-                            "split_pdf_page": False,  # Disable PDF splitting to avoid threading
-                            "split_pdf_allow_failed": False,  # Don't use split PDF hook
-                            "split_pdf_concurrency_level": 1,  # Minimal concurrency
-                        }
-                    }
+            extracted_text = "\n\n".join([
+                element.get("text", "")
+                for element in res.elements
+                if element.get("text")
+            ])
 
-                # Call Unstructured API
-                res = self.client.general.partition(request=req)
+            logger.info(
+                f"✅ Unstructured API (fast) extracted {len(extracted_text)} chars from {filename}"
+            )
 
-                # Extract text from elements
-                extracted_text = "\n\n".join([
-                    element.get("text", "")
-                    for element in res.elements
-                    if element.get("text")
-                ])
-
-                logger.info(
-                    f"✅ Unstructured API (fast) extracted {len(extracted_text)} chars from {filename}"
-                )
-
-                # # For PDFs, also extract and analyze images
-                # if extension == ".pdf":
-                #     try:
-                #         logger.info(f"🖼️ Extracting images from PDF: {filename}")
-                #         pdf_image_extractor = get_pdf_image_extractor()
-                #         image_analysis = pdf_image_extractor.extract_and_analyze_images(
-                #             file_content, filename
-                #         )
-
-                #         if image_analysis:
-                #             # Combine text and image analysis
-                #             extracted_text = f"{extracted_text}\n\n{image_analysis}"
-                #             logger.info(f"✅ Combined text and image analysis for {filename}")
-                #     except Exception as e:
-                #         logger.warning(f"⚠️ Failed to extract images from PDF: {str(e)}")
-                #         # Continue with just text extraction
-
-                return extracted_text
-
-            finally:
-                # Clean up temp file
-                if os.path.exists(tmp_file_path):
-                    os.unlink(tmp_file_path)
+            return extracted_text
 
         except Exception as e:
             logger.error(f"❌ Unstructured API extraction failed for {filename}: {str(e)}")

@@ -39,14 +39,22 @@ class IngestionService:
     """Service for handling document ingestion pipeline"""
 
     def __init__(self):
-        """Initialize service with all required clients"""
+        """Initialize service with required clients. AGE graph is lazy-loaded to avoid slow cold start."""
         from clients.unstructured_client import get_unstructured_client
         self.idrivee2_client = get_idrivee2_client()
         self.postgres_client = get_postgres_client()
         self.pgvector_client = get_pgvector_client()
-        self.age_graph_client = get_age_graph_client()
+        self._age_graph_client = None  # Lazy — takes 2+ min to init LLM connections
         self.chunker_client = get_chunker_client()
         self.unstructured_client = get_unstructured_client()
+
+    @property
+    def age_graph_client(self):
+        """Lazy-load AGE graph client on first use (avoids blocking startup)."""
+        if self._age_graph_client is None:
+            logger.info("🔗 Lazy-initializing AGE graph client...")
+            self._age_graph_client = get_age_graph_client()
+        return self._age_graph_client
 
     def cleanup(self):
         """Clean up all client resources and thread pools"""
@@ -103,16 +111,28 @@ class IngestionService:
                 }
             )
 
-            # Step 2: Upload to E2 (sync)
-            self.idrivee2_client.upload_file_sync(
-                file_obj=io.BytesIO(file_content),
-                object_name=file_key,
-                content_type=content_type
-            )
+            # Step 2+3: Upload to E2 and extract content IN PARALLEL
+            # These are independent — both only read file_content bytes
+            async def _upload_to_e2():
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(
+                    None,
+                    lambda: self.idrivee2_client.upload_file_sync(
+                        file_obj=io.BytesIO(file_content),
+                        object_name=file_key,
+                        content_type=content_type
+                    )
+                )
 
-            # Step 3: Extract content (sync) - pass unstructured_client for proper cleanup
-            raw_content = extract_raw_data(file_content, filename, folder_name, self.unstructured_client)
-            logger.info(f"✅ Upload and extraction complete for {filename}")
+            async def _extract_content():
+                loop = asyncio.get_event_loop()
+                return await loop.run_in_executor(
+                    None,
+                    lambda: extract_raw_data(file_content, filename, folder_name, self.unstructured_client)
+                )
+
+            _, raw_content = await asyncio.gather(_upload_to_e2(), _extract_content())
+            logger.info(f"✅ Upload and extraction complete (parallel) for {filename}")
 
             # Check if video
             is_video = isinstance(raw_content, dict) and raw_content.get('type') == 'video'
@@ -220,6 +240,11 @@ class IngestionService:
                     f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
                 )
 
+                # Accumulate ALL chunks across pre-chunks for batched insert + graph
+                all_texts = []
+                all_metadatas = []
+                all_ids = []
+
                 for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
                     pre_chunk_content = pre_chunk_doc["content"]
                     pre_chunk_metadata = pre_chunk_doc["metadata"]
@@ -235,44 +260,50 @@ class IngestionService:
                         chunker_type="default"
                     )
 
-                    texts = [chunk["text"] for chunk in chunks]
-                    metadatas = [chunk["metadata"] for chunk in chunks]
-
-                    pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
-                    ids = [
-                        f"{document_id}_pre{pre_chunk_index}_chunk{i}"
-                        for i in range(len(chunks))
-                    ]
-
-                    self.pgvector_client.add_documents(
-                        texts=texts,
-                        metadatas=metadatas,
-                        ids=ids,
-                        namespace=organization_id
-                    )
+                    for i, chunk in enumerate(chunks):
+                        all_texts.append(chunk["text"])
+                        all_metadatas.append(chunk["metadata"])
+                        pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
+                        all_ids.append(f"{document_id}_pre{pre_chunk_index}_chunk{i}")
 
                     total_chunks += len(chunks)
                     logger.info(
                         f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
-                        f"{len(chunks)} chunks stored in pgvector"
+                        f"{len(chunks)} chunks created"
                     )
 
-                logger.info(f"✅ Stored {total_chunks} chunks in pgvector for: {filename}")
+                # Batched insert: single call for ALL chunks
+                self.pgvector_client.add_documents(
+                    texts=all_texts,
+                    metadatas=all_metadatas,
+                    ids=all_ids,
+                    namespace=organization_id
+                )
+                logger.info(f"✅ Stored {total_chunks} chunks in pgvector (batched) for: {filename}")
+
+                # Use accumulated chunks for graph (not just the last pre-chunk)
+                texts = all_texts
+                metadatas = all_metadatas
 
             # Step 6: Extract entities/relationships and store in Apache AGE graph
-            logger.info(f"🔗 Extracting graph from chunks: {filename}")
-            try:
-                graph_stats = await self.age_graph_client.add_chunks_as_graph(
-                    document_id=document_id,
-                    organization_id=organization_id,
-                    user_id=user_id,
-                    filename=filename,
-                    chunks=texts,  # Use the last batch of chunks
-                    chunk_metadatas=metadatas
-                )
-                logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
-            except Exception as graph_error:
-                logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
+            # Skip graph extraction for video/tabular files (noisy, low value)
+            is_tabular = filename.lower().endswith(('.xlsx', '.xls', '.csv', '.tsv'))
+            if is_video or is_tabular:
+                logger.info(f"⏭️ Skipping graph extraction for {'video' if is_video else 'tabular'} file: {filename}")
+            else:
+                logger.info(f"🔗 Extracting graph from {len(texts)} chunks: {filename}")
+                try:
+                    graph_stats = await self.age_graph_client.add_chunks_as_graph(
+                        document_id=document_id,
+                        organization_id=organization_id,
+                        user_id=user_id,
+                        filename=filename,
+                        chunks=texts,
+                        chunk_metadatas=metadatas
+                    )
+                    logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
+                except Exception as graph_error:
+                    logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
 
             # Mark as completed
             await self.postgres_client.update_document(
@@ -626,17 +657,20 @@ class IngestionService:
                     **(additional_metadata or {})
                 }
 
-                # This handles token-based pre-chunking if content > 200k tokens
                 prepared_documents = prepare_content_for_vectorization(
                     content=raw_content,
                     metadata=base_metadata
                 )
 
-                # Apply semantic chunking to each prepared document and store in pgvector
                 logger.info(
                     f"✂️ Semantic chunking and storing in pgvector: {file.filename} "
                     f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
                 )
+
+                # Accumulate ALL chunks across pre-chunks for batched insert + graph
+                all_texts = []
+                all_metadatas = []
+                all_ids = []
 
                 for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
                     pre_chunk_content = pre_chunk_doc["content"]
@@ -647,62 +681,62 @@ class IngestionService:
                         f"for {file.filename}..."
                     )
 
-                    # Apply semantic chunking to this pre-chunk
                     chunks = self.chunker_client.chunk_with_metadata(
                         text=pre_chunk_content,
                         base_metadata=pre_chunk_metadata,
                         chunker_type="default"
                     )
 
-                    # Store chunks in Pinecone (use organization_id as namespace)
-                    texts = [chunk["text"] for chunk in chunks]
-                    metadatas = [chunk["metadata"] for chunk in chunks]
-
-                    # Generate unique IDs for chunks
-                    pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
-                    ids = [
-                        f"{document_id}_pre{pre_chunk_index}_chunk{i}"
-                        for i in range(len(chunks))
-                    ]
-
-                    # Add to pgvector (embedding + upload is blocking, no threading)
-                    self.pgvector_client.add_documents(
-                        texts=texts,
-                        metadatas=metadatas,
-                        ids=ids,
-                        namespace=organization_id
-                    )
+                    for i, chunk in enumerate(chunks):
+                        all_texts.append(chunk["text"])
+                        all_metadatas.append(chunk["metadata"])
+                        pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
+                        all_ids.append(f"{document_id}_pre{pre_chunk_index}_chunk{i}")
 
                     total_chunks += len(chunks)
                     logger.info(
                         f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
-                        f"{len(chunks)} chunks stored in pgvector"
+                        f"{len(chunks)} chunks created"
                     )
 
-                logger.info(f"✅ Stored {total_chunks} chunks in pgvector for: {file.filename}")
-
-            # Step 6: Extract entities/relationships and store in Apache AGE graph
-            logger.info(f"🔗 Extracting graph from chunks: {file.filename}")
-            try:
-                graph_stats = await self.age_graph_client.add_chunks_as_graph(
-                    document_id=document_id,
-                    organization_id=organization_id,
-                    user_id=user_id,
-                    filename=file.filename,
-                    chunks=texts,  # Use the last batch of chunks
-                    chunk_metadatas=metadatas
+                # Batched insert: single call for ALL chunks
+                self.pgvector_client.add_documents(
+                    texts=all_texts,
+                    metadatas=all_metadatas,
+                    ids=all_ids,
+                    namespace=organization_id
                 )
-                logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
-            except Exception as graph_error:
-                logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
+                logger.info(f"✅ Stored {total_chunks} chunks in pgvector (batched) for: {file.filename}")
+
+                texts = all_texts
+                metadatas = all_metadatas
+
+            # Step 6: Extract entities/relationships — skip for video/tabular
+            is_tabular = file.filename.lower().endswith(('.xlsx', '.xls', '.csv', '.tsv'))
+            if is_video or is_tabular:
+                logger.info(f"⏭️ Skipping graph extraction for {'video' if is_video else 'tabular'} file: {file.filename}")
+            else:
+                logger.info(f"🔗 Extracting graph from {len(texts)} chunks: {file.filename}")
+                try:
+                    graph_stats = await self.age_graph_client.add_chunks_as_graph(
+                        document_id=document_id,
+                        organization_id=organization_id,
+                        user_id=user_id,
+                        filename=file.filename,
+                        chunks=texts,
+                        chunk_metadatas=metadatas
+                    )
+                    logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
+                except Exception as graph_error:
+                    logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
 
             # Mark as completed
             await self._update_document_status(
-            document_id=document_id,
-            status="completed",
-            stage="completed",
-            stage_description=f"Successfully processed {total_chunks} chunks",
-            completed_at=datetime.utcnow()
+                document_id=document_id,
+                status="completed",
+                stage="completed",
+                stage_description=f"Successfully processed {total_chunks} chunks",
+                completed_at=datetime.utcnow()
             )
             logger.info(f"✅ Document marked as completed: {document_id}")
 
@@ -909,17 +943,20 @@ class IngestionService:
                     **(additional_metadata or {})
                 }
 
-                # This handles token-based pre-chunking if content > 200k tokens
                 prepared_documents = prepare_content_for_vectorization(
                     content=raw_content,
                     metadata=base_metadata
                 )
 
-                # Apply semantic chunking
                 logger.info(
                     f"✂️ Semantic chunking and storing in pgvector: {file.filename} "
                     f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
                 )
+
+                # Accumulate ALL chunks across pre-chunks for batched insert + graph
+                all_texts = []
+                all_metadatas = []
+                all_ids = []
 
                 for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
                     pre_chunk_content = pre_chunk_doc["content"]
@@ -930,54 +967,54 @@ class IngestionService:
                         f"for {file.filename}..."
                     )
 
-                    # Apply semantic chunking to this pre-chunk
                     chunks = self.chunker_client.chunk_with_metadata(
                         text=pre_chunk_content,
                         base_metadata=pre_chunk_metadata,
                         chunker_type="default"
                     )
 
-                    # Store chunks in Pinecone
-                    texts = [chunk["text"] for chunk in chunks]
-                    metadatas = [chunk["metadata"] for chunk in chunks]
-
-                    # Generate unique IDs for chunks
-                    pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
-                    ids = [
-                        f"{document_id}_pre{pre_chunk_index}_chunk{i}"
-                        for i in range(len(chunks))
-                    ]
-
-                    # Add to pgvector (blocking call, no threading)
-                    self.pgvector_client.add_documents(
-                        texts=texts,
-                        metadatas=metadatas,
-                        ids=ids,
-                        namespace=organization_id
-                    )
+                    for i, chunk in enumerate(chunks):
+                        all_texts.append(chunk["text"])
+                        all_metadatas.append(chunk["metadata"])
+                        pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
+                        all_ids.append(f"{document_id}_pre{pre_chunk_index}_chunk{i}")
 
                     total_chunks += len(chunks)
                     logger.info(
                         f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
-                        f"{len(chunks)} chunks stored in pgvector"
+                        f"{len(chunks)} chunks created"
                     )
 
-                logger.info(f"✅ Stored {total_chunks} chunks in pgvector for: {file.filename}")
-
-            # Step 6: Extract entities/relationships and store in Apache AGE graph
-            logger.info(f"🔗 Extracting graph from chunks: {file.filename}")
-            try:
-                graph_stats = await self.age_graph_client.add_chunks_as_graph(
-                    document_id=document_id,
-                    organization_id=organization_id,
-                    user_id=user_id,
-                    filename=file.filename,
-                    chunks=texts,  # Use the last batch of chunks
-                    chunk_metadatas=metadatas
+                # Batched insert: single call for ALL chunks
+                self.pgvector_client.add_documents(
+                    texts=all_texts,
+                    metadatas=all_metadatas,
+                    ids=all_ids,
+                    namespace=organization_id
                 )
-                logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
-            except Exception as graph_error:
-                logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
+                logger.info(f"✅ Stored {total_chunks} chunks in pgvector (batched) for: {file.filename}")
+
+                texts = all_texts
+                metadatas = all_metadatas
+
+            # Step 6: Extract entities/relationships — skip for video/tabular
+            is_tabular = file.filename.lower().endswith(('.xlsx', '.xls', '.csv', '.tsv'))
+            if is_video or is_tabular:
+                logger.info(f"⏭️ Skipping graph extraction for {'video' if is_video else 'tabular'} file: {file.filename}")
+            else:
+                logger.info(f"🔗 Extracting graph from {len(texts)} chunks: {file.filename}")
+                try:
+                    graph_stats = await self.age_graph_client.add_chunks_as_graph(
+                        document_id=document_id,
+                        organization_id=organization_id,
+                        user_id=user_id,
+                        filename=file.filename,
+                        chunks=texts,
+                        chunk_metadatas=metadatas
+                    )
+                    logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
+                except Exception as graph_error:
+                    logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
 
             # Mark as completed
             await self._update_document_status(

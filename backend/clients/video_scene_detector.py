@@ -31,7 +31,6 @@ class VideoSceneDetector:
     def __init__(self):
         """Initialize scene detector"""
         if not hasattr(self, '_initialized'):
-            self._detection_lock = threading.Lock()
             self._initialized = True
             logger.info("✅ Video scene detector initialized (PySceneDetect)")
 
@@ -42,105 +41,78 @@ class VideoSceneDetector:
         threshold: Optional[float] = None,
         downscale: int = 2
     ) -> tuple[List[Dict], Dict[int, float]]:
-        """
-        Detect scenes using PySceneDetect (10-20x faster than custom SSIM)
+        """Legacy wrapper — writes temp file then delegates to detect_scenes_from_path."""
+        extension = Path(filename).suffix.lower()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+            tmp_file.write(file_content)
+            tmp_file.flush()
+            tmp_file_path = tmp_file.name
+        try:
+            return self.detect_scenes_from_path(tmp_file_path, threshold, downscale)
+        finally:
+            import os
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
 
-        Uses ContentDetector with downscaling for maximum speed.
-        Also calculates entropy for key frame selection.
+    def detect_scenes_from_path(
+        self,
+        video_path: str,
+        threshold: Optional[float] = None,
+        downscale: int = 2
+    ) -> tuple[List[Dict], Dict[int, float]]:
+        """
+        Detect scenes using PySceneDetect from an existing file path.
 
         Args:
-            file_content: Video file content as bytes
-            filename: Original filename
-            threshold: Scene detection threshold (default: 27.0)
+            video_path: Path to the video file on disk
+            threshold: Scene detection threshold (default: 18.0)
             downscale: Downscale factor for speed (1=full res, 2=half res)
 
         Returns:
-            Tuple of (scenes, entropy_cache):
-            - scenes: List of scene boundary dictionaries
-            - entropy_cache: Dict mapping frame_number → entropy value
-
-        Raises:
-            Exception: If detection fails
+            Tuple of (scenes, entropy_cache)
         """
-        with self._detection_lock:
-            try:
-                threshold = threshold or 18.0  # Lower threshold = more sensitive (detects more scenes)
-                extension = Path(filename).suffix.lower()
+        try:
+            threshold = threshold or 18.0
+            logger.info(
+                f"🔍 PySceneDetect: Detecting scenes "
+                f"(threshold={threshold}, downscale={downscale}x)"
+            )
 
-                logger.info(
-                    f"🔍 PySceneDetect: Detecting scenes "
-                    f"(threshold={threshold}, downscale={downscale}x)"
-                )
+            from scenedetect.video_manager import VideoManager
+            from scenedetect.scene_manager import SceneManager
 
-                # Write to temp file (PySceneDetect needs file path)
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=extension
-                ) as tmp_file:
-                    tmp_file.write(file_content)
-                    tmp_file.flush()
-                    tmp_file_path = tmp_file.name
+            video_manager = VideoManager([video_path])
+            scene_manager = SceneManager()
+            scene_manager.add_detector(ContentDetector(threshold=threshold))
+            video_manager.set_downscale_factor(downscale)
+            video_manager.start()
+            scene_manager.detect_scenes(video_manager, show_progress=False)
+            scene_list = scene_manager.get_scene_list()
+            video_manager.release()
 
-                try:
-                    # Detect scenes with PySceneDetect
-                    # Note: downscale factor is applied via video backend, not detect() directly
-                    from scenedetect.video_manager import VideoManager
-                    from scenedetect.scene_manager import SceneManager
+            logger.info(f"✅ PySceneDetect found {len(scene_list)} scenes")
 
-                    # Create video manager with downscale
-                    video_manager = VideoManager([tmp_file_path])
-                    scene_manager = SceneManager()
-                    scene_manager.add_detector(ContentDetector(threshold=threshold))
+            scenes = []
+            for i, (start_time, end_time) in enumerate(scene_list):
+                scenes.append({
+                    'scene_id': i,
+                    'start_frame': start_time.get_frames(),
+                    'end_frame': end_time.get_frames(),
+                    'start_time': start_time.get_seconds(),
+                    'end_time': end_time.get_seconds(),
+                    'num_frames': end_time.get_frames() - start_time.get_frames()
+                })
 
-                    # Set downscale factor
-                    video_manager.set_downscale_factor(downscale)
+            entropy_cache = {}
+            logger.info(
+                f"✅ Scene detection complete: {len(scenes)} scenes detected "
+                f"(PySceneDetect with {downscale}x downscale)"
+            )
+            return scenes, entropy_cache
 
-                    # Start video manager
-                    video_manager.start()
-
-                    # Detect scenes
-                    scene_manager.detect_scenes(video_manager, show_progress=False)
-
-                    # Get scene list
-                    scene_list = scene_manager.get_scene_list()
-
-                    # Release video
-                    video_manager.release()
-
-                    logger.info(f"✅ PySceneDetect found {len(scene_list)} scenes")
-
-                    # Convert to our format
-                    scenes = []
-                    for i, (start_time, end_time) in enumerate(scene_list):
-                        scenes.append({
-                            'scene_id': i,
-                            'start_frame': start_time.get_frames(),
-                            'end_frame': end_time.get_frames(),
-                            'start_time': start_time.get_seconds(),
-                            'end_time': end_time.get_seconds(),
-                            'num_frames': end_time.get_frames() - start_time.get_frames()
-                        })
-
-                    # Create entropy cache (empty for now, will be populated during key frame selection)
-                    # We'll calculate entropy on-demand for key frames only
-                    entropy_cache = {}
-
-                    logger.info(
-                        f"✅ Scene detection complete: {len(scenes)} scenes detected "
-                        f"(PySceneDetect with {downscale}x downscale)"
-                    )
-
-                    return scenes, entropy_cache
-
-                finally:
-                    # Clean up temp file
-                    import os
-                    if os.path.exists(tmp_file_path):
-                        os.unlink(tmp_file_path)
-
-            except Exception as e:
-                logger.error(f"❌ PySceneDetect scene detection failed: {str(e)}")
-                raise Exception(f"Scene detection failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ PySceneDetect scene detection failed: {str(e)}")
+            raise Exception(f"Scene detection failed: {str(e)}")
 
     def select_key_frames_from_video(
         self,
@@ -148,98 +120,81 @@ class VideoSceneDetector:
         filename: str,
         scenes: List[Dict]
     ) -> List[Dict]:
-        """
-        Select key frames using entropy (middle frame as fallback)
+        """Legacy wrapper — writes temp file then delegates to select_key_frames_from_path."""
+        extension = Path(filename).suffix.lower()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+            tmp_file.write(file_content)
+            tmp_file.flush()
+            tmp_file_path = tmp_file.name
+        try:
+            return self.select_key_frames_from_path(tmp_file_path, scenes)
+        finally:
+            import os
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
 
-        For each scene, extracts the middle frame and calculates entropy.
-        This is much faster than scanning all frames.
+    def select_key_frames_from_path(
+        self,
+        video_path: str,
+        scenes: List[Dict]
+    ) -> List[Dict]:
+        """
+        Select key frames using entropy from an existing file path.
 
         Args:
-            file_content: Video file content as bytes
-            filename: Original filename
-            scenes: List of scene dicts from detect_scenes_from_video()
+            video_path: Path to the video file on disk
+            scenes: List of scene dicts from detect_scenes
 
         Returns:
-            List of key frame dictionaries with:
-            - frame_number: int
-            - timestamp: float
-            - scene_id: int
-            - scene_start: float
-            - scene_end: float
-            - entropy: float
+            List of key frame dictionaries
         """
-        with self._detection_lock:
-            try:
-                logger.info(f"🔑 Selecting key frames from {len(scenes)} scenes")
+        try:
+            logger.info(f"🔑 Selecting key frames from {len(scenes)} scenes")
 
-                import cv2
-                extension = Path(filename).suffix.lower()
+            import cv2
+            cap = cv2.VideoCapture(video_path)
+            if not cap.isOpened():
+                raise Exception(f"Failed to open video: {video_path}")
 
-                # Write to temp file
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=extension
-                ) as tmp_file:
-                    tmp_file.write(file_content)
-                    tmp_file.flush()
-                    tmp_file_path = tmp_file.name
+            key_frames = []
 
-                try:
-                    # Open video
-                    cap = cv2.VideoCapture(tmp_file_path)
-                    if not cap.isOpened():
-                        raise Exception(f"Failed to open video: {filename}")
+            for scene in scenes:
+                middle_frame_num = (scene['start_frame'] + scene['end_frame']) // 2
+                cap.set(cv2.CAP_PROP_POS_FRAMES, middle_frame_num)
+                ret, frame = cap.read()
 
-                    key_frames = []
+                if ret:
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    entropy = self._calculate_entropy(gray)
 
-                    for scene in scenes:
-                        # Use middle frame of scene as key frame
-                        middle_frame_num = (scene['start_frame'] + scene['end_frame']) // 2
+                    scene_duration = scene['end_time'] - scene['start_time']
+                    scene_frames = scene['end_frame'] - scene['start_frame']
+                    frame_offset = middle_frame_num - scene['start_frame']
 
-                        # Seek to middle frame
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, middle_frame_num)
-                        ret, frame = cap.read()
+                    if scene_frames > 0:
+                        timestamp = scene['start_time'] + (frame_offset / scene_frames) * scene_duration
+                    else:
+                        timestamp = scene['start_time']
 
-                        if ret:
-                            # Convert to grayscale and calculate entropy
-                            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                            entropy = self._calculate_entropy(gray)
+                    key_frames.append({
+                        'frame_number': middle_frame_num,
+                        'timestamp': timestamp,
+                        'scene_id': scene['scene_id'],
+                        'scene_start': scene['start_time'],
+                        'scene_end': scene['end_time'],
+                        'entropy': entropy
+                    })
+                else:
+                    logger.warning(f"⚠️ Could not extract frame for scene {scene['scene_id']}")
 
-                            # Calculate timestamp
-                            scene_duration = scene['end_time'] - scene['start_time']
-                            scene_frames = scene['end_frame'] - scene['start_frame']
-                            frame_offset = middle_frame_num - scene['start_frame']
+            cap.release()
 
-                            if scene_frames > 0:
-                                timestamp = scene['start_time'] + (frame_offset / scene_frames) * scene_duration
-                            else:
-                                timestamp = scene['start_time']
+            logger.info(f"✅ Selected {len(key_frames)} key frames")
+            return key_frames
 
-                            key_frames.append({
-                                'frame_number': middle_frame_num,
-                                'timestamp': timestamp,
-                                'scene_id': scene['scene_id'],
-                                'scene_start': scene['start_time'],
-                                'scene_end': scene['end_time'],
-                                'entropy': entropy
-                            })
-                        else:
-                            logger.warning(f"⚠️ Could not extract frame for scene {scene['scene_id']}")
-
-                    cap.release()
-
-                    logger.info(f"✅ Selected {len(key_frames)} key frames")
-                    return key_frames
-
-                finally:
-                    # Clean up temp file
-                    import os
-                    if os.path.exists(tmp_file_path):
-                        os.unlink(tmp_file_path)
-
-            except Exception as e:
-                logger.error(f"❌ Key frame selection failed: {str(e)}")
-                raise Exception(f"Key frame selection failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ Key frame selection failed: {str(e)}")
+            raise Exception(f"Key frame selection failed: {str(e)}")
 
     def select_key_frames_from_cache(
         self,

@@ -38,7 +38,6 @@ class GroqWhisperClient:
 
             # Initialize Groq client
             self.client = Groq(api_key=self.api_key)
-            self._transcription_lock = threading.Lock()
             self._initialized = True
             logger.info("✅ Groq Whisper client initialized")
 
@@ -76,24 +75,23 @@ class GroqWhisperClient:
         Raises:
             Exception: If transcription fails
         """
-        with self._transcription_lock:
-            try:
-                extension = Path(filename).suffix.lower()
-                file_size_mb = len(file_content) / (1024 * 1024)
+        try:
+            extension = Path(filename).suffix.lower()
+            file_size_mb = len(file_content) / (1024 * 1024)
 
-                logger.info(f"🎵 Audio file size: {file_size_mb:.2f} MB")
+            logger.info(f"🎵 Audio file size: {file_size_mb:.2f} MB")
 
-                # If file is small enough, process directly
-                if file_size_mb <= 20:
-                    return self._transcribe_single_file(file_content, filename)
+            # If file is small enough, process directly
+            if file_size_mb <= 20:
+                return self._transcribe_single_file(file_content, filename)
 
-                # For large files, chunk and process
-                logger.info(f"📦 File too large ({file_size_mb:.2f} MB), chunking into smaller segments...")
-                return self._transcribe_chunked_file(file_content, filename)
+            # For large files, chunk and process in parallel
+            logger.info(f"📦 File too large ({file_size_mb:.2f} MB), chunking into smaller segments...")
+            return self._transcribe_chunked_file(file_content, filename)
 
-            except Exception as e:
-                logger.error(f"❌ Groq Whisper transcription failed for {filename}: {str(e)}")
-                raise Exception(f"Audio transcription failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ Groq Whisper transcription failed for {filename}: {str(e)}")
+            raise Exception(f"Audio transcription failed: {str(e)}")
 
     def _transcribe_single_file(self, file_content: bytes, filename: str) -> list:
         """Transcribe a single audio file without chunking"""
@@ -190,39 +188,53 @@ class GroqWhisperClient:
 
             logger.info(f"✂️  Split into {len(chunks)} chunks")
 
-            # Transcribe each chunk
-            all_segments = []
-            for i, chunk_data in enumerate(chunks, 1):
+            # Transcribe chunks in parallel (up to 3 concurrent)
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+
+            def transcribe_one_chunk(i, chunk_data):
+                """Transcribe a single audio chunk and return offset-adjusted segments."""
                 logger.info(f"🎤 Transcribing chunk {i}/{len(chunks)} ({chunk_data['start_time']:.1f}s - {chunk_data['end_time']:.1f}s)...")
 
-                # Export chunk to temp file
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as chunk_file:
                     chunk_data['audio'].export(chunk_file.name, format='mp3')
                     chunk_path = chunk_file.name
 
                 try:
-                    # Read chunk content
                     with open(chunk_path, 'rb') as f:
                         chunk_content = f.read()
 
-                    # Transcribe chunk
                     chunk_segments = self._transcribe_single_file(
                         chunk_content,
                         f"{Path(filename).stem}_chunk{i}.mp3"
                     )
 
-                    # Adjust timestamps to account for chunk offset
                     time_offset = chunk_data['start_time']
                     for seg in chunk_segments:
                         seg['start'] += time_offset
                         seg['end'] += time_offset
-                        all_segments.append(seg)
 
+                    return i, chunk_segments
                 finally:
                     if os.path.exists(chunk_path):
                         os.unlink(chunk_path)
 
-            logger.info(f"✅ Chunked transcription complete: {len(all_segments)} total segments")
+            # Run up to 3 transcriptions concurrently
+            results = {}
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                futures = {
+                    executor.submit(transcribe_one_chunk, i, chunk_data): i
+                    for i, chunk_data in enumerate(chunks, 1)
+                }
+                for future in as_completed(futures):
+                    idx, segs = future.result()
+                    results[idx] = segs
+
+            # Reassemble in order
+            all_segments = []
+            for i in sorted(results.keys()):
+                all_segments.extend(results[i])
+
+            logger.info(f"✅ Chunked transcription complete (parallel): {len(all_segments)} total segments")
             return all_segments
 
         finally:
