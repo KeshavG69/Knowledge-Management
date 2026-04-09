@@ -245,45 +245,62 @@ Text:
         namespace: Optional[str] = None
     ) -> bool:
         """
-        Delete documents from pgvector by IDs or filter
+        Delete documents from pgvector by IDs or metadata filter.
+        Uses direct SQL for filter-based deletion (fast and reliable).
 
         Args:
             ids: Optional list of document IDs to delete
-            filter: Optional metadata filter for deletion
+            filter: Optional metadata filter for deletion (e.g. {"document_id": {"$eq": "..."}})
             namespace: Optional namespace (organization_id)
 
         Returns:
             bool: True if deletion was successful
-
-        Raises:
-            Exception: If deletion fails
         """
         try:
             if ids:
-                # Delete by IDs
                 self.vector_store.delete(ids=ids)
                 logger.info(f"✅ Deleted {len(ids)} documents from pgvector")
             elif filter:
+                # Direct SQL delete on langchain_pg_embedding using JSONB metadata filters
+                # Much faster than the old approach (similarity_search with empty query + delete by IDs)
+                from sqlalchemy import text
+
+                # Build WHERE clauses from filter dict
+                conditions = []
+                params = {}
+
                 # Add namespace to filter if provided
-                delete_filter = filter.copy() if filter else {}
                 if namespace:
-                    delete_filter["organization_id"] = {"$eq": namespace}
+                    filter["organization_id"] = {"$eq": namespace}
 
-                # Note: LangChain PGVector may not support filter-based deletion
-                # We may need to query first, then delete by IDs
-                matching_docs = self.similarity_search(
-                    query="",  # Dummy query
-                    k=10000,  # High limit
-                    filter=delete_filter
-                )
+                for i, (key, value) in enumerate(filter.items()):
+                    if isinstance(value, dict) and "$eq" in value:
+                        param_name = f"val_{i}"
+                        conditions.append(f"cmetadata->>'{key}' = :{param_name}")
+                        params[param_name] = value["$eq"]
 
-                matching_ids = [doc.metadata.get("id") for doc in matching_docs if doc.metadata.get("id")]
+                if not conditions:
+                    raise ValueError("Filter produced no valid conditions")
 
-                if matching_ids:
-                    self.vector_store.delete(ids=matching_ids)
-                    logger.info(f"✅ Deleted {len(matching_ids)} documents matching filter from pgvector")
-                else:
-                    logger.warning("No documents found matching filter")
+                # Get the collection UUID for this collection_name
+                where_clause = " AND ".join(conditions)
+                sql = text(f"""
+                    DELETE FROM langchain_pg_embedding
+                    WHERE collection_id = (
+                        SELECT uuid FROM langchain_pg_collection
+                        WHERE name = :collection_name
+                    )
+                    AND {where_clause}
+                """)
+                params["collection_name"] = self.vector_store.collection_name
+
+                # Execute via the vector store's engine
+                with self.vector_store._make_sync_session() as session:
+                    result = session.execute(sql, params)
+                    deleted_count = result.rowcount
+                    session.commit()
+
+                logger.info(f"✅ Deleted {deleted_count} embeddings from pgvector (direct SQL)")
             else:
                 raise ValueError("Either ids or filter must be provided")
 
@@ -365,11 +382,16 @@ Text:
         return retriever
 
 
+_pgvector_client = None
+
 def get_pgvector_client() -> PGVectorClient:
     """
-    Create a fresh PGVectorClient instance
+    Get or create PGVectorClient singleton instance.
 
     Returns:
-        PGVectorClient: Fresh client instance
+        PGVectorClient: Singleton client instance
     """
-    return PGVectorClient()
+    global _pgvector_client
+    if _pgvector_client is None:
+        _pgvector_client = PGVectorClient()
+    return _pgvector_client

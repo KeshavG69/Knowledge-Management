@@ -51,7 +51,7 @@ dependencies = [
     "aioboto3>=13.0.0",
     # Utilities
     "pytz>=2025.2",
-    "chonkie[catsu]>=1.5.4",
+    "chonkie==1.5.6",
     "agno>=2.0.11",
     "groq>=1.0.0",
     "opencv-python>=4.13.0.90",

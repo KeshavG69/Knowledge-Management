@@ -213,7 +213,8 @@ export default function ChatArea() {
     };
 
     fetchTAKConfig();
-  }, [setTAKCredentials, setTAKEnabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelectMission = (mission: Mission) => {
     setCurrentMissionId(mission.id);

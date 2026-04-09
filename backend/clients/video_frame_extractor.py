@@ -31,7 +31,6 @@ class VideoFrameExtractor:
     def __init__(self):
         """Initialize frame extractor"""
         if not hasattr(self, '_initialized'):
-            self._extraction_lock = threading.Lock()
             self._initialized = True
             logger.info("✅ Video frame extractor initialized")
 
@@ -61,7 +60,7 @@ class VideoFrameExtractor:
         Raises:
             Exception: If extraction fails
         """
-        with self._extraction_lock:
+        if True:  # Lock removed — I/O bound, no shared state to protect
             try:
                 target_fps = target_fps or settings.VIDEO_TARGET_FPS
                 extension = Path(filename).suffix.lower()
@@ -167,7 +166,7 @@ class VideoFrameExtractor:
         Raises:
             Exception: If extraction fails
         """
-        with self._extraction_lock:
+        if True:  # Lock removed — I/O bound, no shared state to protect
             try:
                 target_fps = target_fps or settings.VIDEO_TARGET_FPS
                 extension = Path(filename).suffix.lower()
@@ -259,82 +258,65 @@ class VideoFrameExtractor:
         filename: str,
         frame_numbers: List[int]
     ) -> List[np.ndarray]:
-        """
-        Extract multiple color frames efficiently (single video open)
+        """Legacy wrapper — writes temp file then delegates to extract_color_frames_batch_from_path."""
+        extension = Path(filename).suffix.lower()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+            tmp_file.write(file_content)
+            tmp_file.flush()
+            tmp_file_path = tmp_file.name
+        try:
+            return self.extract_color_frames_batch_from_path(tmp_file_path, frame_numbers)
+        finally:
+            import os
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
 
-        OPTIMIZED: Opens video ONCE and extracts all frames
-        - Old: Open/close video 916 times = ~5-10 mins
-        - New: Open video once, seek to frames = ~30-60 seconds ✅ 10-20x faster!
+    def extract_color_frames_batch_from_path(
+        self,
+        video_path: str,
+        frame_numbers: List[int]
+    ) -> List[np.ndarray]:
+        """
+        Extract multiple color frames efficiently from an existing file path.
+
+        Opens video ONCE and seeks to each frame.
 
         Args:
-            file_content: Video file content as bytes
-            filename: Original filename
+            video_path: Path to the video file on disk
             frame_numbers: List of frame numbers to extract
 
         Returns:
             List of color frames as BGR numpy arrays (same order as frame_numbers)
-
-        Raises:
-            Exception: If extraction fails
         """
-        with self._extraction_lock:
-            try:
-                extension = Path(filename).suffix.lower()
+        try:
+            cap = cv2.VideoCapture(video_path)
+            if not cap.isOpened():
+                raise Exception(f"Failed to open video file: {video_path}")
 
-                # Write to temp file
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=extension
-                ) as tmp_file:
-                    tmp_file.write(file_content)
-                    tmp_file.flush()
-                    tmp_file_path = tmp_file.name
+            logger.info(f"📹 Extracting {len(frame_numbers)} color frames in batch...")
 
-                try:
-                    # Open video ONCE
-                    cap = cv2.VideoCapture(tmp_file_path)
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 
-                    if not cap.isOpened():
-                        raise Exception(f"Failed to open video file: {filename}")
+            color_frames = []
+            for i, frame_num in enumerate(frame_numbers):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
+                ret, frame = cap.read()
+                if not ret:
+                    logger.warning(f"⚠️ Failed to read frame {frame_num}, using black frame")
+                    frame = np.zeros((height, width, 3), dtype=np.uint8)
+                color_frames.append(frame)
 
-                    logger.info(f"📹 Extracting {len(frame_numbers)} color frames in batch...")
+                if (i + 1) % 100 == 0:
+                    logger.info(f"⏳ Extracted {i + 1}/{len(frame_numbers)} color frames...")
 
-                    # Get video properties for fallback black frame
-                    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            cap.release()
+            logger.info(f"✅ Batch extracted {len(color_frames)} color frames")
+            return color_frames
 
-                    # Extract all frames in one pass
-                    color_frames = []
-                    for i, frame_num in enumerate(frame_numbers):
-                        # Seek to specific frame
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
-
-                        ret, frame = cap.read()
-                        if not ret:
-                            logger.warning(f"⚠️ Failed to read frame {frame_num}, using black frame")
-                            # Create black frame as fallback
-                            frame = np.zeros((height, width, 3), dtype=np.uint8)
-
-                        color_frames.append(frame)
-
-                        # Log progress every 100 frames
-                        if (i + 1) % 100 == 0:
-                            logger.info(f"⏳ Extracted {i + 1}/{len(frame_numbers)} color frames...")
-
-                    cap.release()
-
-                    logger.info(f"✅ Batch extracted {len(color_frames)} color frames")
-                    return color_frames
-
-                finally:
-                    # Clean up temp file
-                    import os
-                    if os.path.exists(tmp_file_path):
-                        os.unlink(tmp_file_path)
-
-            except Exception as e:
-                logger.error(f"❌ Batch color frame extraction failed for {filename}: {str(e)}")
-                raise Exception(f"Batch color frame extraction failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ Batch color frame extraction failed: {str(e)}")
+            raise Exception(f"Batch color frame extraction failed: {str(e)}")
 
     def extract_color_frame(
         self,
@@ -358,7 +340,7 @@ class VideoFrameExtractor:
         Raises:
             Exception: If extraction fails
         """
-        with self._extraction_lock:
+        if True:  # Lock removed — I/O bound, no shared state to protect
             try:
                 extension = Path(filename).suffix.lower()
 

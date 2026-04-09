@@ -65,12 +65,13 @@ export default function DashboardPage() {
     }
   }, [user, isInitializing, router]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user) {
       fetchDocuments();
       fetchKnowledgeBases();
     }
-  }, [user, fetchDocuments, fetchKnowledgeBases]);
+  }, [user]);
 
   if (isInitializing || !user) {
     return (

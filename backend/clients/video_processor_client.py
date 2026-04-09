@@ -37,7 +37,6 @@ class VideoProcessorClient:
     def __init__(self):
         """Initialize video processor"""
         if not hasattr(self, '_initialized'):
-            self._processing_lock = threading.Lock()
             self._initialized = True
             logger.info("✅ Video processor initialized")
 
@@ -55,10 +54,10 @@ class VideoProcessorClient:
 
         Pipeline stages:
         1. Audio extraction → Whisper transcription (timestamped)
-        2. Scene detection → SSIM streaming (pass 1, ~10MB memory)
-        3. Key frame selection → Entropy streaming (pass 2, ~10MB memory)
-        4. Color frame extraction → Key frames only (seeking)
-        5. Upload thumbnails → iDrive E2 (file_keys)
+        2. Scene detection → PySceneDetect (single temp file)
+        3. Key frame selection → Entropy (reuses temp file)
+        4. Color frame extraction → Key frames only (reuses temp file)
+        5. Upload thumbnails → (skipped)
         6. VLM description → Multimodal alignment & blending
         7. Format output → Combined text + scene chunks
 
@@ -71,135 +70,114 @@ class VideoProcessorClient:
             Dictionary with:
             - combined_text: str (all scenes for MongoDB)
             - chunks: List[Dict] (scene chunks for Pinecone)
-                Each chunk has:
-                - chunk_id, video_id, video_name
-                - clip_start, clip_end, duration
-                - key_frame_timestamp, keyframe_file_key
-                - transcript_text, visual_description, blended_text
 
         Raises:
             Exception: If processing fails
         """
-        with self._processing_lock:
+        try:
+            logger.info(f"🎬 Starting video processing pipeline for: {filename}")
+
+            # Generate video ID (sanitized filename)
+            video_id = self._sanitize_video_id(filename)
+            video_name = filename
+
+            # Write temp file ONCE — all stages reuse this path
+            import os
+            extension = Path(filename).suffix.lower()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+                tmp_file.write(file_content)
+                tmp_file.flush()
+                video_tmp_path = tmp_file.name
+
             try:
-                logger.info(f"🎬 Starting video processing pipeline for: {filename}")
-
-                # Generate video ID (sanitized filename)
-                video_id = self._sanitize_video_id(filename)
-                video_name = filename
-
                 logger.info("🚀 PARALLEL PROCESSING: Audio transcription + Video frame processing")
 
-                # Run Stage 1 (audio) in PARALLEL with Stages 2-5 (video frames)
-                # This saves 5-10 minutes since transcription doesn't block video processing!
                 import asyncio
 
                 async def process_audio_and_video_parallel():
                     """Process audio and video in parallel for maximum throughput"""
 
-                    # Task 1: Audio transcription (blocking call, no threading)
                     async def transcribe_audio():
                         logger.info("📝 Stage 1/7: Audio transcription (timestamped) - PARALLEL")
-                        return self._extract_and_transcribe_audio(
-                            file_content,
-                            filename
+                        loop = asyncio.get_event_loop()
+                        return await loop.run_in_executor(
+                            None,
+                            lambda: self._extract_and_transcribe_audio(video_tmp_path, filename)
                         )
 
-                    # Task 2: Video frame processing (runs in thread pool)
                     async def process_video_frames():
                         logger.info("🎬 Stages 2-4/7: Video frame processing (PySceneDetect) - PARALLEL")
 
                         scene_detector = get_video_scene_detector()
                         frame_extractor = get_video_frame_extractor()
 
-                        # Stage 2: PySceneDetect scene detection (full resolution for accuracy)
+                        # Stage 2: PySceneDetect scene detection — reuses temp file path
                         logger.info("🎬 Stage 2/7: PySceneDetect scene detection (full resolution)")
-                        scenes, entropy_cache = scene_detector.detect_scenes_from_video(
-                            file_content,
-                            filename,
-                            threshold=27.0,  # Lower threshold = more sensitive (detects more scenes)
-                            downscale=1  # Full resolution = catches subtle changes
+                        loop = asyncio.get_event_loop()
+                        scenes, entropy_cache = await loop.run_in_executor(
+                            None,
+                            lambda: scene_detector.detect_scenes_from_path(
+                                video_tmp_path,
+                                threshold=27.0,
+                                downscale=1
+                            )
                         )
 
                         # Handle videos with no scene changes (static content)
                         if not scenes:
                             logger.warning("⚠️ No scenes detected - treating entire video as single scene")
-                            # Get video duration to create a single scene covering the entire video
-                            import tempfile
-                            extension = Path(filename).suffix.lower()
-                            with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
-                                tmp_file.write(file_content)
-                                tmp_file_path = tmp_file.name
+                            cap = cv2.VideoCapture(video_tmp_path)
+                            fps = cap.get(cv2.CAP_PROP_FPS)
+                            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                            duration_seconds = frame_count / fps if fps > 0 else 10.0
+                            cap.release()
 
-                            try:
-                                cap = cv2.VideoCapture(tmp_file_path)
-                                fps = cap.get(cv2.CAP_PROP_FPS)
-                                frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                                duration_seconds = frame_count / fps if fps > 0 else 10.0  # Default 10s if can't determine
-                                cap.release()
-
-                                # Create single scene covering entire video
-                                scenes = [
-                                    {
-                                        'scene_id': 0,
-                                        'start_frame': 0,
-                                        'end_frame': frame_count - 1 if frame_count > 0 else 100,
-                                        'start_time': 0.0,
-                                        'end_time': duration_seconds,
-                                        'duration': duration_seconds
-                                    }
-                                ]
-                                logger.info(f"✅ Created single scene: 0.0s to {duration_seconds:.1f}s")
-                            finally:
-                                import os
-                                if os.path.exists(tmp_file_path):
-                                    os.unlink(tmp_file_path)
+                            scenes = [
+                                {
+                                    'scene_id': 0,
+                                    'start_frame': 0,
+                                    'end_frame': frame_count - 1 if frame_count > 0 else 100,
+                                    'start_time': 0.0,
+                                    'end_time': duration_seconds,
+                                    'duration': duration_seconds
+                                }
+                            ]
+                            logger.info(f"✅ Created single scene: 0.0s to {duration_seconds:.1f}s")
 
                         logger.info(f"✅ PySceneDetect complete: {len(scenes)} scenes detected")
 
-                        # Stage 3: Select key frames (uses middle frame + entropy)
+                        # Stage 3: Select key frames — reuses temp file path
                         logger.info("🔑 Stage 3/7: Selecting key frames from scenes")
-                        key_frames_data = scene_detector.select_key_frames_from_video(
-                            file_content,
-                            filename,
-                            scenes
+                        key_frames_data = await loop.run_in_executor(
+                            None,
+                            lambda: scene_detector.select_key_frames_from_path(
+                                video_tmp_path, scenes
+                            )
                         )
                         logger.info(f"✅ Selected {len(key_frames_data)} key frames")
 
-                        # Stage 4: Extract color frames (BATCH - 10-20x faster!)
+                        # Stage 4: Extract color frames — reuses temp file path
                         logger.info("🖼️ Stage 4/7: Color frame extraction (batch mode)")
                         frame_numbers = [kf['frame_number'] for kf in key_frames_data]
-                        color_frames = frame_extractor.extract_color_frames_batch(
-                            file_content,
-                            filename,
-                            frame_numbers
+                        color_frames = await loop.run_in_executor(
+                            None,
+                            lambda: frame_extractor.extract_color_frames_batch_from_path(
+                                video_tmp_path, frame_numbers
+                            )
                         )
                         logger.info(f"✅ Batch extracted {len(color_frames)} color key frames")
 
-                        # Stage 5: Upload thumbnails (COMMENTED OUT - not needed)
-                        # logger.info("📤 Stage 5/7: Uploading key frame thumbnails")
-                        # keyframe_file_keys = await self._upload_keyframe_thumbnails(
-                        #     color_frames,
-                        #     key_frames_data,
-                        #     video_id,
-                        #     folder_name,
-                        #     organization_id
-                        # )
-
-                        # Skip thumbnail upload - return None for all keyframes
                         keyframe_file_keys = [None] * len(key_frames_data)
                         logger.info("⏭️ Skipping keyframe thumbnail upload")
 
                         return scenes, key_frames_data, color_frames, keyframe_file_keys
 
-                    # Run both tasks in parallel and wait for completion
                     transcript_segments, (scenes, key_frames_data, color_frames, keyframe_file_keys) = await asyncio.gather(
                         transcribe_audio(),
                         process_video_frames()
                     )
 
                     logger.info("✅ PARALLEL PROCESSING complete: Audio + Video ready for alignment")
-
                     return transcript_segments, scenes, key_frames_data, color_frames, keyframe_file_keys
 
                 # Run parallel processing
@@ -212,77 +190,81 @@ class VideoProcessorClient:
                 finally:
                     loop.close()
 
-                # Stage 6: Align and blend (includes VLM description)
-                logger.info("🔗 Stage 6/7: Alignment and multimodal blending")
-                aligner = get_video_aligner()
-                aligned_chunks = aligner.align_and_blend(
-                    transcript_segments,
-                    scenes,
-                    key_frames_data,
-                    color_frames
+            finally:
+                # Clean up the single temp file
+                if os.path.exists(video_tmp_path):
+                    os.unlink(video_tmp_path)
+                    logger.debug(f"🧹 Cleaned up temp video file: {video_tmp_path}")
+
+            # Stage 6: Align and blend (includes VLM description)
+            logger.info("🔗 Stage 6/7: Alignment and multimodal blending")
+            aligner = get_video_aligner()
+            aligned_chunks = aligner.align_and_blend(
+                transcript_segments,
+                scenes,
+                key_frames_data,
+                color_frames
+            )
+
+            # Clean up color frames and scenes from memory
+            del color_frames
+            del scenes
+            logger.debug("🧹 Cleaned up color frames and scenes from memory")
+
+            # Stage 7: Format final output
+            logger.info("📦 Stage 7/7: Formatting final output")
+            final_chunks = []
+            combined_text_parts = []
+
+            for i, chunk in enumerate(aligned_chunks):
+                chunk_id = f"{video_id}_chunk_{chunk['scene_id']}"
+
+                final_chunks.append({
+                    'chunk_id': chunk_id,
+                    'video_id': video_id,
+                    'video_name': video_name,
+                    'clip_start': chunk['clip_start'],
+                    'clip_end': chunk['clip_end'],
+                    'duration': chunk['clip_end'] - chunk['clip_start'],
+                    'key_frame_timestamp': chunk['key_frame_timestamp'],
+                    'keyframe_file_key': keyframe_file_keys[i],
+                    'transcript_text': chunk['transcript_text'],
+                    'visual_description': chunk['visual_description'],
+                    'blended_text': chunk['blended_text']
+                })
+
+                combined_text_parts.append(
+                    f"[Scene {chunk['scene_id']} - {chunk['clip_start']:.1f}s to {chunk['clip_end']:.1f}s]\n"
+                    f"{chunk['blended_text']}\n"
                 )
 
-                # Clean up color frames and scenes from memory
-                del color_frames
-                del scenes
-                logger.debug("🧹 Cleaned up color frames and scenes from memory")
+            combined_text = "\n".join(combined_text_parts)
 
-                # Stage 7: Format final output
-                logger.info("📦 Stage 7/7: Formatting final output")
-                final_chunks = []
-                combined_text_parts = []
+            logger.info(
+                f"✅ Video processing complete: {filename} → "
+                f"{len(final_chunks)} chunks created, "
+                f"{len(combined_text)} chars combined text"
+            )
 
-                for i, chunk in enumerate(aligned_chunks):
-                    chunk_id = f"{video_id}_chunk_{chunk['scene_id']}"
+            return {
+                'combined_text': combined_text,
+                'chunks': final_chunks
+            }
 
-                    final_chunks.append({
-                        'chunk_id': chunk_id,
-                        'video_id': video_id,
-                        'video_name': video_name,
-                        'clip_start': chunk['clip_start'],
-                        'clip_end': chunk['clip_end'],
-                        'duration': chunk['clip_end'] - chunk['clip_start'],
-                        'key_frame_timestamp': chunk['key_frame_timestamp'],
-                        'keyframe_file_key': keyframe_file_keys[i],  # iDrive E2 file key for thumbnail
-                        'transcript_text': chunk['transcript_text'],
-                        'visual_description': chunk['visual_description'],
-                        'blended_text': chunk['blended_text']  # This gets embedded
-                    })
-
-                    # Add to combined text with scene markers
-                    combined_text_parts.append(
-                        f"[Scene {chunk['scene_id']} - {chunk['clip_start']:.1f}s to {chunk['clip_end']:.1f}s]\n"
-                        f"{chunk['blended_text']}\n"
-                    )
-
-                # Combine all scene texts
-                combined_text = "\n".join(combined_text_parts)
-
-                logger.info(
-                    f"✅ Video processing complete: {filename} → "
-                    f"{len(final_chunks)} chunks created, "
-                    f"{len(combined_text)} chars combined text"
-                )
-
-                return {
-                    'combined_text': combined_text,  # For MongoDB
-                    'chunks': final_chunks  # For Pinecone (skip semantic chunking)
-                }
-
-            except Exception as e:
-                logger.error(f"❌ Video processing failed for {filename}: {str(e)}")
-                raise Exception(f"Video processing failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ Video processing failed for {filename}: {str(e)}")
+            raise Exception(f"Video processing failed: {str(e)}")
 
     def _extract_and_transcribe_audio(
         self,
-        file_content: bytes,
+        video_path: str,
         filename: str
     ) -> List[Dict]:
         """
         Extract audio from video and transcribe using Groq Whisper
 
         Args:
-            file_content: Video file content as bytes
+            video_path: Path to the temp video file on disk
             filename: Original filename
 
         Returns:
@@ -292,20 +274,9 @@ class VideoProcessorClient:
             Exception: If extraction or transcription fails
         """
         audio_path = None
-        video_path = None
 
         try:
-            extension = Path(filename).suffix.lower()
-
-            # Write video to temp file
-            with tempfile.NamedTemporaryFile(
-                delete=False,
-                suffix=extension
-            ) as video_file:
-                video_file.write(file_content)
-                video_path = video_file.name
-
-            # Extract audio using MoviePy
+            # Extract audio using MoviePy — reuses existing temp file
             logger.info("🎵 Extracting audio from video...")
             video_clip = VideoFileClip(video_path)
 
@@ -356,7 +327,7 @@ class VideoProcessorClient:
             return []
 
         finally:
-            # Clean up temp files
+            # Clean up temp audio file only (video temp file is owned by caller)
             import os
             if audio_path and os.path.exists(audio_path):
                 try:
@@ -364,13 +335,6 @@ class VideoProcessorClient:
                     logger.debug(f"🧹 Cleaned up temp audio file: {audio_path}")
                 except Exception as e:
                     logger.warning(f"Failed to delete temp audio file: {str(e)}")
-
-            if video_path and os.path.exists(video_path):
-                try:
-                    os.unlink(video_path)
-                    logger.debug(f"🧹 Cleaned up temp video file: {video_path}")
-                except Exception as e:
-                    logger.warning(f"Failed to delete temp video file: {str(e)}")
 
     async def _upload_keyframe_thumbnails(
         self,
