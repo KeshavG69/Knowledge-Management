@@ -265,39 +265,63 @@ export default function ReportViewer({ reportContent, reportTitle, onClose }: Re
         </div>
 
         {/* Report Content */}
-        <div className="flex-1 overflow-y-auto p-6 tactical-scrollbar bg-slate-50 dark:bg-slate-950">
-          <div className="prose dark:prose-invert prose max-w-none font-['Inter',sans-serif]
-            text-[15px] leading-[1.9]
-            prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-headings:font-['Inter',sans-serif]
-            dark:prose-headings:text-amber-400 prose-headings:text-blue-600
-            prose-h1:text-2xl prose-h1:mb-8 prose-h1:mt-12
-            prose-h2:text-xl prose-h2:mb-7 prose-h2:mt-10 prose-h2:font-bold
-            prose-h3:text-lg prose-h3:mb-6 prose-h3:mt-9 prose-h3:font-semibold
-            prose-h4:text-base prose-h4:mb-5 prose-h4:mt-8 prose-h4:font-semibold dark:prose-h4:text-amber-300 prose-h4:text-blue-500
-            prose-p:mb-7 prose-p:leading-[1.9] dark:prose-p:text-slate-100 prose-p:text-slate-800
-            prose-ul:my-7 prose-ul:space-y-4 prose-ul:leading-[1.9]
-            prose-ol:my-7 prose-ol:space-y-4 prose-ol:leading-[1.9]
-            prose-li:leading-[1.9] dark:prose-li:text-slate-100 prose-li:text-slate-800 prose-li:my-2.5
-            prose-li>p:my-3 prose-li>p:leading-[1.9]
-            prose-blockquote:border-l-4 dark:prose-blockquote:border-amber-400/50 prose-blockquote:border-blue-500/50 prose-blockquote:pl-6 prose-blockquote:my-7 prose-blockquote:py-3 prose-blockquote:italic
-            prose-a:text-tactical-green prose-a:no-underline hover:prose-a:underline prose-a:transition-all
-            dark:prose-strong:text-slate-50 prose-strong:text-slate-900 prose-strong:font-bold
-            dark:prose-em:text-slate-200 prose-em:text-slate-700 prose-em:italic
-            dark:prose-code:text-amber-300 prose-code:text-blue-600 dark:prose-code:bg-slate-800/70 prose-code:bg-slate-200 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[13px] prose-code:font-mono prose-code:before:content-[''] prose-code:after:content-['']
-            dark:prose-pre:bg-slate-800/70 prose-pre:bg-slate-200 dark:prose-pre:border-slate-700/50 prose-pre:border-slate-300 prose-pre:my-7 prose-pre:p-5 prose-pre:rounded-lg prose-pre:overflow-x-auto
-            dark:prose-hr:border-slate-700/50 prose-hr:border-slate-300 prose-hr:my-12 prose-hr:border-t
-            prose-table:my-7 prose-table:text-sm
-            dark:prose-thead:border-slate-700 prose-thead:border-slate-300 prose-thead:border-b-2
-            dark:prose-th:text-amber-400 prose-th:text-blue-600 prose-th:py-3 prose-th:px-4 prose-th:text-left prose-th:font-semibold
-            dark:prose-td:border-slate-800 prose-td:border-slate-200 prose-td:py-3 prose-td:px-4 prose-td:border-t
-            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
-            [&_ul]:list-disc [&_ul]:pl-7
-            [&_ol]:list-decimal [&_ol]:pl-7
-            [&_ul_ul]:my-3 [&_ol_ol]:my-3"
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {reportContent}
-            </ReactMarkdown>
+        <div className="flex-1 overflow-y-auto px-8 py-10 md:px-12 lg:px-16 tactical-scrollbar bg-white dark:bg-[#0d1117]">
+          <div className="max-w-3xl mx-auto">
+            <div className="
+              prose prose-lg dark:prose-invert
+              font-[Inter,system-ui,sans-serif]
+              text-[16px] leading-[2] tracking-[0.01em]
+              text-slate-700 dark:text-slate-200
+
+              prose-headings:font-display prose-headings:tracking-wide prose-headings:leading-snug
+              dark:prose-headings:text-amber-400 prose-headings:text-blue-700
+              prose-h1:text-[26px] prose-h1:font-bold prose-h1:mb-8 prose-h1:mt-14 prose-h1:pb-3 prose-h1:border-b prose-h1:border-slate-200 dark:prose-h1:border-slate-700/50
+              prose-h2:text-[22px] prose-h2:font-bold prose-h2:mb-6 prose-h2:mt-12
+              prose-h3:text-[18px] prose-h3:font-semibold prose-h3:mb-5 prose-h3:mt-10
+              prose-h4:text-[16px] prose-h4:font-semibold prose-h4:mb-4 prose-h4:mt-8 dark:prose-h4:text-amber-300 prose-h4:text-blue-600 prose-h4:italic
+
+              prose-p:mb-6 prose-p:leading-[2]
+
+              prose-ul:my-6 prose-ul:space-y-3
+              prose-ol:my-6 prose-ol:space-y-3
+              prose-li:leading-[1.9] prose-li:pl-2 prose-li:my-1
+              [&_li>p]:my-1 [&_li>p]:leading-[1.9]
+              [&_ul]:list-disc [&_ul]:pl-6
+              [&_ol]:list-decimal [&_ol]:pl-6
+              [&_ul_ul]:my-2 [&_ol_ol]:my-2
+
+              prose-blockquote:border-l-4 dark:prose-blockquote:border-amber-400/40 prose-blockquote:border-blue-400/40
+              prose-blockquote:pl-6 prose-blockquote:my-8 prose-blockquote:py-2 prose-blockquote:italic
+              dark:prose-blockquote:text-slate-300 prose-blockquote:text-slate-600
+              dark:prose-blockquote:bg-slate-800/30 prose-blockquote:bg-blue-50/50 prose-blockquote:rounded-r-lg
+
+              dark:prose-strong:text-white prose-strong:text-slate-900 prose-strong:font-semibold
+              dark:prose-em:text-slate-300 prose-em:text-slate-600
+
+              prose-a:text-tactical-green prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-green-300
+
+              dark:prose-code:text-amber-300 prose-code:text-blue-600
+              dark:prose-code:bg-slate-800/60 prose-code:bg-slate-100
+              prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-[14px] prose-code:font-mono
+              prose-code:before:content-[''] prose-code:after:content-['']
+
+              dark:prose-pre:bg-slate-900 prose-pre:bg-slate-50
+              dark:prose-pre:border prose-pre:border dark:prose-pre:border-slate-700/50 prose-pre:border-slate-200
+              prose-pre:my-8 prose-pre:p-5 prose-pre:rounded-xl prose-pre:overflow-x-auto
+
+              prose-hr:my-16 prose-hr:py-4 dark:prose-hr:border-slate-600 prose-hr:border-slate-300 prose-hr:border-t-2
+
+              prose-table:my-8 prose-table:text-[15px] prose-table:w-full
+              dark:prose-thead:border-slate-600 prose-thead:border-slate-300 prose-thead:border-b-2
+              dark:prose-th:text-amber-400 prose-th:text-blue-700 prose-th:py-3 prose-th:px-5 prose-th:text-left prose-th:font-semibold prose-th:text-[14px] prose-th:uppercase prose-th:tracking-wider
+              dark:prose-td:border-slate-800 prose-td:border-slate-100 prose-td:py-3.5 prose-td:px-5 prose-td:border-t
+
+              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
+            ">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {reportContent}
+              </ReactMarkdown>
+            </div>
           </div>
         </div>
       </div>
