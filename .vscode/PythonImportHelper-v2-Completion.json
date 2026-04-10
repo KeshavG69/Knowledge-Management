@@ -6756,7 +6756,7 @@
         "kind": 6,
         "importPath": "backend.services.mindmap_service",
         "description": "backend.services.mindmap_service",
-        "peekOfCode": "class MindMapService:\n    \"\"\"Service for generating mind maps from multiple documents\"\"\"\n    def __init__(self):\n        \"\"\"Initialize the mind map service\"\"\"\n        self.llm = get_llm(model=\"openai/gpt-4.1\",provider=\"openrouter\")\n        # Structured output - forces LLM to return valid objects\n        self.structured_llm = self.llm.with_structured_output(MindMap)\n        self.summary_llm = self.llm.with_structured_output(DocumentSummary)\n        self.postgres_client = get_postgres_client()\n    async def generate_from_documents(",
+        "peekOfCode": "class MindMapService:\n    \"\"\"Service for generating mind maps from multiple documents\"\"\"\n    def __init__(self):\n        \"\"\"Initialize the mind map service\"\"\"\n        self.llm = get_llm(model=\"google/gemini-3-flash-preview\",provider=\"openrouter\")\n        # Structured output - forces LLM to return valid objects\n        self.structured_llm = self.llm.with_structured_output(MindMap)\n        self.summary_llm = self.llm.with_structured_output(DocumentSummary)\n        self.postgres_client = get_postgres_client()\n    async def generate_from_documents(",
         "detail": "backend.services.mindmap_service",
         "documentation": {}
     },

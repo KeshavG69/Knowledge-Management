@@ -9,6 +9,7 @@ import ThemeToggle from "../ThemeToggle";
 import SessionDropdown from "./SessionDropdown";
 import TicketCreationModal from "../TicketCreationModal";
 import TAKSettingsModal from "./TAKSettingsModal";
+import { Z_INDEX } from "@/lib/constants/zIndex";
 
 export default function Header() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function Header() {
     if (typeof window !== 'undefined' && window.Calendly) {
       window.Calendly.initPopupWidget({ url: calendlyUrl });
     } else {
-      console.error('Calendly widget not loaded');
+      // Calendly widget not loaded
     }
   };
 
@@ -194,13 +195,14 @@ export default function Header() {
         {showMenu && (
           <>
             <div
-              className="fixed inset-0 z-[100]"
+              className="fixed inset-0"
+              style={{ zIndex: Z_INDEX.DROPDOWN }}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMenu(false);
               }}
             />
-            <div className="fixed top-16 right-6 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-amber-400/20 shadow-2xl z-[200] tactical-panel">
+            <div className="fixed top-16 right-6 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-amber-400/20 shadow-2xl tactical-panel" style={{ zIndex: Z_INDEX.DROPDOWN + 1 }}>
               <div className="p-2">
                 {/* Settings Option */}
                 <button
@@ -255,12 +257,13 @@ export default function Header() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[500] animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            style={{ zIndex: Z_INDEX.MODAL }}
             onClick={closeComingSoonDialog}
           />
 
           {/* Dialog */}
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[501] w-full max-w-md animate-in zoom-in-95 duration-200">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md animate-in zoom-in-95 duration-200" style={{ zIndex: Z_INDEX.MODAL + 1 }}>
             <div className="relative bg-white dark:bg-slate-900 border-2 border-amber-400/50 shadow-2xl mx-4">
               {/* Tactical corners */}
               <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400"></div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useDocumentStore } from "@/lib/stores/documentStore";
 import { mindmapApi, MindMapResponse } from "@/lib/api/mindmap";
 import { flashcardsApi, FlashcardData } from "@/lib/api/flashcards";
@@ -163,7 +164,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
         setMindMapData(response);
         setIsGenerating(false);
       } catch (err: any) {
-        console.error("Failed to generate mind map:", err);
+        // Mind map generation failed
         setError(err.response?.data?.detail || "Failed to generate mind map. Please try again.");
         setIsGenerating(false);
         setTimeout(() => setError(null), 5000);
@@ -192,7 +193,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
         setFlashcardData(response);
         setIsGenerating(false);
       } catch (err: any) {
-        console.error("Failed to generate flashcards:", err);
+        // Flashcard generation failed
         setError(err.response?.data?.detail || "Failed to generate flashcards. Please try again.");
         setIsGenerating(false);
         setTimeout(() => setError(null), 5000);
@@ -312,9 +313,12 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
       {/* Workflow Grid */}
       <div className="flex-1 overflow-y-auto p-4 tactical-scrollbar">
         <div className="grid grid-cols-2 gap-3">
-          {workflows.map((workflow) => (
-            <button
+          {workflows.map((workflow, idx) => (
+            <motion.button
               key={workflow.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.05 }}
               onClick={() => handleWorkflowClick(workflow)}
               disabled={!workflow.available}
               className={`relative tactical-panel p-3 text-left transition-all group ${
@@ -342,7 +346,7 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
               }`}>
                 {workflow.title}
               </div>
-            </button>
+            </motion.button>
           ))}
         </div>
 
@@ -364,7 +368,14 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
         </div>
 
         {/* Selected Documents Info */}
+        <AnimatePresence>
         {selectedDocs.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
           <div className="mt-4 tactical-panel p-3 bg-blue-50 dark:bg-amber-900/20 border-blue-200 dark:border-amber-400/30">
             <div className="flex items-center gap-2 mb-1">
               <svg className="w-3 h-3 text-blue-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,7 +389,9 @@ export default function WorkflowPanel({ isCollapsed: externalCollapsed, onToggle
               Ready to generate intelligence products
             </div>
           </div>
+          </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Error Message */}
         {error && (

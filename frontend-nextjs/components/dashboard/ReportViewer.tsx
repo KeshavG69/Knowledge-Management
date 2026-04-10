@@ -21,7 +21,7 @@ export default function ReportViewer({ reportContent, reportTitle, onClose }: Re
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      // Copy failed silently
     }
   };
 
@@ -185,7 +185,7 @@ export default function ReportViewer({ reportContent, reportTitle, onClose }: Re
 
       setDownloading(false);
     } catch (err) {
-      console.error("Failed to generate PDF:", err);
+      // PDF generation failed
       setDownloading(false);
     }
   };

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { configureTAK, getTAKConfig, deleteTAKConfig } from "@/lib/api/tak";
 import { useChatStore } from "@/lib/stores/chatStore";
+import { Z_INDEX } from "@/lib/constants/zIndex";
 
 interface TAKSettingsModalProps {
   isOpen: boolean;
@@ -44,7 +45,7 @@ export default function TAKSettingsModal({ isOpen, onClose }: TAKSettingsModalPr
       setTakPassword("");
     } catch (err: any) {
       // TAK not configured yet - show empty form
-      console.log("TAK not configured");
+      // TAK not configured yet - expected on first load
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +139,7 @@ export default function TAKSettingsModal({ isOpen, onClose }: TAKSettingsModalPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[300]">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center" style={{ zIndex: Z_INDEX.MODAL }}>
       <div className="bg-white dark:bg-slate-900 border-2 border-amber-400/30 w-full max-w-2xl max-h-[90vh] overflow-y-auto tactical-panel">
         {/* Header */}
         <div className="border-b-2 border-amber-400/20 p-6 bg-gradient-to-r from-slate-50 to-amber-50/20 dark:from-slate-900 dark:to-amber-900/10">

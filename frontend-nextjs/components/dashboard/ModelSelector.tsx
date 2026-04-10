@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useChatStore } from "@/lib/stores/chatStore";
+import { Z_INDEX } from "@/lib/constants/zIndex";
 
 interface Model {
   id: string;
@@ -72,14 +73,16 @@ export default function ModelSelector() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-[100]"
+            className="fixed inset-0"
+            style={{ zIndex: Z_INDEX.DROPDOWN }}
             onClick={() => setIsOpen(false)}
           />
 
           {/* Dropdown Menu */}
           <div
-            className="fixed w-72 bg-white dark:bg-slate-900 border border-blue-200 dark:border-amber-400/20 shadow-2xl z-[200] tactical-panel max-h-96 overflow-y-auto tactical-scrollbar"
+            className="fixed w-72 bg-white dark:bg-slate-900 border border-blue-200 dark:border-amber-400/20 shadow-2xl tactical-panel max-h-96 overflow-y-auto tactical-scrollbar"
             style={{
+              zIndex: Z_INDEX.DROPDOWN + 1,
               top: `${dropdownPosition.top}px`,
               left: `${dropdownPosition.left}px`,
             }}

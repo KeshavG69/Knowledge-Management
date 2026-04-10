@@ -1,41 +1,71 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/authStore";
-import { useDocumentStore } from "@/lib/stores/documentStore";
+import { useDocuments, useKnowledgeBases } from "@/lib/hooks/useDocuments";
 import Header from "@/components/dashboard/Header";
 import Sidebar from "@/components/dashboard/Sidebar";
 import ChatArea from "@/components/dashboard/ChatArea";
-import WorkflowPanel from "@/components/dashboard/WorkflowPanel";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import ChatSkeleton from "@/components/skeletons/ChatSkeleton";
+import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
+import WorkflowSkeleton from "@/components/skeletons/WorkflowSkeleton";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+// Lazy load heavy workflow panel
+const WorkflowPanel = lazy(
+  () => import("@/components/dashboard/WorkflowPanel")
+);
+
+const MIN_PANEL_WIDTH = 280;
+const MAX_PANEL_WIDTH = 600;
+const DEFAULT_LEFT_WIDTH = 320;
+const DEFAULT_RIGHT_WIDTH = 320;
+const COLLAPSED_WIDTH = 56;
+const MOBILE_BREAKPOINT = 768;
+const TABLET_BREAKPOINT = 1024;
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isInitializing } = useAuthStore();
-  const { fetchDocuments, fetchKnowledgeBases } = useDocumentStore();
+  const user = useAuthStore((s) => s.user);
+  const isInitializing = useAuthStore((s) => s.isInitializing);
 
-  const [leftWidth, setLeftWidth] = useState(320); // Sidebar width
-  const [rightWidth, setRightWidth] = useState(320); // Workflow panel width
+  const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT_WIDTH);
+  const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH);
   const [isResizingLeft, setIsResizingLeft] = useState(false);
   const [isResizingRight, setIsResizingRight] = useState(false);
   const [isWorkflowCollapsed, setIsWorkflowCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [workflowOpen, setWorkflowOpen] = useState(false);
 
-  // Calculate actual right width based on collapsed state (w-14 = 56px)
-  const actualRightWidth = isWorkflowCollapsed ? 56 : rightWidth;
+  const actualRightWidth = isWorkflowCollapsed ? COLLAPSED_WIDTH : rightWidth;
 
-  // Mouse move handler for resizing
+  // Responsive breakpoint detection
   useEffect(() => {
+    const checkBreakpoint = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < MOBILE_BREAKPOINT);
+      setIsTablet(w >= MOBILE_BREAKPOINT && w < TABLET_BREAKPOINT);
+    };
+    checkBreakpoint();
+    window.addEventListener("resize", checkBreakpoint);
+    return () => window.removeEventListener("resize", checkBreakpoint);
+  }, []);
+
+  // Resize handler
+  useEffect(() => {
+    if (!isResizingLeft && !isResizingRight) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (isResizingLeft) {
-        const newWidth = e.clientX;
-        if (newWidth >= 280 && newWidth <= 600) {
-          setLeftWidth(newWidth);
-        }
+        const w = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, e.clientX));
+        setLeftWidth(w);
       } else if (isResizingRight && !isWorkflowCollapsed) {
-        const newWidth = window.innerWidth - e.clientX;
-        if (newWidth >= 280 && newWidth <= 600) {
-          setRightWidth(newWidth);
-        }
+        const w = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, window.innerWidth - e.clientX));
+        setRightWidth(w);
       }
     };
 
@@ -44,77 +74,168 @@ export default function DashboardPage() {
       setIsResizingRight(false);
     };
 
-    if (isResizingLeft || isResizingRight) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    }
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
   }, [isResizingLeft, isResizingRight, isWorkflowCollapsed]);
 
+  // Auth redirect
   useEffect(() => {
     if (!isInitializing && !user) {
       router.push("/auth/login");
     }
   }, [user, isInitializing, router]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (user) {
-      fetchDocuments();
-      fetchKnowledgeBases();
-    }
-  }, [user]);
+  // React Query: cached, deduped, auto-refetches when stale
+  useDocuments(user?.organization_id);
+  useKnowledgeBases(user?.organization_id);
+
+  const handleToggleWorkflow = useCallback((collapsed: boolean | ((prev: boolean) => boolean)) => {
+    setIsWorkflowCollapsed(collapsed);
+  }, []);
 
   if (isInitializing || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="text-white">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-amber-400/20 border-t-amber-400 rounded-full animate-spin" />
+          <span className="text-slate-400 text-xs tracking-widest">INITIALIZING SYSTEM...</span>
+        </div>
       </div>
     );
   }
 
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div className="h-screen flex flex-col bg-slate-50 dark:bg-zinc-950">
+        <Header />
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          {/* Mobile toolbar */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90">
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger>
+                <button className="tactical-btn p-2 text-xs">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[85vw] max-w-[360px] p-0 bg-slate-50 dark:bg-slate-950">
+                <ErrorBoundary>
+                  <Suspense fallback={<SidebarSkeleton />}>
+                    <Sidebar />
+                  </Suspense>
+                </ErrorBoundary>
+              </SheetContent>
+            </Sheet>
+
+            <span className="text-xs text-slate-500 tracking-widest">SOLDIERIQ</span>
+
+            <Sheet open={workflowOpen} onOpenChange={setWorkflowOpen}>
+              <SheetTrigger>
+                <button className="tactical-btn p-2 text-xs">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85vw] max-w-[360px] p-0 bg-slate-50 dark:bg-slate-950">
+                <ErrorBoundary>
+                  <Suspense fallback={<WorkflowSkeleton />}>
+                    <WorkflowPanel isCollapsed={false} onToggleCollapse={() => setWorkflowOpen(false)} />
+                  </Suspense>
+                </ErrorBoundary>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Chat takes full width on mobile */}
+          <ErrorBoundary>
+            <Suspense fallback={<ChatSkeleton />}>
+              <ChatArea />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop / Tablet layout
   return (
     <div className="h-screen flex flex-col bg-slate-50 dark:bg-zinc-950">
       <Header />
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar with resize handle */}
-        <div className="relative flex" style={{ width: leftWidth }}>
-          <Sidebar />
-          {/* Resize Handle */}
-          <div
-            className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-amber-400/50 transition-colors z-10 group"
-            onMouseDown={() => setIsResizingLeft(true)}
-          >
-            <div className="absolute inset-y-0 -left-1 -right-1" />
+        {/* Left Sidebar */}
+        {!isTablet && (
+          <div className="relative flex flex-shrink-0" style={{ width: leftWidth }}>
+            <ErrorBoundary>
+              <Suspense fallback={<SidebarSkeleton />}>
+                <Sidebar />
+              </Suspense>
+            </ErrorBoundary>
+            <div
+              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-amber-400/50 transition-colors z-10"
+              onMouseDown={() => setIsResizingLeft(true)}
+            >
+              <div className="absolute inset-y-0 -left-1 -right-1" />
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Tablet: sidebar as sheet */}
+        {isTablet && (
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger>
+              <button className="absolute left-2 top-16 z-20 tactical-btn p-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[320px] p-0 bg-slate-50 dark:bg-slate-950">
+              <ErrorBoundary>
+                <Suspense fallback={<SidebarSkeleton />}>
+                  <Sidebar />
+                </Suspense>
+              </ErrorBoundary>
+            </SheetContent>
+          </Sheet>
+        )}
 
         {/* Chat Area */}
-        <ChatArea />
+        <ErrorBoundary>
+          <Suspense fallback={<ChatSkeleton />}>
+            <ChatArea />
+          </Suspense>
+        </ErrorBoundary>
 
-        {/* Right Panel with resize handle */}
-        <div className="relative flex" style={{ width: actualRightWidth }}>
-          {/* Resize Handle - only show when not collapsed */}
+        {/* Right Workflow Panel */}
+        <div className="relative flex flex-shrink-0" style={{ width: actualRightWidth }}>
           {!isWorkflowCollapsed && (
             <div
-              className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-amber-400/50 transition-colors z-10 group"
+              className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-amber-400/50 transition-colors z-10"
               onMouseDown={() => setIsResizingRight(true)}
             >
               <div className="absolute inset-y-0 -left-1 -right-1" />
             </div>
           )}
-          <WorkflowPanel
-            isCollapsed={isWorkflowCollapsed}
-            onToggleCollapse={setIsWorkflowCollapsed}
-          />
+          <ErrorBoundary>
+            <Suspense fallback={<WorkflowSkeleton />}>
+              <WorkflowPanel
+                isCollapsed={isWorkflowCollapsed}
+                onToggleCollapse={handleToggleWorkflow}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </div>
     </div>

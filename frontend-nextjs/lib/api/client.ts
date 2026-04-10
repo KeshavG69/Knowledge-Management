@@ -124,4 +124,55 @@ apiClient.interceptors.response.use(
   }
 );
 
+/**
+ * Fetch wrapper with automatic token refresh on 401.
+ * Use this instead of raw fetch() for authenticated API calls
+ * that can't use Axios (e.g., SSE streaming).
+ */
+export async function fetchWithRefresh(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const accessToken = localStorage.getItem("access_token");
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+
+  let response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401) {
+    // Try refreshing the token
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) {
+      window.location.href = "/auth/login";
+      throw new Error("No refresh token");
+    }
+
+    try {
+      const refreshRes = await apiClient.post("/auth/refresh", {
+        refresh_token: refreshToken,
+      });
+
+      localStorage.setItem("access_token", refreshRes.data.access_token);
+      localStorage.setItem("refresh_token", refreshRes.data.refresh_token);
+
+      // Retry the original request with the new token
+      headers["Authorization"] = `Bearer ${refreshRes.data.access_token}`;
+      response = await fetch(url, { ...options, headers });
+    } catch {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      window.location.href = "/auth/login";
+      throw new Error("Token refresh failed");
+    }
+  }
+
+  return response;
+}
+
 export default apiClient;

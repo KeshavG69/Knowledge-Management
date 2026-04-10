@@ -19,7 +19,7 @@ class MindMapService:
 
     def __init__(self):
         """Initialize the mind map service"""
-        self.llm = get_llm(model="openai/gpt-4.1",provider="openrouter")
+        self.llm = get_llm(model="google/gemini-3-flash-preview",provider="openrouter")
 
         # Structured output - forces LLM to return valid objects
         self.structured_llm = self.llm.with_structured_output(MindMap)

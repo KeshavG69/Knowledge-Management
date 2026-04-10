@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient, { fetchWithRefresh } from './client';
 import { Document, KnowledgeBase } from '@/types';
 
 // Helper to get user info from localStorage (assuming it's stored there after login)
@@ -15,7 +15,7 @@ const getUserParams = () => {
         };
       }
     } catch (e) {
-      console.error('Failed to parse user from localStorage:', e);
+      // Failed to parse user from localStorage
     }
   }
   return null;
@@ -148,18 +148,9 @@ export const chatApi = {
     fileNames?: string[],
     takCredentials?: TAKCredentials
   ): Promise<ReadableStream> => {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-      throw new Error('No access token found');
-    }
-
-    // Use fetch for SSE streaming (axios doesn't support SSE properly)
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
+    // Use fetchWithRefresh for automatic token refresh on 401
+    const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-      },
       body: JSON.stringify({
         message,
         document_ids: documentIds,
@@ -167,7 +158,6 @@ export const chatApi = {
         session_id: sessionId,
         model,
         tak_credentials: takCredentials,
-        // user_id and organization_id are extracted from JWT token by backend
       }),
     });
 

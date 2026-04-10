@@ -3,24 +3,20 @@
 import { useState, useEffect, useRef } from "react";
 import { chatSessionsApi, ChatSession } from "@/lib/api/documents";
 import { useChatStore } from "@/lib/stores/chatStore";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { useChatSessions } from "@/lib/hooks/useChatSessions";
 
 interface SessionDropdownProps {
   hasUserMessages: boolean;
 }
 
 export default function SessionDropdown({ hasUserMessages }: SessionDropdownProps) {
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const user = useAuthStore((s) => s.user);
+  const { data: sessions = [], isLoading, refetch } = useChatSessions(user?.id);
   const { startNewSession, loadSession, setLoadingSession } = useChatStore();
-
-  // Fetch sessions on component mount
-  useEffect(() => {
-    fetchSessions();
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -39,29 +35,16 @@ export default function SessionDropdown({ hasUserMessages }: SessionDropdownProp
     };
   }, [isOpen]);
 
-  const fetchSessions = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const fetchedSessions = await chatSessionsApi.listSessions();
-      setSessions(fetchedSessions);
-    } catch (err: any) {
-      console.error("Failed to fetch sessions:", err);
-      setError(err.message || "Failed to load sessions");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const handleSessionSelect = async (session: ChatSession) => {
     try {
       setLoadingSession(true);
       setIsOpen(false);
+      setLoadError(null);
 
       const sessionHistory = await chatSessionsApi.getSession(session.session_id);
 
-      // Convert backend message format to frontend format
-      // Filter out system messages - ChatMessage type only accepts "user" | "assistant"
       const formattedMessages = sessionHistory.messages
         .filter((msg) => msg.role === "user" || msg.role === "assistant")
         .map((msg, idx) => ({
@@ -73,11 +56,9 @@ export default function SessionDropdown({ hasUserMessages }: SessionDropdownProp
           ...(msg.sources && { sources: msg.sources }),
         }));
 
-      // Load session into chat store
       loadSession(session.session_id, formattedMessages);
     } catch (err: any) {
-      console.error("Failed to load session:", err);
-      setError(err.message || "Failed to load session");
+      setLoadError(err.message || "Failed to load session");
     } finally {
       setLoadingSession(false);
     }
@@ -86,8 +67,7 @@ export default function SessionDropdown({ hasUserMessages }: SessionDropdownProp
   const handleNewSession = () => {
     startNewSession();
     setIsOpen(false);
-    // Refresh sessions list to include the previous session
-    fetchSessions();
+    refetch();
   };
 
   const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
@@ -99,10 +79,8 @@ export default function SessionDropdown({ hasUserMessages }: SessionDropdownProp
 
     try {
       await chatSessionsApi.deleteSession(sessionId);
-      // Refresh sessions list
-      await fetchSessions();
+      refetch();
     } catch (err: any) {
-      console.error("Failed to delete session:", err);
       alert(err.message || "Failed to delete session");
     }
   };
@@ -176,14 +154,14 @@ export default function SessionDropdown({ hasUserMessages }: SessionDropdownProp
           )}
 
           {/* Error State */}
-          {error && (
+          {(loadError) && (
             <div className="px-4 py-3 text-xs text-red-600 dark:text-red-400">
-              {error}
+              {loadError}
             </div>
           )}
 
           {/* Sessions List */}
-          {!isLoading && sessions.length === 0 && !error && (
+          {!isLoading && sessions.length === 0 && !loadError && (
             <div className="px-4 py-8 text-center text-xs text-slate-500">
               No previous sessions found
             </div>
