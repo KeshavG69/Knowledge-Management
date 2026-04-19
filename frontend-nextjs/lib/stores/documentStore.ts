@@ -167,6 +167,8 @@ interface DocumentState {
   deselectAllDocs: () => void;
   selectFolderDocs: (folderName: string) => void;
   deselectFolderDocs: (folderName: string) => void;
+  selectDocs: (ids: string[]) => void;
+  deselectDocs: (ids: string[]) => void;
 }
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
@@ -430,6 +432,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       : [];
     const newSelected = new Set(selectedDocs);
     folderDocIds.forEach(id => newSelected.delete(id));
+    saveSelectedDocs(newSelected);
+    set({ selectedDocs: newSelected });
+  },
+
+  selectDocs: (ids) => {
+    if (!ids?.length) return;
+    const newSelected = new Set(get().selectedDocs);
+    ids.forEach(id => newSelected.add(id));
+    saveSelectedDocs(newSelected);
+    set({ selectedDocs: newSelected });
+  },
+
+  deselectDocs: (ids) => {
+    if (!ids?.length) return;
+    const newSelected = new Set(get().selectedDocs);
+    ids.forEach(id => newSelected.delete(id));
     saveSelectedDocs(newSelected);
     set({ selectedDocs: newSelected });
   },

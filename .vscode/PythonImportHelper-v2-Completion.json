@@ -25,6 +25,30 @@
         "documentation": {}
     },
     {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
         "label": "os",
         "kind": 6,
         "isExtraImport": true,
@@ -1161,6 +1185,14 @@
     },
     {
         "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -2581,6 +2613,22 @@
         "documentation": {}
     },
     {
+        "label": "BaseSettings",
+        "importPath": "pydantic_settings",
+        "description": "pydantic_settings",
+        "isExtraImport": true,
+        "detail": "pydantic_settings",
+        "documentation": {}
+    },
+    {
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
+        "isExtraImport": true,
+        "detail": "dotenv",
+        "documentation": {}
+    },
+    {
         "label": "load_dotenv",
         "importPath": "dotenv",
         "description": "dotenv",
@@ -3028,6 +3076,14 @@
         "description": "keycloak",
         "isExtraImport": true,
         "detail": "keycloak",
+        "documentation": {}
+    },
+    {
+        "label": "lru_cache",
+        "importPath": "functools",
+        "description": "functools",
+        "isExtraImport": true,
+        "detail": "functools",
         "documentation": {}
     },
     {
@@ -3678,6 +3734,14 @@
         "documentation": {}
     },
     {
+        "label": "PGVector",
+        "importPath": "langchain_postgres",
+        "description": "langchain_postgres",
+        "isExtraImport": true,
+        "detail": "langchain_postgres",
+        "documentation": {}
+    },
+    {
         "label": "OpenAIEmbeddings",
         "importPath": "langchain_openai",
         "description": "langchain_openai",
@@ -3695,6 +3759,14 @@
     },
     {
         "label": "ChatOpenAI",
+        "importPath": "langchain_openai",
+        "description": "langchain_openai",
+        "isExtraImport": true,
+        "detail": "langchain_openai",
+        "documentation": {}
+    },
+    {
+        "label": "OpenAIEmbeddings",
         "importPath": "langchain_openai",
         "description": "langchain_openai",
         "isExtraImport": true,
@@ -4825,6 +4897,158 @@
         "importPath": "subprocess",
         "description": "subprocess",
         "detail": "subprocess",
+        "documentation": {}
+    },
+    {
+        "label": "AgentSession",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "JobContext",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "RoomInputOptions",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "WorkerOptions",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "cli",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "Agent",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "RunContext",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "function_tool",
+        "importPath": "livekit.agents",
+        "description": "livekit.agents",
+        "isExtraImport": true,
+        "detail": "livekit.agents",
+        "documentation": {}
+    },
+    {
+        "label": "noise_cancellation",
+        "importPath": "livekit.plugins",
+        "description": "livekit.plugins",
+        "isExtraImport": true,
+        "detail": "livekit.plugins",
+        "documentation": {}
+    },
+    {
+        "label": "openai",
+        "importPath": "livekit.plugins",
+        "description": "livekit.plugins",
+        "isExtraImport": true,
+        "detail": "livekit.plugins",
+        "documentation": {}
+    },
+    {
+        "label": "silero",
+        "importPath": "livekit.plugins",
+        "description": "livekit.plugins",
+        "isExtraImport": true,
+        "detail": "livekit.plugins",
+        "documentation": {}
+    },
+    {
+        "label": "MultilingualModel",
+        "importPath": "livekit.plugins.turn_detector.multilingual",
+        "description": "livekit.plugins.turn_detector.multilingual",
+        "isExtraImport": true,
+        "detail": "livekit.plugins.turn_detector.multilingual",
+        "documentation": {}
+    },
+    {
+        "label": "build_instructions",
+        "importPath": "prompts",
+        "description": "prompts",
+        "isExtraImport": true,
+        "detail": "prompts",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "settings",
+        "description": "settings",
+        "isExtraImport": true,
+        "detail": "settings",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "settings",
+        "description": "settings",
+        "isExtraImport": true,
+        "detail": "settings",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "settings",
+        "description": "settings",
+        "isExtraImport": true,
+        "detail": "settings",
+        "documentation": {}
+    },
+    {
+        "label": "KnowledgeAgent",
+        "importPath": "tools",
+        "description": "tools",
+        "isExtraImport": true,
+        "detail": "tools",
+        "documentation": {}
+    },
+    {
+        "label": "create_engine",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "search",
+        "importPath": "retriever",
+        "description": "retriever",
+        "isExtraImport": true,
+        "detail": "retriever",
         "documentation": {}
     },
     {
@@ -7352,6 +7576,159 @@
         "description": "frontend-nextjs.node_modules.katex.src.metrics.parse_tfm",
         "peekOfCode": "def read_tfm_file(file_name):\n    with open(file_name, 'rb') as f:\n        reader = TfmReader(f)\n        # file_size\n        reader.read_halfword()\n        header_size = reader.read_halfword()\n        start_char = reader.read_halfword()\n        end_char = reader.read_halfword()\n        width_table_size = reader.read_halfword()\n        height_table_size = reader.read_halfword()",
         "detail": "frontend-nextjs.node_modules.katex.src.metrics.parse_tfm",
+        "documentation": {}
+    },
+    {
+        "label": "bin_dir",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "bin_dir = os.path.dirname(abs_file)\nbase = bin_dir[: -len(\"bin\") - 1]  # strip away the bin part from the __file__, plus the path separator\n# prepend bin to PATH (this file is inside the bin directory)\nos.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"soldieriq-voice-agent\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.11/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "base",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "base = bin_dir[: -len(\"bin\") - 1]  # strip away the bin part from the __file__, plus the path separator\n# prepend bin to PATH (this file is inside the bin directory)\nos.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"soldieriq-voice-agent\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.11/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"PATH\"]",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "os.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"soldieriq-voice-agent\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.11/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"VIRTUAL_ENV\"]",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "os.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = \"soldieriq-voice-agent\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.11/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"VIRTUAL_ENV_PROMPT\"]",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "os.environ[\"VIRTUAL_ENV_PROMPT\"] = \"soldieriq-voice-agent\" or os.path.basename(base)  # noqa: SIM222\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in \"../lib/python3.11/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "prev_length",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "prev_length = len(sys.path)\nfor lib in \"../lib/python3.11/site-packages\".split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.path[:]",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.real_prefix",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "sys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.prefix",
+        "kind": 5,
+        "importPath": "voice-agent..venv.bin.activate_this",
+        "description": "voice-agent..venv.bin.activate_this",
+        "peekOfCode": "sys.prefix = base",
+        "detail": "voice-agent..venv.bin.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "voice-agent.agent",
+        "description": "voice-agent.agent",
+        "peekOfCode": "logger = logging.getLogger(\"voice-agent\")\ndef _parse_metadata(raw: str | None) -> dict:\n    if not raw:\n        return {}\n    try:\n        parsed = json.loads(raw)\n        if isinstance(parsed, dict):\n            return parsed\n        logger.warning(\"Participant metadata was not a JSON object: %r\", raw)\n    except json.JSONDecodeError:",
+        "detail": "voice-agent.agent",
+        "documentation": {}
+    },
+    {
+        "label": "build_instructions",
+        "kind": 2,
+        "importPath": "voice-agent.prompts",
+        "description": "voice-agent.prompts",
+        "peekOfCode": "def build_instructions(\n    document_ids: list[str] | None,\n    file_names: list[str] | None,\n) -> str:\n    if not document_ids:\n        return BASE_INSTRUCTIONS + \"\\nThe user has not selected any documents yet.\"\n    if file_names:\n        listed = \", \".join(file_names)\n        return BASE_INSTRUCTIONS + f\"\\nThe user has selected these documents for this conversation: {listed}.\"\n    # document_ids set but file_names missing — still a valid selection, just no pretty names.",
+        "detail": "voice-agent.prompts",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_INSTRUCTIONS",
+        "kind": 5,
+        "importPath": "voice-agent.prompts",
+        "description": "voice-agent.prompts",
+        "peekOfCode": "BASE_INSTRUCTIONS = \"\"\"You are a concise voice assistant that answers questions using the user's selected documents.\nRules:\n- Keep answers short and conversational — the user is listening, not reading.\n- Before answering a substantive question, call `search_knowledge_base` to retrieve relevant passages.\n- If the tool returns \"No documents selected\", tell the user to pick documents first and stop.\n- If the tool returns no results, say so plainly instead of guessing.\n- When citing information, mention the source file naturally (e.g. \"according to report.pdf\").\n- Do not read long passages verbatim. Summarize.\n- If the user asks something unrelated to the documents, answer briefly from general knowledge but steer them back to the selected material.\n\"\"\"",
+        "detail": "voice-agent.prompts",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "voice-agent.retriever",
+        "description": "voice-agent.retriever",
+        "peekOfCode": "logger = logging.getLogger(\"voice-agent.retriever\")\n@lru_cache(maxsize=1)\ndef _get_vector_store() -> PGVector:\n    if not settings.POSTGRES_VECTOR_URL:\n        raise RuntimeError(\"POSTGRES_VECTOR_URL is not configured\")\n    if not settings.OPENAI_API_KEY:\n        raise RuntimeError(\"OPENAI_API_KEY is not configured for embeddings\")\n    engine = create_engine(\n        settings.POSTGRES_VECTOR_URL,\n        pool_size=2,",
+        "detail": "voice-agent.retriever",
+        "documentation": {}
+    },
+    {
+        "label": "Settings",
+        "kind": 6,
+        "importPath": "voice-agent.settings",
+        "description": "voice-agent.settings",
+        "peekOfCode": "class Settings(BaseSettings):\n    # LiveKit Cloud — auto-injected at runtime on LK Cloud deploys.\n    LIVEKIT_URL: str = \"\"\n    LIVEKIT_API_KEY: str = \"\"\n    LIVEKIT_API_SECRET: str = \"\"\n    # LLM (Claude Haiku 4.5 via OpenRouter)\n    OPENROUTER_API_KEY: str = \"\"\n    # Retrieval\n    POSTGRES_VECTOR_URL: str = \"\"\n    OPENAI_API_KEY: str = \"\"  # used for text-embedding-3-small",
+        "detail": "voice-agent.settings",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "kind": 5,
+        "importPath": "voice-agent.settings",
+        "description": "voice-agent.settings",
+        "peekOfCode": "settings = Settings()",
+        "detail": "voice-agent.settings",
+        "documentation": {}
+    },
+    {
+        "label": "KnowledgeAgent",
+        "kind": 6,
+        "importPath": "voice-agent.tools",
+        "description": "voice-agent.tools",
+        "peekOfCode": "class KnowledgeAgent(Agent):\n    \"\"\"Voice agent that answers from the user's selected documents.\"\"\"\n    @function_tool()\n    async def search_knowledge_base(\n        self,\n        context: RunContext,\n        query: str,\n    ) -> str:\n        \"\"\"Search the user's selected documents for information to answer their question.\n        Args:",
+        "detail": "voice-agent.tools",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "voice-agent.tools",
+        "description": "voice-agent.tools",
+        "peekOfCode": "logger = logging.getLogger(\"voice-agent.tools\")\ndef _format_hits(hits: list[dict]) -> str:\n    if not hits:\n        return \"No relevant information found in the selected documents.\"\n    lines: list[str] = []\n    for idx, hit in enumerate(hits, start=1):\n        text = (hit.get(\"text\") or \"\").strip()\n        if not text:\n            continue\n        file_name = hit.get(\"file_name\") or \"Unknown source\"",
+        "detail": "voice-agent.tools",
         "documentation": {}
     },
     {

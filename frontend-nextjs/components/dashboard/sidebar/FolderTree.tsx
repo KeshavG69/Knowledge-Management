@@ -11,7 +11,7 @@ interface FolderTreeProps {
   expandedFolders: Set<string>;
   onToggleFolder: (folderName: string) => void;
   onToggleDoc: (docId: string) => void;
-  onSelectAllFolder: (folderName: string, anySelected: boolean) => void;
+  onSelectAllFolder: (folderName: string, anySelected: boolean, docIds: string[]) => void;
   onDeleteDoc: (docId: string) => void;
   onDeleteFolder: (folderName: string) => void;
   deletingDocId: string | null;

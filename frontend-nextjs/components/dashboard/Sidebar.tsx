@@ -30,8 +30,8 @@ export default function Sidebar() {
     toggleDocSelection,
     selectAllDocs,
     deselectAllDocs,
-    selectFolderDocs,
-    deselectFolderDocs,
+    selectDocs,
+    deselectDocs,
     uploadDocuments,
     uploadYouTubeVideo,
   } = useDocumentStore();
@@ -99,14 +99,14 @@ export default function Sidebar() {
   }, []);
 
   const handleSelectAllFolder = useCallback(
-    (folderName: string, anySelected: boolean) => {
+    (_folderName: string, anySelected: boolean, docIds: string[]) => {
       if (anySelected) {
-        deselectFolderDocs(folderName);
+        deselectDocs(docIds);
       } else {
-        selectFolderDocs(folderName);
+        selectDocs(docIds);
       }
     },
-    [selectFolderDocs, deselectFolderDocs]
+    [selectDocs, deselectDocs]
   );
 
   const handleDeleteDoc = useCallback(

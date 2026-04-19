@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { TAKCredentials } from "@/lib/api/documents";
+import VoiceButton from "./VoiceButton";
 
 interface ChatInputProps {
   inputMessage: string;
@@ -84,6 +85,7 @@ const ChatInput = React.memo(function ChatInput({
               className="w-full bg-transparent pl-4 pr-12 py-3 resize-none max-h-40 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
               rows={1}
             />
+            <VoiceButton disabled={isLoading} />
             <button
               type="submit"
               disabled={isLoading || !inputMessage.trim()}

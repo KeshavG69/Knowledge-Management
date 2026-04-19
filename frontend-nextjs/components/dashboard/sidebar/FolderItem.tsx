@@ -12,7 +12,7 @@ interface FolderItemProps {
   expandedFolders: Set<string>;
   onToggleFolder: (folderName: string) => void;
   onToggleDoc: (docId: string) => void;
-  onSelectAllFolder: (folderName: string, anySelected: boolean) => void;
+  onSelectAllFolder: (folderName: string, anySelected: boolean, docIds: string[]) => void;
   onDeleteDoc: (docId: string) => void;
   onDeleteFolder: (folderName: string) => void;
   deletingDocId: string | null;
@@ -74,7 +74,7 @@ const FolderItem = React.memo(function FolderItem({
             type="checkbox"
             checked={anyFolderDocsSelected}
             disabled={isDeletingFolder}
-            onChange={() => onSelectAllFolder(folderName, anyFolderDocsSelected)}
+            onChange={() => onSelectAllFolder(folderName, anyFolderDocsSelected, folderDocIds)}
             className="tactical-checkbox flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             title={
               anyFolderDocsSelected

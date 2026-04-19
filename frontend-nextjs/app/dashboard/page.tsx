@@ -18,6 +18,11 @@ const WorkflowPanel = lazy(
   () => import("@/components/dashboard/WorkflowPanel")
 );
 
+// Lazy load voice session (only loaded when user starts a voice call)
+const VoiceSession = lazy(
+  () => import("@/components/dashboard/VoiceSession")
+);
+
 const MIN_PANEL_WIDTH = 280;
 const MAX_PANEL_WIDTH = 600;
 const DEFAULT_LEFT_WIDTH = 320;
@@ -238,6 +243,10 @@ export default function DashboardPage() {
           </ErrorBoundary>
         </div>
       </div>
+
+      <Suspense fallback={null}>
+        <VoiceSession />
+      </Suspense>
     </div>
   );
 }
