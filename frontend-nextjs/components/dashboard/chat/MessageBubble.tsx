@@ -20,34 +20,38 @@ interface MessageBubbleProps {
   onCitationClick: (source: DocumentSource, url: string | undefined) => void;
 }
 
-const PROSE_CLASSES = `prose dark:prose-invert prose max-w-none font-['Inter',sans-serif]
-  text-[15px] leading-[1.9]
-  prose-headings:font-bold prose-headings:tracking-tight prose-headings:leading-tight prose-headings:font-['Inter',sans-serif]
-  dark:prose-headings:text-amber-400 prose-headings:text-blue-600
-  prose-h1:text-2xl prose-h1:mb-8 prose-h1:mt-12
-  prose-h2:text-xl prose-h2:mb-7 prose-h2:mt-10 prose-h2:font-bold
-  prose-h3:text-lg prose-h3:mb-6 prose-h3:mt-9 prose-h3:font-semibold
-  prose-h4:text-base prose-h4:mb-5 prose-h4:mt-8 prose-h4:font-semibold dark:prose-h4:text-amber-300 prose-h4:text-blue-500
-  prose-p:mb-7 prose-p:leading-[1.9] dark:prose-p:text-slate-100 prose-p:text-slate-800
-  prose-ul:my-7 prose-ul:space-y-4 prose-ul:leading-[1.9]
-  prose-ol:my-7 prose-ol:space-y-4 prose-ol:leading-[1.9]
-  prose-li:leading-[1.9] dark:prose-li:text-slate-100 prose-li:text-slate-800 prose-li:my-2.5
-  prose-li>p:my-3 prose-li>p:leading-[1.9]
-  prose-blockquote:border-l-4 dark:prose-blockquote:border-amber-400/50 prose-blockquote:border-blue-500/50 prose-blockquote:pl-6 prose-blockquote:my-7 prose-blockquote:py-3 prose-blockquote:italic
-  prose-a:text-tactical-green prose-a:no-underline hover:prose-a:underline prose-a:transition-all
-  dark:prose-strong:text-slate-50 prose-strong:text-slate-900 prose-strong:font-bold
-  dark:prose-em:text-slate-200 prose-em:text-slate-700 prose-em:italic
-  dark:prose-code:text-amber-300 prose-code:text-blue-600 dark:prose-code:bg-slate-800/70 prose-code:bg-slate-200 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[13px] prose-code:font-mono prose-code:before:content-[''] prose-code:after:content-['']
-  dark:prose-pre:bg-slate-800/70 prose-pre:bg-slate-200 dark:prose-pre:border-slate-700/50 prose-pre:border-slate-300 prose-pre:my-7 prose-pre:p-5 prose-pre:rounded-lg prose-pre:overflow-x-auto
-  dark:prose-hr:border-slate-700/50 prose-hr:border-slate-300 prose-hr:my-12 prose-hr:border-t
-  prose-table:my-7 prose-table:text-sm
-  dark:prose-thead:border-slate-700 prose-thead:border-slate-300 prose-thead:border-b-2
-  dark:prose-th:text-amber-400 prose-th:text-blue-600 prose-th:py-3 prose-th:px-4 prose-th:text-left prose-th:font-semibold
-  dark:prose-td:border-slate-800 prose-td:border-slate-200 prose-td:py-3 prose-td:px-4 prose-td:border-t
+const PROSE_CLASSES = `prose dark:prose-invert max-w-none font-sans
+  text-[15px] leading-[1.75]
+  prose-headings:font-semibold prose-headings:tracking-tight prose-headings:leading-tight
+  prose-headings:text-zinc-900 dark:prose-headings:text-zinc-100
+  prose-h1:text-2xl prose-h1:mb-6 prose-h1:mt-10
+  prose-h2:text-xl prose-h2:mb-5 prose-h2:mt-8
+  prose-h3:text-lg prose-h3:mb-4 prose-h3:mt-7
+  prose-h4:text-base prose-h4:mb-3 prose-h4:mt-6
+  prose-p:mb-5 prose-p:leading-[1.75]
+  prose-p:text-zinc-700 dark:prose-p:text-zinc-300
+  prose-ul:my-5 prose-ul:space-y-2
+  prose-ol:my-5 prose-ol:space-y-2
+  prose-li:text-zinc-700 dark:prose-li:text-zinc-300 prose-li:my-1
+  prose-blockquote:border-l-2 prose-blockquote:border-zinc-300 dark:prose-blockquote:border-zinc-700
+  prose-blockquote:pl-4 prose-blockquote:my-5 prose-blockquote:text-zinc-600 dark:prose-blockquote:text-zinc-400 prose-blockquote:italic prose-blockquote:not-italic
+  prose-a:text-zinc-900 dark:prose-a:text-zinc-100 prose-a:underline prose-a:underline-offset-4
+  prose-strong:text-zinc-900 dark:prose-strong:text-zinc-100 prose-strong:font-semibold
+  prose-em:text-zinc-700 dark:prose-em:text-zinc-300
+  prose-code:text-zinc-900 dark:prose-code:text-zinc-100
+  prose-code:bg-zinc-100 dark:prose-code:bg-zinc-900
+  prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-[13px] prose-code:font-mono
+  prose-code:before:content-[''] prose-code:after:content-['']
+  prose-pre:bg-zinc-50 dark:prose-pre:bg-zinc-950 prose-pre:border prose-pre:border-zinc-200 dark:prose-pre:border-zinc-800
+  prose-pre:my-5 prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
+  prose-hr:border-zinc-200 dark:prose-hr:border-zinc-800 prose-hr:my-8
+  prose-table:my-5 prose-table:text-sm
+  prose-thead:border-b prose-thead:border-zinc-200 dark:prose-thead:border-zinc-800
+  prose-th:text-zinc-900 dark:prose-th:text-zinc-100 prose-th:py-2 prose-th:px-3 prose-th:text-left prose-th:font-semibold
+  prose-td:border-t prose-td:border-zinc-100 dark:prose-td:border-zinc-900 prose-td:py-2 prose-td:px-3
   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
-  [&_ul]:list-disc [&_ul]:pl-7
-  [&_ol]:list-decimal [&_ol]:pl-7
-  [&_ul_ul]:my-3 [&_ol_ol]:my-3`;
+  [&_ul]:list-disc [&_ul]:pl-6
+  [&_ol]:list-decimal [&_ol]:pl-6`;
 
 function processContent(message: ChatMessage): string {
   let content = message.content || "";
@@ -77,146 +81,123 @@ const MessageBubble = React.memo(function MessageBubble({
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
-  return (
-    <div
-      className={`data-load flex ${isUser ? "justify-end" : "justify-start"}`}
-      style={{ animationDelay: `${animationDelay}ms` }}
-    >
+  const timeStr = new Date(message.timestamp).toLocaleTimeString("en-US", {
+    hour12: true,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  if (isUser) {
+    return (
       <div
-        className={`max-w-[85%] relative ${
-          isUser
-            ? "bg-blue-50 dark:bg-slate-800 border border-blue-300 dark:border-amber-400/30"
-            : "bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/50"
-        }`}
-        style={{
-          clipPath: isUser
-            ? "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"
-            : "polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))",
-        }}
+        className="data-load flex justify-end"
+        style={{ animationDelay: `${animationDelay}ms` }}
       >
-        <div className="p-4">
-          {/* Message Header */}
-          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
-            {!isUser && (
-              <svg
-                className="w-4 h-4 text-blue-600 dark:text-amber-400"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2L4 7v10c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V7l-8-5zm0 18c-3.31-1-6-5.46-6-9.4V8.3l6-4.45 6 4.45v2.3c0 3.94-2.69 8.4-6 9.4z" />
-              </svg>
-            )}
-            <span
-              className={`text-xs tracking-wider font-semibold ${
-                isUser
-                  ? "text-blue-600 dark:text-amber-400"
-                  : "text-tactical-green"
-              }`}
-            >
-              {isUser ? "OPERATOR" : "SYSTEM ANALYSIS"}
-            </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-600 font-mono ml-auto">
-              {new Date(message.timestamp).toLocaleTimeString("en-US", {
-                hour12: false,
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })}
-            </span>
+        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-zinc-100 dark:bg-zinc-900 px-4 py-2.5">
+          <div className="text-[15px] text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap leading-relaxed">
+            {message.content}
           </div>
-
-          {/* Message Content */}
-          <div
-            className={
-              isUser
-                ? "text-slate-800 dark:text-slate-100 text-sm leading-relaxed"
-                : ""
-            }
-          >
-            {message.content ? (
-              !isUser ? (
-                <div className={PROSE_CLASSES}>
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      a: ({ node, href, children, ...props }) => {
-                        if (href?.startsWith("#source-")) {
-                          const index = parseInt(
-                            href.replace("#source-", ""),
-                            10
-                          );
-                          if (
-                            !isNaN(index) &&
-                            message.sources &&
-                            message.sources[index - 1]
-                          ) {
-                            const source = message.sources[
-                              index - 1
-                            ] as DocumentSource;
-                            const fileKey = source.file_key;
-                            const finalUrl = sourceUrls.get(fileKey);
-
-                            return (
-                              <span
-                                className="inline-flex items-center justify-center w-5 h-5 ml-1 mr-0.5 text-[10px] font-bold text-tactical-green bg-tactical-green/10 border border-tactical-green/30 rounded-full cursor-pointer hover:bg-tactical-green/20 transition-colors align-super relative"
-                                onMouseEnter={(e) => {
-                                  const rect =
-                                    e.currentTarget.getBoundingClientRect();
-                                  onCitationHover(
-                                    index - 1,
-                                    message.id,
-                                    rect.left + rect.width / 2,
-                                    rect.top
-                                  );
-                                }}
-                                onMouseLeave={onCitationLeave}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  onCitationClick(source, finalUrl);
-                                }}
-                              >
-                                {index}
-                              </span>
-                            );
-                          }
-                        }
-                        return (
-                          <a
-                            href={href}
-                            {...props}
-                            className="text-tactical-green hover:underline"
-                          >
-                            {children}
-                          </a>
-                        );
-                      },
-                    }}
-                  >
-                    {processContent(message)}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                message.content
-              )
-            ) : (
-              <span className="text-slate-500 italic flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-amber-400/20 border-t-amber-400 rounded-full animate-spin"></div>
-                Processing query...
-              </span>
-            )}
+          <div className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1 text-right">
+            {timeStr}
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Corner decorations */}
-        <div
-          className={`absolute ${
-            isUser ? "top-0 left-0" : "bottom-0 right-0"
-          } w-2 h-2 border-amber-400/30`}
-          style={{
-            borderWidth: isUser ? "1px 0 0 1px" : "0 1px 1px 0",
-          }}
-        ></div>
+  return (
+    <div
+      className="data-load flex justify-start"
+      style={{ animationDelay: `${animationDelay}ms` }}
+    >
+      <div className="max-w-[92%] w-full">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-6 h-6 rounded-md bg-zinc-900 dark:bg-white flex items-center justify-center flex-shrink-0">
+            <svg
+              className="w-3.5 h-3.5 text-white dark:text-zinc-900"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </div>
+          <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+            SoldierIQ
+          </span>
+          <span className="text-[11px] text-zinc-500">· {timeStr}</span>
+        </div>
+
+        <div className="pl-8">
+          {message.content ? (
+            <div className={PROSE_CLASSES}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a: ({ node, href, children, ...props }) => {
+                    if (href?.startsWith("#source-")) {
+                      const index = parseInt(href.replace("#source-", ""), 10);
+                      if (
+                        !isNaN(index) &&
+                        message.sources &&
+                        message.sources[index - 1]
+                      ) {
+                        const source = message.sources[
+                          index - 1
+                        ] as DocumentSource;
+                        const fileKey = source.file_key;
+                        const finalUrl = sourceUrls.get(fileKey);
+
+                        return (
+                          <span
+                            className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 ml-0.5 text-[10px] font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors align-super"
+                            onMouseEnter={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              onCitationHover(
+                                index - 1,
+                                message.id,
+                                rect.left + rect.width / 2,
+                                rect.top
+                              );
+                            }}
+                            onMouseLeave={onCitationLeave}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onCitationClick(source, finalUrl);
+                            }}
+                          >
+                            {index}
+                          </span>
+                        );
+                      }
+                    }
+                    return (
+                      <a
+                        href={href}
+                        {...props}
+                        className="text-zinc-900 dark:text-zinc-100 underline underline-offset-4 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      >
+                        {children}
+                      </a>
+                    );
+                  },
+                }}
+              >
+                {processContent(message)}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-zinc-500 text-sm">
+              <div className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin" />
+              Thinking…
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

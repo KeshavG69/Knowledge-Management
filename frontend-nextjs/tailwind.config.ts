@@ -10,8 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "tactical-green": "#4ade80",
-        // shadcn/ui CSS variable-based colors
+        "tactical-green": "#10b981",
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
@@ -52,8 +51,9 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["IBM Plex Mono", "monospace"],
-        display: ["Rajdhani", "sans-serif"],
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "IBM Plex Mono", "monospace"],
+        display: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
     },
   },

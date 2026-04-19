@@ -404,14 +404,11 @@ export default function ChatArea() {
   );
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-950 relative min-h-0">
-      {/* Decorative corner bracket */}
-      <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400/40 z-10"></div>
-
+    <div className="flex-1 flex flex-col bg-white dark:bg-[#0a0a0a] relative min-h-0">
       {/* Loading Session Overlay */}
       {isLoadingSession && (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="w-16 h-16 border-4 border-blue-400/20 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin"></div>
+        <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-700 dark:border-t-zinc-100 rounded-full animate-spin" />
         </div>
       )}
 
@@ -452,21 +449,21 @@ export default function ChatArea() {
         onKeyDown={handleKeyDown}
       />
 
-      {/* Bottom border accent */}
-      <div className="h-px bg-gradient-to-r from-transparent via-blue-400/30 dark:via-amber-400/30 to-transparent"></div>
-
       {/* New Mission Modal */}
       {showNewMissionModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white dark:bg-slate-900 border-2 border-blue-400 dark:border-amber-400 shadow-2xl max-w-md w-full mx-4">
-            <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4">
-              <h3 className="text-lg font-bold text-blue-600 dark:text-amber-400 tracking-wider">
-                CREATE NEW MISSION
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+          <div className="bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                New mission
               </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Missions group related conversations and documents.
+              </p>
             </div>
             <div className="p-6">
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 tracking-wider mb-2">
-                MISSION NAME:
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Mission name
               </label>
               <input
                 type="text"
@@ -479,27 +476,27 @@ export default function ChatArea() {
                     setNewMissionName("");
                   }
                 }}
-                placeholder="Enter mission name..."
-                className="tactical-input w-full px-3 py-2 text-sm"
+                placeholder="e.g. Op Nightwatch"
+                className="tactical-input"
                 autoFocus
               />
             </div>
-            <div className="border-t border-slate-200 dark:border-slate-800 px-6 py-4 flex gap-3 justify-end">
+            <div className="border-t border-zinc-200 dark:border-zinc-800 px-6 py-4 flex gap-2 justify-end bg-zinc-50 dark:bg-zinc-900/40">
               <button
                 onClick={() => {
                   setShowNewMissionModal(false);
                   setNewMissionName("");
                 }}
-                className="tactical-btn px-4 py-2 text-sm"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
-                CANCEL
+                Cancel
               </button>
               <button
                 onClick={handleCreateMission}
                 disabled={!newMissionName.trim()}
-                className="tactical-btn tactical-btn-primary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                CREATE
+                Create mission
               </button>
             </div>
           </div>

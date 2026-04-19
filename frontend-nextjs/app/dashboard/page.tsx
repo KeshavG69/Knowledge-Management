@@ -104,10 +104,10 @@ export default function DashboardPage() {
 
   if (isInitializing || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-amber-400/20 border-t-amber-400 rounded-full animate-spin" />
-          <span className="text-slate-400 text-xs tracking-widest">INITIALIZING SYSTEM...</span>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-700 dark:border-t-zinc-100 rounded-full animate-spin" />
+          <span className="text-zinc-500 text-xs">Loading</span>
         </div>
       </div>
     );
@@ -116,7 +116,7 @@ export default function DashboardPage() {
   // Mobile layout
   if (isMobile) {
     return (
-      <div className="h-screen flex flex-col bg-slate-50 dark:bg-zinc-950">
+      <div className="h-screen flex flex-col bg-white dark:bg-[#0a0a0a]">
         <Header />
         <div className="flex-1 flex flex-col overflow-hidden relative">
           {/* Mobile toolbar */}
@@ -129,7 +129,7 @@ export default function DashboardPage() {
                   </svg>
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[85vw] max-w-[360px] p-0 bg-slate-50 dark:bg-slate-950">
+              <SheetContent side="left" className="w-[85vw] max-w-[360px] p-0 bg-white dark:bg-[#0a0a0a]">
                 <ErrorBoundary>
                   <Suspense fallback={<SidebarSkeleton />}>
                     <Sidebar />
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                   </svg>
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[85vw] max-w-[360px] p-0 bg-slate-50 dark:bg-slate-950">
+              <SheetContent side="right" className="w-[85vw] max-w-[360px] p-0 bg-white dark:bg-[#0a0a0a]">
                 <ErrorBoundary>
                   <Suspense fallback={<WorkflowSkeleton />}>
                     <WorkflowPanel isCollapsed={false} onToggleCollapse={() => setWorkflowOpen(false)} />
@@ -171,7 +171,7 @@ export default function DashboardPage() {
 
   // Desktop / Tablet layout
   return (
-    <div className="h-screen flex flex-col bg-slate-50 dark:bg-zinc-950">
+    <div className="h-screen flex flex-col bg-white dark:bg-[#0a0a0a]">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
@@ -183,7 +183,7 @@ export default function DashboardPage() {
               </Suspense>
             </ErrorBoundary>
             <div
-              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-amber-400/50 transition-colors z-10"
+              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors z-10"
               onMouseDown={() => setIsResizingLeft(true)}
             >
               <div className="absolute inset-y-0 -left-1 -right-1" />
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                 </svg>
               </button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[320px] p-0 bg-slate-50 dark:bg-slate-950">
+            <SheetContent side="left" className="w-[320px] p-0 bg-white dark:bg-[#0a0a0a]">
               <ErrorBoundary>
                 <Suspense fallback={<SidebarSkeleton />}>
                   <Sidebar />
@@ -222,7 +222,7 @@ export default function DashboardPage() {
         <div className="relative flex flex-shrink-0" style={{ width: actualRightWidth }}>
           {!isWorkflowCollapsed && (
             <div
-              className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-amber-400/50 transition-colors z-10"
+              className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors z-10"
               onMouseDown={() => setIsResizingRight(true)}
             >
               <div className="absolute inset-y-0 -left-1 -right-1" />

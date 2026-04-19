@@ -34,99 +34,84 @@ const ChatInput = React.memo(function ChatInput({
   }, [inputMessage]);
 
   return (
-    <div className="border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-4 flex-shrink-0">
-      <div className="max-w-5xl mx-auto">
+    <div className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0a0a0a] px-4 py-3 flex-shrink-0">
+      <div className="max-w-4xl mx-auto">
         {/* Status Bar */}
-        <div className="flex items-center justify-between mb-3 text-xs">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between mb-2 text-xs">
+          <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
             {selectedDocsCount > 0 ? (
-              <div className="flex items-center gap-2">
-                <div className="status-indicator status-active"></div>
-                <span className="text-tactical-green tracking-wider">
-                  {selectedDocsCount} DOCUMENT
-                  {selectedDocsCount !== 1 ? "S" : ""} ACTIVE
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>
+                  {selectedDocsCount} document{selectedDocsCount !== 1 ? "s" : ""} selected
                 </span>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center gap-2">
-                <div className="status-indicator bg-blue-500 dark:bg-amber-400"></div>
-                <span className="text-blue-600 dark:text-amber-400 tracking-wider">
-                  GENERAL MODE
-                </span>
-              </div>
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+                <span>General mode</span>
+              </>
             )}
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 dark:text-slate-600 tracking-wider">
-                STATUS:
-              </span>
-              <span
-                className={`font-mono tracking-wider ${
-                  isLoading
-                    ? "text-blue-600 dark:text-amber-400"
-                    : "text-tactical-green"
-                }`}
-              >
-                {isLoading ? "PROCESSING" : "READY"}
-              </span>
-            </div>
-
+          <div className="flex items-center gap-3">
+            <span className="text-zinc-500 dark:text-zinc-400">
+              {isLoading ? "Thinking…" : "Ready"}
+            </span>
             {takEnabled && takCredentials && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/30 dark:bg-green-400/10 dark:border-green-400/30">
-                <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs font-bold text-green-600 dark:text-green-400 tracking-wider">
-                  TAK ACTIVE
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                TAK active
+              </span>
             )}
           </div>
         </div>
 
         {/* Input Form */}
         <form onSubmit={onSend} className="relative">
-          <textarea
-            ref={textareaRef}
-            value={inputMessage}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={
-              selectedDocsCount === 0
-                ? "ENTER QUERY (NO DOCUMENTS SELECTED - GENERAL MODE)..."
-                : "ENTER QUERY FOR INTELLIGENCE ANALYSIS..."
-            }
-            disabled={isLoading}
-            className="tactical-input pr-14 py-3 resize-none max-h-32 disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-slate-600 placeholder:text-xs placeholder:tracking-wider"
-            rows={1}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !inputMessage.trim()}
-            className="absolute right-2 bottom-2 tactical-btn tactical-btn-primary px-3 py-2 disabled:opacity-30"
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-amber-400/20 border-t-amber-400 rounded-full animate-spin"></div>
-            ) : (
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
+          <div className="relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus-within:border-zinc-400 dark:focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-zinc-900/5 dark:focus-within:ring-white/5 transition-all">
+            <textarea
+              ref={textareaRef}
+              value={inputMessage}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={
+                selectedDocsCount === 0
+                  ? "Ask a question…"
+                  : "Ask about your selected documents…"
+              }
+              disabled={isLoading}
+              className="w-full bg-transparent pl-4 pr-12 py-3 resize-none max-h-40 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
+              rows={1}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !inputMessage.trim()}
+              className="absolute right-2 bottom-2 w-8 h-8 rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              aria-label="Send"
+            >
+              {isLoading ? (
+                <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+              ) : (
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 5l7 7-7 7M5 5l7 7-7 7"
-                />
-              </svg>
-            )}
-          </button>
+                >
+                  <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+              )}
+            </button>
+          </div>
         </form>
 
-        <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-600 text-center tracking-widest">
-          ENTER: SUBMIT QUERY | SHIFT+ENTER: NEW LINE
+        <div className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-600 text-center">
+          <kbd className="font-mono">Enter</kbd> to send ·{" "}
+          <kbd className="font-mono">Shift</kbd> + <kbd className="font-mono">Enter</kbd> for new line
         </div>
       </div>
     </div>

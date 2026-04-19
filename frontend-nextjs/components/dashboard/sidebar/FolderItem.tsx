@@ -48,100 +48,79 @@ const FolderItem = React.memo(function FolderItem({
       style={{ animationDelay: `${animationDelay}ms` }}
     >
       {/* Folder Header */}
-      <div
-        className="relative group transition-all duration-200 bg-slate-200 dark:bg-slate-800/40 border border-slate-300 dark:border-slate-700/50 hover:border-blue-400 dark:hover:border-amber-400/30"
-        style={{
-          clipPath:
-            "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)",
-        }}
-      >
-        <div className="flex items-center gap-2 p-3">
-          {/* Expand/Collapse Button */}
+      <div className="group rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
+        <div className="flex items-center gap-2 px-2 py-2">
           <button
             onClick={() => onToggleFolder(folderName)}
             disabled={isDeletingFolder}
-            className="text-blue-600 dark:text-amber-400 hover:text-blue-700 dark:hover:text-amber-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           >
             <motion.svg
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
+              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               animate={{ rotate: isExpanded ? 90 : 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              transition={{ duration: 0.15, ease: "easeInOut" }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+              <path d="M9 5l7 7-7 7" />
             </motion.svg>
           </button>
 
-          {/* Folder Selection Checkbox */}
           <input
             type="checkbox"
             checked={anyFolderDocsSelected}
             disabled={isDeletingFolder}
             onChange={() => onSelectAllFolder(folderName, anyFolderDocsSelected)}
-            className="tactical-checkbox disabled:opacity-50 disabled:cursor-not-allowed"
+            className="tactical-checkbox flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             title={
               anyFolderDocsSelected
-                ? "Deselect all documents in folder"
-                : "Select all documents in folder"
+                ? "Deselect all in folder"
+                : "Select all in folder"
             }
           />
 
-          {/* Folder Icon or Loader */}
           {isDeletingFolder ? (
-            <div className="w-4 h-4 border-2 border-blue-200 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin"></div>
+            <div className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin flex-shrink-0" />
           ) : (
             <svg
-              className="w-4 h-4 text-blue-600 dark:text-amber-400"
-              fill="currentColor"
+              className="w-4 h-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0"
               viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+              <path d="M4 20h16a2 2 0 002-2V8a2 2 0 00-2-2h-7.93a2 2 0 01-1.66-.9l-.82-1.2A2 2 0 008.93 3H4a2 2 0 00-2 2v13c0 1.1.9 2 2 2z" />
             </svg>
           )}
 
-          {/* Folder Name */}
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-wide break-words">
+            <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
               {folderName}
-            </div>
-            <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-              {folderDocCount} DOCUMENT{folderDocCount !== 1 ? "S" : ""}
             </div>
           </div>
 
-          {/* Delete Folder Button */}
+          <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-mono flex-shrink-0">
+            {folderDocCount}
+          </span>
+
           {!isDeletingFolder && (
             <button
               onClick={() => onDeleteFolder(folderName)}
-              className="opacity-0 group-hover:opacity-100 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-200 p-1"
-              title="Delete knowledge base"
+              className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-all p-0.5 flex-shrink-0"
+              title="Delete folder"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
               </svg>
             </button>
           )}
         </div>
-
-        {/* Decorative corner */}
-        <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-blue-400/20 dark:border-amber-400/20"></div>
       </div>
 
       {/* Folder Documents */}
@@ -152,10 +131,10 @@ const FolderItem = React.memo(function FolderItem({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
+            transition={{ duration: 0.18, ease: "easeInOut" }}
             style={{ overflow: "hidden" }}
           >
-            <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-300 dark:border-slate-700/30 pl-3">
+            <div className="ml-3 pl-3 border-l border-zinc-200 dark:border-zinc-800 space-y-0.5">
               {folderDocs.map((doc, index) => (
                 <DocumentItem
                   key={doc.id}

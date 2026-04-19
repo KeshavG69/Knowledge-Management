@@ -148,9 +148,7 @@ export default function Sidebar() {
   );
 
   return (
-    <div className="flex-1 bg-white dark:bg-slate-900 border-r border-slate-300 dark:border-amber-400/20 flex flex-col relative">
-      <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-blue-400/40 dark:border-amber-400/40 z-10"></div>
-
+    <div className="flex-1 bg-white dark:bg-[#0a0a0a] border-r border-zinc-200 dark:border-zinc-800 flex flex-col relative">
       <SidebarHeader
         totalDocs={totalDocs}
         selectedCount={selectedDocs.size}

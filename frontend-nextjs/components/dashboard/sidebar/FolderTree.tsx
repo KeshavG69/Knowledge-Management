@@ -61,31 +61,34 @@ const FolderTree = React.memo(function FolderTree({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <div className="w-8 h-8 border-2 border-blue-200 dark:border-amber-400/20 border-t-blue-600 dark:border-t-amber-400 rounded-full animate-spin mb-4"></div>
-        <div className="text-slate-500 text-sm">LOADING REPOSITORY...</div>
+        <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin mb-3" />
+        <div className="text-zinc-500 text-xs">Loading</div>
       </div>
     );
   }
 
   if (folderList.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <svg
-          className="w-16 h-16 text-slate-400 dark:text-slate-700 mb-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
+      <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+        <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mb-3">
+          <svg
+            className="w-5 h-5 text-zinc-400 dark:text-zinc-600"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-        <div className="text-slate-500 text-sm mb-2">NO DOCUMENTS</div>
-        <div className="text-slate-600 text-xs">
-          Create a knowledge base and upload documents
+          >
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <path d="M14 2v6h6" />
+          </svg>
+        </div>
+        <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
+          No documents yet
+        </div>
+        <div className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-[220px]">
+          Upload a document to create your first knowledge base.
         </div>
       </div>
     );
