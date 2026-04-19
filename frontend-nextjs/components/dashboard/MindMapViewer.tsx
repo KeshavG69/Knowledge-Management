@@ -34,13 +34,9 @@ export default function MindMapViewer({ mindMapData, onClose }: MindMapViewerPro
         // Convert backend data to markdown
         const markdown = convertToMarkdown(mindMapData.mind_map.nodes, mindMapData.mind_map.edges);
 
-        console.log("Generated markdown:", markdown);
-
         // Transform markdown to markmap data
         const transformer = new Transformer();
         const { root, features } = transformer.transform(markdown);
-
-        console.log("Markmap root data:", root);
 
         // Load required assets
         const { styles, scripts } = transformer.getUsedAssets(features);
@@ -98,7 +94,7 @@ export default function MindMapViewer({ mindMapData, onClose }: MindMapViewerPro
 
         setIsLoading(false);
       } catch (error) {
-        console.error("Failed to render mind map:", error);
+        // Mind map render failed
         setIsLoading(false);
       }
     };

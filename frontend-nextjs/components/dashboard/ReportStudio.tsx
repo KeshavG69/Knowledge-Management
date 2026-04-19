@@ -65,7 +65,7 @@ export default function ReportStudio({ onClose }: ReportStudioProps) {
             setTimeout(() => setError(null), 5000);
           }
         } catch (err: any) {
-          console.error('Polling error:', err);
+          // Polling error - will retry on next interval
         }
       }, 2000);
 
@@ -81,7 +81,7 @@ export default function ReportStudio({ onClose }: ReportStudioProps) {
       setSuggestionsStatus('loading');
       await reportsApi.triggerFormatSuggestions(documentIds);
     } catch (err: any) {
-      console.error('Failed to trigger AI suggestions:', err);
+      // AI suggestions trigger failed
       setSuggestionsStatus('failed');
       setError(err.response?.data?.detail || 'Failed to trigger AI suggestions');
       setTimeout(() => setError(null), 5000);
@@ -171,7 +171,7 @@ export default function ReportStudio({ onClose }: ReportStudioProps) {
                   throw new Error(data.error || 'Unknown error occurred');
                 }
               } catch (parseError) {
-                console.error('Failed to parse SSE data:', parseError);
+                // SSE parse error - continue processing
               }
 
               i += 2; // Skip event and data lines
@@ -191,7 +191,7 @@ export default function ReportStudio({ onClose }: ReportStudioProps) {
       setShowReportViewer(true);
 
     } catch (err: any) {
-      console.error('Failed to generate report:', err);
+      // Report generation failed
       setError(err.message || 'Failed to generate report');
       setIsGenerating(false);
       setLoading(false);

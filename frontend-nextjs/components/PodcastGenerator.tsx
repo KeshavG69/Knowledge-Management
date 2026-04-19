@@ -68,7 +68,7 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
           setIsGenerating(false);
         }
       } catch (err: any) {
-        console.error('Polling error:', err);
+        // Polling error - will retry
         if (attempts > 3) {
           clearInterval(interval);
           setError('Failed to check audio overview status');
@@ -89,7 +89,7 @@ export default function PodcastGenerator({ selectedDocumentIds, onClose }: Podca
         setError('Failed to generate audio URL');
       }
     } catch (err) {
-      console.error('Failed to fetch audio URL:', err);
+      // Audio URL fetch failed
       setError('Failed to load audio file');
     }
   };

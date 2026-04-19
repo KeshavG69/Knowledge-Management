@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { Z_INDEX } from "@/lib/constants/zIndex";
 
 interface TicketCreationModalProps {
   onClose: () => void;
@@ -63,12 +64,13 @@ export default function TicketCreationModal({ onClose }: TicketCreationModalProp
       <>
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[500] animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          style={{ zIndex: Z_INDEX.MODAL }}
           onClick={onClose}
         />
 
         {/* Success Dialog */}
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[501] w-full max-w-md animate-in zoom-in-95 duration-200">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md animate-in zoom-in-95 duration-200" style={{ zIndex: Z_INDEX.MODAL + 1 }}>
           <div className="relative bg-white dark:bg-slate-900 border-2 border-green-500 shadow-2xl mx-4">
             {/* Tactical corners */}
             <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-green-500"></div>
@@ -139,12 +141,13 @@ export default function TicketCreationModal({ onClose }: TicketCreationModalProp
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[500] animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        style={{ zIndex: Z_INDEX.MODAL }}
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[501] w-full max-w-2xl animate-in zoom-in-95 duration-200">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl animate-in zoom-in-95 duration-200" style={{ zIndex: Z_INDEX.MODAL + 1 }}>
         <div className="relative bg-white dark:bg-slate-900 border-2 border-blue-400 dark:border-amber-400/50 shadow-2xl mx-4">
           {/* Tactical corners */}
           <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-blue-400 dark:border-amber-400"></div>

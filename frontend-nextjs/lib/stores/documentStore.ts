@@ -14,14 +14,12 @@ const checkAndClearCache = () => {
   try {
     const storedVersion = localStorage.getItem(STORAGE_KEY_CACHE_VERSION);
     if (storedVersion !== CURRENT_CACHE_VERSION) {
-      console.log('🧹 Cache version mismatch - clearing stale data');
       localStorage.removeItem(STORAGE_KEY_SELECTED_KB);
       localStorage.removeItem(STORAGE_KEY_SELECTED_DOCS);
       localStorage.setItem(STORAGE_KEY_CACHE_VERSION, CURRENT_CACHE_VERSION);
-      console.log(`✅ Cache updated to version: ${CURRENT_CACHE_VERSION}`);
     }
   } catch (e) {
-    console.error('Failed to check cache version:', e);
+    // Cache version check failed
   }
 };
 
@@ -34,7 +32,7 @@ const loadSelectedKB = (): string | null => {
     const stored = localStorage.getItem(STORAGE_KEY_SELECTED_KB);
     return stored || null;
   } catch (e) {
-    console.error('Failed to load selected KB from localStorage:', e);
+    // Failed to load selected KB
     return null;
   }
 };
@@ -48,7 +46,7 @@ const saveSelectedKB = (kb: string | null) => {
       localStorage.setItem(STORAGE_KEY_SELECTED_KB, kb);
     }
   } catch (e) {
-    console.error('Failed to save selected KB to localStorage:', e);
+    // Failed to save selected KB
   }
 };
 
@@ -61,7 +59,7 @@ const loadSelectedDocs = (): Set<string> => {
       return new Set(array);
     }
   } catch (e) {
-    console.error('Failed to load selected docs from localStorage:', e);
+    // Failed to load selected docs
   }
   return new Set();
 };
@@ -72,7 +70,7 @@ const saveSelectedDocs = (docs: Set<string>) => {
     const array = Array.from(docs);
     localStorage.setItem(STORAGE_KEY_SELECTED_DOCS, JSON.stringify(array));
   } catch (e) {
-    console.error('Failed to save selected docs to localStorage:', e);
+    // Failed to save selected docs
   }
 };
 
@@ -101,7 +99,7 @@ const startBackgroundPolling = (
   };
 
   const pollingIntervalMs = calculatePollingInterval(maxFileSizeMB);
-  console.log(`📊 Background polling started: ${pollingIntervalMs}ms interval (max file size: ${maxFileSizeMB.toFixed(2)}MB)`);
+  // Background polling started
 
   // Poll SPECIFIC documents by ID to check for status updates (more efficient)
   const pollInterval = setInterval(async () => {
@@ -137,7 +135,7 @@ const startBackgroundPolling = (
         }, 2000);
       }
     } catch (error: any) {
-      console.error('Polling error:', error);
+      // Polling error
       clearInterval(pollInterval);
       set({ uploadStatus: 'failed', error: error.message, uploadProgress: null });
     }
@@ -169,6 +167,8 @@ interface DocumentState {
   deselectAllDocs: () => void;
   selectFolderDocs: (folderName: string) => void;
   deselectFolderDocs: (folderName: string) => void;
+  selectDocs: (ids: string[]) => void;
+  deselectDocs: (ids: string[]) => void;
 }
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
@@ -204,7 +204,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       // Update if we removed any invalid IDs
       if (cleanedSelectedDocs.size !== currentSelectedDocs.size) {
-        console.log(`🧹 Cleaned ${currentSelectedDocs.size - cleanedSelectedDocs.size} stale document IDs from selection`);
+        // Cleaned stale document IDs from selection
         saveSelectedDocs(cleanedSelectedDocs);
         set({ selectedDocs: cleanedSelectedDocs });
       }
@@ -218,7 +218,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const kbs = await documentsApi.listFolders();
       set({ knowledgeBases: Array.isArray(kbs) ? kbs : [] });
     } catch (error: any) {
-      console.error('Failed to fetch knowledge bases:', error);
+      // Failed to fetch knowledge bases
       set({ knowledgeBases: [] });
     }
   },
@@ -432,6 +432,22 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       : [];
     const newSelected = new Set(selectedDocs);
     folderDocIds.forEach(id => newSelected.delete(id));
+    saveSelectedDocs(newSelected);
+    set({ selectedDocs: newSelected });
+  },
+
+  selectDocs: (ids) => {
+    if (!ids?.length) return;
+    const newSelected = new Set(get().selectedDocs);
+    ids.forEach(id => newSelected.add(id));
+    saveSelectedDocs(newSelected);
+    set({ selectedDocs: newSelected });
+  },
+
+  deselectDocs: (ids) => {
+    if (!ids?.length) return;
+    const newSelected = new Set(get().selectedDocs);
+    ids.forEach(id => newSelected.delete(id));
     saveSelectedDocs(newSelected);
     set({ selectedDocs: newSelected });
   },
