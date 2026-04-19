@@ -34,11 +34,24 @@ class PGVectorClient:
             model="text-embedding-3-small"
         )
 
-        # Initialize LangChain PGVector store
+        # Initialize LangChain PGVector store with connection pooling
+        from sqlalchemy import create_engine
+        self._engine = create_engine(
+            self.connection_string,
+            pool_size=5,
+            max_overflow=10,
+            pool_pre_ping=True,      # Auto-reconnect stale connections
+            pool_recycle=300,         # Recycle connections every 5 min (Railway idle timeout)
+            connect_args={
+                "connect_timeout": 10,
+                "options": "-c statement_timeout=30000",  # 30s query timeout
+            },
+        )
+
         self.vector_store = PGVector(
             embeddings=self.embeddings,
             collection_name="vector_embeddings",
-            connection=self.connection_string,
+            connection=self._engine,
             use_jsonb=True
         )
 
@@ -209,34 +222,40 @@ Text:
         Raises:
             Exception: If search fails
         """
-        try:
-            # Ensure k is valid
-            if k is None or k < 1:
-                k = 5
-                logger.warning(f"Invalid k value, using default: {k}")
+        # Ensure k is valid
+        if k is None or k < 1:
+            k = 5
 
-            # Add namespace to filter if provided
-            search_filter = filter.copy() if filter else {}
-            if namespace:
-                search_filter["organization_id"] = {"$eq": namespace}
+        # Add namespace to filter if provided
+        search_filter = filter.copy() if filter else {}
+        if namespace:
+            search_filter["organization_id"] = {"$eq": namespace}
 
-            if search_filter:
-                results = self.vector_store.similarity_search_with_score(
-                    query,
-                    k=k,
-                    filter=search_filter
-                )
-            else:
-                results = self.vector_store.similarity_search_with_score(query, k=k)
+        # Retry once on connection errors
+        for attempt in range(2):
+            try:
+                if search_filter:
+                    results = self.vector_store.similarity_search_with_score(
+                        query, k=k, filter=search_filter
+                    )
+                else:
+                    results = self.vector_store.similarity_search_with_score(query, k=k)
 
-            logger.info(f"✅ Found {len(results)} similar documents with scores")
-            return results
+                logger.info(f"✅ Found {len(results)} similar documents with scores")
+                return results
 
-        except Exception as e:
-            logger.error(f"❌ Similarity search with score failed: {str(e)}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            raise Exception(f"Similarity search failed: {str(e)}")
+            except Exception as e:
+                err_msg = str(e).lower()
+                is_connection_error = any(kw in err_msg for kw in ["timed out", "closed", "connection", "server closed", "operational"])
+
+                if is_connection_error and attempt == 0:
+                    logger.warning(f"⚠️ PGVector connection error, retrying... ({e})")
+                    # Dispose stale connections and let pool_pre_ping create fresh ones
+                    self._engine.dispose()
+                    continue
+
+                logger.error(f"❌ Similarity search failed: {str(e)}")
+                raise Exception(f"Similarity search failed: {str(e)}")
 
     def delete_documents(
         self,

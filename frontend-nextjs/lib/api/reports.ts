@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient, { fetchWithRefresh } from './client';
 
 export interface FormatSuggestion {
   name: string;
@@ -39,22 +39,12 @@ export const reportsApi = {
     documentIds: string[],
     prompt: string
   ): Promise<ReadableStream> => {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-      throw new Error('No access token found');
-    }
-
-    // Use fetch for SSE streaming
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/generate`, {
+    // Use fetchWithRefresh for automatic token refresh on 401
+    const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/generate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-      },
       body: JSON.stringify({
         document_ids: documentIds,
         prompt,
-        // user_id and organization_id are extracted from JWT token by backend
       }),
     });
 

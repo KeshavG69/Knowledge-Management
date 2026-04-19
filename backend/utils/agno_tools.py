@@ -3,6 +3,7 @@ Agno Tools for Knowledge Management
 Creates custom tools for agno agent with hybrid retrieval (vector + graph)
 """
 
+import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 from collections import defaultdict
 from agno.agent import Agent
@@ -73,7 +74,7 @@ def create_knowledge_retriever(
     # Store default in closure
     num_documents_default = num_documents
 
-    def search_knowledge_base(
+    async def search_knowledge_base(
         query: str,
         agent: Optional[Agent] = None,
         num_documents: Optional[int] = None
@@ -114,112 +115,89 @@ def create_knowledge_retriever(
                 f"(limit: {num_documents}, docs: {len(document_ids) if document_ids else 'all'})"
             )
 
-            rankings = []  # Store rankings from different sources
-
             # ========================================================================
-            # 1. PGVECTOR: Semantic vector search
+            # Run vector + graph search in PARALLEL via asyncio
             # ========================================================================
-            try:
-                pgvector_client = get_pgvector_client()
+            loop = asyncio.get_event_loop()
 
-                # Build filter for RBAC
-                filter_dict = {}
-                if user_id:
-                    filter_dict["user_id"] = user_id
-                if document_ids:
-                    filter_dict["document_id"] = {"$in": document_ids}
+            def _vector_search():
+                try:
+                    pgvector_client = get_pgvector_client()
+                    filter_dict = {}
+                    if user_id:
+                        filter_dict["user_id"] = user_id
+                    if document_ids:
+                        filter_dict["document_id"] = {"$in": document_ids}
 
-                # Query pgvector with scores
-                vector_results = pgvector_client.similarity_search_with_score(
-                    query=query,
-                    k=num_documents,  # Get num_documents from vector
-                    namespace=organization_id,
-                    filter=filter_dict if filter_dict else None
-                )
+                    vector_results = pgvector_client.similarity_search_with_score(
+                        query=query,
+                        k=num_documents,
+                        namespace=organization_id,
+                        filter=filter_dict if filter_dict else None
+                    )
 
-                # Convert to ranking format: List[(chunk_id, metadata)]
-                vector_ranking = []
-                for doc, score in vector_results:
-                    # Use page_content hash as unique ID
-                    chunk_id = f"vec_{hash(doc.page_content)}"
-                    metadata = {
-                        "text": doc.page_content,
-                        "file_id": doc.metadata.get("document_id", ""),
-                        "datasource": "files",
-                        "vector_score": float(score),
-                        "source": "vector",
-                        "metadata": {
-                            "file_name": doc.metadata.get("file_name", "Unknown"),
-                            "folder_name": doc.metadata.get("folder_name", "N/A"),
-                            "file_key": doc.metadata.get("file_key", ""),
+                    vector_ranking = []
+                    for doc, score in vector_results:
+                        chunk_id = f"vec_{hash(doc.page_content)}"
+                        metadata = {
+                            "text": doc.page_content,
+                            "file_id": doc.metadata.get("document_id", ""),
+                            "datasource": "files",
+                            "vector_score": float(score),
+                            "source": "vector",
+                            "metadata": {
+                                "file_name": doc.metadata.get("file_name", "Unknown"),
+                                "folder_name": doc.metadata.get("folder_name", "N/A"),
+                                "file_key": doc.metadata.get("file_key", ""),
+                            }
                         }
-                    }
+                        if "video_id" in doc.metadata:
+                            metadata["datasource"] = "videos"
+                            metadata["metadata"].update({
+                                "video_id": doc.metadata.get("video_id"),
+                                "video_name": doc.metadata.get("video_name"),
+                                "clip_start": doc.metadata.get("clip_start"),
+                                "clip_end": doc.metadata.get("clip_end"),
+                                "scene_id": doc.metadata.get("scene_id"),
+                                "key_frame_timestamp": doc.metadata.get("key_frame_timestamp"),
+                                "keyframe_file_key": doc.metadata.get("keyframe_file_key", ""),
+                            })
+                        vector_ranking.append((chunk_id, metadata))
 
-                    # Check if video chunk
-                    if "video_id" in doc.metadata:
-                        metadata["datasource"] = "videos"
-                        metadata["metadata"].update({
-                            "video_id": doc.metadata.get("video_id"),
-                            "video_name": doc.metadata.get("video_name"),
-                            "clip_start": doc.metadata.get("clip_start"),
-                            "clip_end": doc.metadata.get("clip_end"),
-                            "scene_id": doc.metadata.get("scene_id"),
-                            "key_frame_timestamp": doc.metadata.get("key_frame_timestamp"),
-                            "keyframe_file_key": doc.metadata.get("keyframe_file_key", ""),
-                        })
+                    logger.info(f"  📊 Vector: {len(vector_ranking)} results")
+                    return vector_ranking
+                except Exception as e:
+                    logger.warning(f"  ⚠️  Vector search failed: {str(e)}")
+                    return []
 
-                    vector_ranking.append((chunk_id, metadata))
-
-                rankings.append(vector_ranking)
-                logger.info(f"  📊 Vector: {len(vector_ranking)} results")
-
-            except Exception as e:
-                logger.warning(f"  ⚠️  Vector search failed: {str(e)}")
-
-            # ========================================================================
-            # 2. AGE GRAPH: Entity-based graph traversal
-            # ========================================================================
-            try:
-                if document_ids:  # Only do graph search if documents specified
+            def _graph_search():
+                try:
+                    if not document_ids:
+                        return []
                     age_client = get_age_graph_client()
-
-                    # Query graph - NO enhancement, graph client handles filtering
                     graph_results = age_client.query(
-                        question=query,  # Raw query, not enhanced
+                        question=query,
                         organization_id=organization_id,
                         document_ids=document_ids,
                         user_id=user_id
                     )
 
-                    # Convert graph results to ranking format
                     graph_ranking = []
                     if graph_results:
-                        # Handle different result formats from AGE graph
                         results_list = []
-
                         if isinstance(graph_results, list):
                             results_list = graph_results
                         elif isinstance(graph_results, dict):
-                            # If dict, try to extract results
                             results_list = [graph_results]
                         else:
-                            # Try to convert to list
                             try:
                                 results_list = list(graph_results)
                             except:
                                 results_list = [graph_results]
 
-                        # Limit results to num_documents
-                        limited_results = results_list[:num_documents] if len(results_list) > num_documents else results_list
-
-                        for idx, result in enumerate(limited_results):
-                            # Create unique ID from graph result
+                        for idx, result in enumerate(results_list[:num_documents]):
                             result_id = f"graph_{idx}_{hash(str(result))}"
-
-                            # Format graph result as text
                             text_content = str(result)
-
-                            # Extract entity information if it's a node dict
                             entity_id = None
                             if isinstance(result, dict):
                                 entity_id = result.get("entity_id") or result.get("id") or result.get("n", {}).get("id") if isinstance(result.get("n"), dict) else None
@@ -236,15 +214,26 @@ def create_knowledge_retriever(
                                     "entity_id": entity_id
                                 }
                             }
-
                             graph_ranking.append((result_id, metadata))
 
-                        if graph_ranking:
-                            rankings.append(graph_ranking)
-                            logger.info(f"  🔗 Graph: {len(graph_ranking)} results")
+                    if graph_ranking:
+                        logger.info(f"  🔗 Graph: {len(graph_ranking)} results")
+                    return graph_ranking
+                except Exception as e:
+                    logger.warning(f"  ⚠️  Graph search failed: {str(e)}")
+                    return []
 
-            except Exception as e:
-                logger.warning(f"  ⚠️  Graph search failed: {str(e)}")
+            # Run both in parallel — each in its own thread via run_in_executor
+            vector_ranking, graph_ranking = await asyncio.gather(
+                loop.run_in_executor(None, _vector_search),
+                loop.run_in_executor(None, _graph_search),
+            )
+
+            rankings = []
+            if vector_ranking:
+                rankings.append(vector_ranking)
+            if graph_ranking:
+                rankings.append(graph_ranking)
 
             # ========================================================================
             # 3. COMBINE RESULTS: Vector + Graph (no fusion)

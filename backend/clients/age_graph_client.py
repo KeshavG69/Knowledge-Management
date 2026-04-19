@@ -82,9 +82,31 @@ class AGEGraphClient:
             }
         )
 
-        # Strip semicolons from queries (Apache AGE doesn't accept them)
+        # Store AGE config for reconnection
+        self._age_conf = {
+            "database": self.database,
+            "user": self.username,
+            "password": self.password,
+            "host": self.host,
+            "port": self.port,
+        }
+
+        # Wrap query with auto-reconnect on stale connections
         _original_query = self.age_graph.query
-        self.age_graph.query = lambda q: _original_query(q.strip().rstrip(';'))
+
+        def _resilient_query(q: str):
+            clean_q = q.strip().rstrip(';')
+            try:
+                return _original_query(clean_q)
+            except Exception as e:
+                err_msg = str(e).lower()
+                if "closed" in err_msg or "connection" in err_msg or "server closed" in err_msg:
+                    logger.warning(f"⚠️ AGE connection lost, reconnecting...")
+                    self._reconnect_age()
+                    return self.age_graph.query(clean_q)
+                raise
+
+        self.age_graph.query = _resilient_query
 
         # Initialize LLM for entity extraction (mini model — sufficient for NER, ~80% cheaper)
         self.extraction_llm = get_llm(model="gpt-4.1-mini", provider="openai")
@@ -100,6 +122,21 @@ class AGEGraphClient:
         self._query_chain_lock = __import__('threading').Lock()
 
         logger.info(f"✅ Apache AGE graph client initialized: knowledge_graph (schema deferred)")
+
+    def _reconnect_age(self):
+        """Recreate AGE graph connection when the old one goes stale."""
+        try:
+            self.age_graph = LazySchemaAGEGraph(
+                graph_name="knowledge_graph",
+                conf=self._age_conf,
+            )
+            # Re-apply the fast schema if query chain was already initialized
+            if self._query_chain is not None:
+                self._fast_schema_refresh()
+            logger.info("✅ AGE connection re-established")
+        except Exception as e:
+            logger.error(f"❌ AGE reconnection failed: {e}")
+            raise
 
     def _batched_add_graph_documents(self, graph_documents: List) -> None:
         """
@@ -139,16 +176,24 @@ class AGEGraphClient:
 
         logger.info(f"  📤 Sending {len(statements)} SQL statements in single execute...")
 
-        # Execute all statements in one network call
-        conn = self.age_graph.connection
-        with conn.cursor() as curs:
-            try:
+        # Execute all statements in one network call (with reconnect on stale connection)
+        def _execute():
+            conn = self.age_graph.connection
+            with conn.cursor() as curs:
                 combined_sql = "; ".join(statements)
                 curs.execute(combined_sql)
                 conn.commit()
-            except psycopg2.Error as e:
-                conn.rollback()
-                raise e
+
+        try:
+            _execute()
+        except (psycopg2.Error, Exception) as e:
+            err_msg = str(e).lower()
+            if "closed" in err_msg or "connection" in err_msg or "server closed" in err_msg:
+                logger.warning(f"⚠️ AGE connection lost during write, reconnecting...")
+                self._reconnect_age()
+                _execute()
+            else:
+                raise
 
     def _fast_schema_refresh(self):
         """
@@ -236,17 +281,30 @@ class AGEGraphClient:
 
 OUTPUT: Only pure Cypher. No SQL wrapper, no explanations, no markdown.
 
-RULES:
+SYNTAX RULES:
 - ONE MATCH clause only
 - EVERY RETURN field MUST use AS alias (no dots in column names)
 - NO map projections, list comprehensions, OPTIONAL MATCH, UNION, WITH
 - Use backticks for multi-word labels: MATCH (n:`Mountain_peak`)
-- Do NOT assume specific node labels — labels vary per document (Concept, Technology, etc.)
-- Always match by document_id property, not by label:
-  GOOD: MATCH (a)-[r]->(b) WHERE a.document_id = 'xxx' RETURN a.id AS source, type(r) AS rel, b.id AS target
-  BAD:  MATCH (c:Country) WHERE ... (label may not exist)
 
-Schema (for reference — labels vary per document):
+QUERY STRATEGY:
+- The node property "id" contains the entity name (e.g. "India", "Himalayas", "Agriculture")
+- Extract key entities/topics from the QUESTION and filter nodes using WHERE a.id CONTAINS 'keyword'
+- Use multiple OR conditions to match different relevant keywords from the question
+- The question includes REQUIRED WHERE filters — you MUST include them in the WHERE clause
+- Combine the entity filters AND the required filters in the same WHERE clause
+
+EXAMPLES:
+Question: "Tell me about India's economy\n\nREQUIRED WHERE filters:\na.organization_id = 'org1' AND a.document_id IN ['abc']"
+MATCH (a)-[r]->(b) WHERE (a.id CONTAINS 'Economy' OR a.id CONTAINS 'India' OR a.id CONTAINS 'Gdp') AND a.organization_id = 'org1' AND a.document_id IN ['abc'] RETURN a.id AS source, type(r) AS rel, b.id AS target
+
+Question: "PMCS maintenance checks\n\nREQUIRED WHERE filters:\na.organization_id = 'org1' AND a.document_id IN ['xyz']"
+MATCH (a)-[r]->(b) WHERE (a.id CONTAINS 'Pmcs' OR a.id CONTAINS 'Maintenance' OR a.id CONTAINS 'Check' OR a.id CONTAINS 'Service') AND a.organization_id = 'org1' AND a.document_id IN ['xyz'] RETURN a.id AS source, type(r) AS rel, b.id AS target
+
+Question: "safety warnings and cautions\n\nREQUIRED WHERE filters:\na.organization_id = 'org1' AND a.document_id IN ['xyz']"
+MATCH (a)-[r]->(b) WHERE (a.id CONTAINS 'Warning' OR a.id CONTAINS 'Caution' OR a.id CONTAINS 'Safety' OR a.id CONTAINS 'Danger') AND a.organization_id = 'org1' AND a.document_id IN ['xyz'] RETURN a.id AS source, type(r) AS rel, b.id AS target
+
+Schema:
 {schema}
 
 Question:
@@ -439,21 +497,19 @@ Question:
             )
         """
         try:
-            # Build document filter string
+            # Build filter values for the Cypher WHERE clause
             doc_ids_str = ", ".join([f"'{doc_id}'" for doc_id in document_ids])
-
-            # Enhance question with filtering context
-            enhanced_question = f"""{question}
-
-IMPORTANT: Filter all queries with these constraints:
-- organization_id must equal '{organization_id}'
-- document_id must be IN [{doc_ids_str}]"""
-
+            filter_clause = f"a.organization_id = '{organization_id}' AND a.document_id IN [{doc_ids_str}]"
             if user_id:
-                enhanced_question += f"\n- user_id must equal '{user_id}'"
+                filter_clause += f" AND a.user_id = '{user_id}'"
 
-            # Execute query - LLM generates Cypher, returns direct results
-            results = self.query_chain.invoke({"query": enhanced_question})
+            # Pass the question cleanly — filters are structured, not mixed into the question text
+            structured_query = f"""{question}
+
+REQUIRED WHERE filters (MUST include in every query):
+{filter_clause}"""
+
+            results = self.query_chain.invoke({"query": structured_query})
 
             logger.info(f"✅ Query executed: '{question}' on {len(document_ids)} document(s)")
             return results

@@ -101,7 +101,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Call logout endpoint to revoke refresh token
       await authApi.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      // Logout API call failed - proceeding with local cleanup
     } finally {
       // Clear tokens from localStorage
       localStorage.removeItem('access_token');
@@ -116,12 +116,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fetchUser: async () => {
     try {
       const user = await authApi.getCurrentUser();
-      console.log('Fetched user from /auth/me:', user);
       // Store user in localStorage for API access
       localStorage.setItem('user', JSON.stringify(user));
       set({ user });
     } catch (error) {
-      console.error('Failed to fetch user:', error);
+      // User fetch failed - clearing tokens
       // Clear tokens on failed user fetch
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
@@ -141,7 +140,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       try {
         await get().fetchUser();
       } catch (error) {
-        console.error('Auth initialization failed:', error);
+        // Auth initialization failed
       }
     }
 
