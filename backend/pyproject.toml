@@ -54,7 +54,6 @@ dependencies = [
     "chonkie==1.5.6",
     "agno>=2.0.11",
     "groq>=1.0.0",
-    "opencv-python>=4.13.0.90",
     "moviepy>=2.2.1",
     "scikit-image>=0.26.0",
     "numpy>=2.4.1",
@@ -78,5 +77,12 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "langchain-experimental>=0.4.1",
     "json-repair>=0.58.3",
+    # FalkorDB GraphRAG-SDK — native, lighter than Cognee
+    # Use only the [litellm] extra; LiteLLM routes OpenRouter via the
+    # ``openrouter/...`` model prefix (the [openrouter] extra pins an older
+    # `openai` SDK that conflicts with LiteLLM).
+    "graphrag-sdk[litellm,pdf]>=1.0.1",
+    "falkordb>=1.0.9",
+    "opencv-python-headless>=4.13.0.92",
 ]
 
