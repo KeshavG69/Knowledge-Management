@@ -4,6 +4,7 @@ Database operations for documents, podcasts, workflows, and TAK configuration
 Replaces MongoDB for non-agent collections
 """
 
+import asyncio
 import asyncpg
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -45,13 +46,39 @@ class PostgresClient:
         return doc
 
     async def get_pool(self) -> asyncpg.Pool:
-        """Get or create connection pool"""
+        """Get or create connection pool — loop-safe across Celery tasks.
+
+        Celery ``--pool=solo`` reuses one Python process across tasks. Each
+        task calls ``asyncio.run()`` which spins up a fresh event loop and
+        tears it down at the end. The asyncpg pool was bound to whichever
+        loop created it; on the *next* task the loop is dead and any pool
+        op throws ``RuntimeError: Event loop is closed`` /
+        ``InterfaceError: another operation is in progress``.
+
+        Fix: detect when the existing pool's loop differs from the current
+        one (or is closed) and rebuild the pool for the current loop.
+        """
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self.pool is not None and current_loop is not None:
+            pool_loop = getattr(self.pool, "_loop", None)
+            if pool_loop is None or pool_loop is not current_loop or pool_loop.is_closed():
+                logger.warning(
+                    "🔄 Postgres pool was bound to a different/closed event loop; "
+                    "rebuilding for current task"
+                )
+                # Don't await close() — the old loop is dead. Let GC handle it.
+                self.pool = None
+
         if self.pool is None:
             self.pool = await asyncpg.create_pool(
                 self.connection_string,
                 min_size=2,
                 max_size=10,
-                command_timeout=60
+                command_timeout=60,
             )
             logger.info("✅ PostgreSQL connection pool created")
         return self.pool

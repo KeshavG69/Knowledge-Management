@@ -2,11 +2,10 @@
 Document Ingestion Service
 Orchestrates the complete ingestion pipeline:
 1. Upload files to iDrive E2
-2. Extract raw content
-3. Store in PostgreSQL
-4. Chunk content
-5. Store chunks in pgvector
-6. Extract entities/relationships and store in Apache AGE graph
+2. Extract raw content (PDF / video / YouTube / etc.)
+3. Store raw content + app metadata in PostgreSQL (`documents` table)
+4. Hand the content to Cognee, which internally chunks, embeds to pgvector,
+   extracts entities/relationships, and writes the knowledge graph to FalkorDB
 """
 
 import io
@@ -16,13 +15,8 @@ from datetime import datetime
 from fastapi import UploadFile
 from clients.idrivee2_client import get_idrivee2_client
 from clients.postgres_client import get_postgres_client
-from clients.pgvector_client import get_pgvector_client
-from clients.age_graph_client import get_age_graph_client
-from clients.chunker_client import (
-    get_chunker_client,
-    prepare_content_for_vectorization,
-    validate_content_for_embeddings
-)
+from clients.graphrag_client import get_graphrag_client
+from clients.chunker_client import validate_content_for_embeddings
 from utils.file_utils import (
     extract_raw_data,
     validate_extracted_content,
@@ -39,22 +33,12 @@ class IngestionService:
     """Service for handling document ingestion pipeline"""
 
     def __init__(self):
-        """Initialize service with required clients. AGE graph is lazy-loaded to avoid slow cold start."""
+        """Initialize service with required clients."""
         from clients.unstructured_client import get_unstructured_client
         self.idrivee2_client = get_idrivee2_client()
         self.postgres_client = get_postgres_client()
-        self.pgvector_client = get_pgvector_client()
-        self._age_graph_client = None  # Lazy — takes 2+ min to init LLM connections
-        self.chunker_client = get_chunker_client()
+        self.graphrag_client = get_graphrag_client()
         self.unstructured_client = get_unstructured_client()
-
-    @property
-    def age_graph_client(self):
-        """Lazy-load AGE graph client on first use (avoids blocking startup)."""
-        if self._age_graph_client is None:
-            logger.info("🔗 Lazy-initializing AGE graph client...")
-            self._age_graph_client = get_age_graph_client()
-        return self._age_graph_client
 
     def cleanup(self):
         """Clean up all client resources and thread pools"""
@@ -174,136 +158,43 @@ class IngestionService:
                 }
             )
 
-            # Step 5: Chunking and Pinecone storage
+            # Step 5: Hand off to Cognee — it chunks, embeds (pgvector), and
+            # builds the knowledge graph (FalkorDB) in one call.
             total_chunks = 0
 
-            if is_video:
-                logger.info(f"📦 Storing video scene chunks in Pinecone: {filename}")
-
-                texts = []
-                metadatas = []
-                ids = []
-
-                for chunk in video_chunks:
-                    texts.append(chunk['blended_text'])
-
-                    metadata = {
-                        "document_id": document_id,
-                        "file_name": filename,
-                        "folder_name": folder_name,
-                        "file_key": file_key,
-                        "user_id": user_id,
-                        "video_id": chunk['video_id'],
-                        "video_name": chunk['video_name'],
-                        "clip_start": chunk['clip_start'],
-                        "clip_end": chunk['clip_end'],
-                        "duration": chunk['duration'],
-                        "key_frame_timestamp": chunk['key_frame_timestamp'],
-                        "scene_id": chunk.get('chunk_id'),
-                        **(additional_metadata or {})
-                    }
-
-                    if chunk.get('keyframe_file_key') is not None:
-                        metadata["keyframe_file_key"] = chunk['keyframe_file_key']
-
-                    metadatas.append(metadata)
-                    ids.append(f"{document_id}_{chunk['chunk_id']}")
-
-                self.pgvector_client.add_documents(
-                    texts=texts,
-                    metadatas=metadatas,
-                    ids=ids,
-                    namespace=organization_id
-                )
-
-                total_chunks = len(video_chunks)
-                logger.info(f"✅ Stored {total_chunks} video scene chunks in pgvector for: {filename}")
-
-            else:
-                logger.info(f"📦 Preparing content for vectorization: {filename}")
-                base_metadata = {
-                    "document_id": document_id,
-                    "file_name": filename,
-                    "folder_name": folder_name,
-                    "file_key": file_key,
-                    "user_id": user_id,
-                    **(additional_metadata or {})
+            await self.postgres_client.update_document(
+                organization_id=organization_id,
+                user_id=user_id,
+                document_id=document_id,
+                updates={
+                    "processing_stage": "cognifying",
+                    "processing_stage_description": "Building knowledge graph"
                 }
+            )
 
-                prepared_documents = prepare_content_for_vectorization(
-                    content=sanitized_content,  # Use sanitized content (no null bytes)
-                    metadata=base_metadata
-                )
-
-                logger.info(
-                    f"✂️ Semantic chunking and storing in pgvector: {filename} "
-                    f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
-                )
-
-                # Accumulate ALL chunks across pre-chunks for batched insert + graph
-                all_texts = []
-                all_metadatas = []
-                all_ids = []
-
-                for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
-                    pre_chunk_content = pre_chunk_doc["content"]
-                    pre_chunk_metadata = pre_chunk_doc["metadata"]
-
-                    logger.info(
-                        f"📝 Processing pre-chunk {idx}/{len(prepared_documents)} "
-                        f"for {filename}..."
-                    )
-
-                    chunks = self.chunker_client.chunk_with_metadata(
-                        text=pre_chunk_content,
-                        base_metadata=pre_chunk_metadata,
-                        chunker_type="default"
-                    )
-
-                    for i, chunk in enumerate(chunks):
-                        all_texts.append(chunk["text"])
-                        all_metadatas.append(chunk["metadata"])
-                        pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
-                        all_ids.append(f"{document_id}_pre{pre_chunk_index}_chunk{i}")
-
-                    total_chunks += len(chunks)
-                    logger.info(
-                        f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
-                        f"{len(chunks)} chunks created"
-                    )
-
-                # Batched insert: single call for ALL chunks
-                self.pgvector_client.add_documents(
-                    texts=all_texts,
-                    metadatas=all_metadatas,
-                    ids=all_ids,
-                    namespace=organization_id
-                )
-                logger.info(f"✅ Stored {total_chunks} chunks in pgvector (batched) for: {filename}")
-
-                # Use accumulated chunks for graph (not just the last pre-chunk)
-                texts = all_texts
-                metadatas = all_metadatas
-
-            # Step 6: Extract entities/relationships and store in Apache AGE graph
-            # Skip graph extraction for video/tabular files (noisy, low value)
-            is_tabular = filename.lower().endswith(('.xlsx', '.xls', '.csv', '.tsv'))
-            if is_video or is_tabular:
-                logger.info(f"⏭️ Skipping graph extraction for {'video' if is_video else 'tabular'} file: {filename}")
-            else:
-                logger.info(f"🔗 Extracting graph from {len(texts)} chunks: {filename}")
-                try:
-                    graph_stats = await self.age_graph_client.add_chunks_as_graph(
-                        document_id=document_id,
+            try:
+                if is_video:
+                    scene_texts = [c['blended_text'] for c in video_chunks if c.get('blended_text')]
+                    await self.graphrag_client.ingest_chunks(
+                        chunks=scene_texts,
                         organization_id=organization_id,
-                        user_id=user_id,
-                        filename=filename,
-                        chunks=texts,
-                        chunk_metadatas=metadatas
+                        document_id=document_id,
                     )
-                    logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
-                except Exception as graph_error:
-                    logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
+                    total_chunks = len(scene_texts)
+                else:
+                    await self.graphrag_client.ingest_text(
+                        text=sanitized_content,
+                        organization_id=organization_id,
+                        document_id=document_id,
+                        filename=filename,
+                    )
+                    # Cognee does internal chunking; approximate for status display
+                    total_chunks = max(1, len(sanitized_content) // 1000)
+
+                logger.info(f"✅ GraphRAG ingest complete for {filename}")
+            except Exception as graphrag_error:
+                logger.error(f"❌ GraphRAG ingest failed (document will be marked failed): {graphrag_error}")
+                raise
 
             # Mark as completed
             await self.postgres_client.update_document(
@@ -313,7 +204,7 @@ class IngestionService:
                 updates={
                     "status": "completed",
                     "processing_stage": "completed",
-                    "processing_stage_description": f"Successfully processed {total_chunks} chunks"
+                    "processing_stage_description": f"Successfully processed ~{total_chunks} chunks",
                 }
             )
             logger.info(f"✅ Document marked as completed: {document_id}")
@@ -582,160 +473,44 @@ class IngestionService:
             )
             logger.info(f"✅ MongoDB content updated. Document ID: {document_id}")
 
-            # Step 4 & 5: Chunking and Pinecone storage
+            # Step 4 & 5: Hand off to Cognee — chunks + embeds + builds graph
             total_chunks = 0
 
-            if is_video:
-                # For videos: use pre-made scene chunks directly (skip semantic chunking)
-                logger.info(f"📦 Storing video scene chunks in Pinecone: {file.filename}")
-
-                # Update status to embedding
-                await self._update_document_status(
+            await self._update_document_status(
                 document_id=document_id,
-                stage="embedding",
-                stage_description=f"Creating embeddings for {len(video_chunks)} video chunks",
-                progress_current=0,
-                progress_total=len(video_chunks)
-                )
+                stage="cognifying",
+                stage_description="Building semantic memory (chunks + graph)"
+            )
 
-                # Prepare metadata and texts for Pinecone
-                texts = []
-                metadatas = []
-                ids = []
-
-                for chunk in video_chunks:
-                    texts.append(chunk['blended_text'])
-
-                    # Build metadata, excluding keyframe_file_key if None (Pinecone rejects null values)
-                    metadata = {
-                        "document_id": document_id,
-                        "file_name": file.filename,
-                        "folder_name": folder_name,
-                        "file_key": file_key,
-                        "user_id": user_id,
-                        "video_id": chunk['video_id'],
-                        "video_name": chunk['video_name'],
-                        "clip_start": chunk['clip_start'],
-                        "clip_end": chunk['clip_end'],
-                        "duration": chunk['duration'],
-                        "key_frame_timestamp": chunk['key_frame_timestamp'],
-                        "scene_id": chunk.get('chunk_id'),
-                        **(additional_metadata or {})
-                    }
-
-                    # Only include keyframe_file_key if it's not None
-                    if chunk.get('keyframe_file_key') is not None:
-                        metadata["keyframe_file_key"] = chunk['keyframe_file_key']
-
-                    metadatas.append(metadata)
-                    ids.append(f"{document_id}_{chunk['chunk_id']}")
-
-                # Add to pgvector (blocking call, no threading)
-                logger.info(f"🔄 Starting pgvector storage for {len(texts)} video chunks...")
-                logger.info(f"   - Namespace: {organization_id}")
-                logger.info(f"   - First text preview: {texts[0][:100]}..." if texts else "   - No texts")
-
-                self.pgvector_client.add_documents(
-                    texts=texts,
-                    metadatas=metadatas,
-                    ids=ids,
-                    namespace=organization_id
-                )
-
-                total_chunks = len(video_chunks)
-                logger.info(f"✅ Stored {total_chunks} video scene chunks in pgvector for: {file.filename}")
-
-            else:
-                # Normal files: do semantic chunking
-                logger.info(f"📦 Preparing content for vectorization: {file.filename}")
-                base_metadata = {
-                    "document_id": document_id,
-                    "file_name": file.filename,
-                    "folder_name": folder_name,
-                    "file_key": file_key,
-                    "user_id": user_id,
-                    **(additional_metadata or {})
-                }
-
-                prepared_documents = prepare_content_for_vectorization(
-                    content=raw_content,
-                    metadata=base_metadata
-                )
-
-                logger.info(
-                    f"✂️ Semantic chunking and storing in pgvector: {file.filename} "
-                    f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
-                )
-
-                # Accumulate ALL chunks across pre-chunks for batched insert + graph
-                all_texts = []
-                all_metadatas = []
-                all_ids = []
-
-                for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
-                    pre_chunk_content = pre_chunk_doc["content"]
-                    pre_chunk_metadata = pre_chunk_doc["metadata"]
-
-                    logger.info(
-                        f"📝 Processing pre-chunk {idx}/{len(prepared_documents)} "
-                        f"for {file.filename}..."
-                    )
-
-                    chunks = self.chunker_client.chunk_with_metadata(
-                        text=pre_chunk_content,
-                        base_metadata=pre_chunk_metadata,
-                        chunker_type="default"
-                    )
-
-                    for i, chunk in enumerate(chunks):
-                        all_texts.append(chunk["text"])
-                        all_metadatas.append(chunk["metadata"])
-                        pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
-                        all_ids.append(f"{document_id}_pre{pre_chunk_index}_chunk{i}")
-
-                    total_chunks += len(chunks)
-                    logger.info(
-                        f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
-                        f"{len(chunks)} chunks created"
-                    )
-
-                # Batched insert: single call for ALL chunks
-                self.pgvector_client.add_documents(
-                    texts=all_texts,
-                    metadatas=all_metadatas,
-                    ids=all_ids,
-                    namespace=organization_id
-                )
-                logger.info(f"✅ Stored {total_chunks} chunks in pgvector (batched) for: {file.filename}")
-
-                texts = all_texts
-                metadatas = all_metadatas
-
-            # Step 6: Extract entities/relationships — skip for video/tabular
-            is_tabular = file.filename.lower().endswith(('.xlsx', '.xls', '.csv', '.tsv'))
-            if is_video or is_tabular:
-                logger.info(f"⏭️ Skipping graph extraction for {'video' if is_video else 'tabular'} file: {file.filename}")
-            else:
-                logger.info(f"🔗 Extracting graph from {len(texts)} chunks: {file.filename}")
-                try:
-                    graph_stats = await self.age_graph_client.add_chunks_as_graph(
-                        document_id=document_id,
+            try:
+                if is_video:
+                    scene_texts = [c['blended_text'] for c in video_chunks if c.get('blended_text')]
+                    await self.graphrag_client.ingest_chunks(
+                        chunks=scene_texts,
                         organization_id=organization_id,
-                        user_id=user_id,
-                        filename=file.filename,
-                        chunks=texts,
-                        chunk_metadatas=metadatas
+                        document_id=document_id,
                     )
-                    logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
-                except Exception as graph_error:
-                    logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
+                    total_chunks = len(scene_texts)
+                else:
+                    await self.graphrag_client.ingest_text(
+                        text=raw_content,
+                        organization_id=organization_id,
+                        document_id=document_id,
+                        filename=file.filename,
+                    )
+                    total_chunks = max(1, len(raw_content) // 1000)
+
+                logger.info(f"✅ GraphRAG ingest complete for {file.filename}")
+            except Exception as graphrag_error:
+                logger.error(f"❌ GraphRAG ingest failed: {graphrag_error}")
+                raise
 
             # Mark as completed
             await self._update_document_status(
                 document_id=document_id,
                 status="completed",
                 stage="completed",
-                stage_description=f"Successfully processed {total_chunks} chunks",
+                stage_description=f"Successfully processed ~{total_chunks} chunks",
                 completed_at=datetime.utcnow()
             )
             logger.info(f"✅ Document marked as completed: {document_id}")
@@ -869,159 +644,44 @@ class IngestionService:
             )
             logger.info(f"✅ MongoDB content updated. Document ID: {document_id}")
 
-            # Step 4 & 5: Chunking and Pinecone storage
+            # Step 4 & 5: Hand off to Cognee — chunks + embeds + builds graph
             total_chunks = 0
 
-            if is_video:
-                # For videos: use pre-made scene chunks directly (skip semantic chunking)
-                logger.info(f"📦 Storing video scene chunks in Pinecone: {file.filename}")
+            await self._update_document_status(
+                document_id=document_id,
+                stage="cognifying",
+                stage_description="Building semantic memory (chunks + graph)"
+            )
 
-                # Update status to embedding
-                await self._update_document_status(
-                    document_id=document_id,
-                    stage="embedding",
-                    stage_description=f"Creating embeddings for {len(video_chunks)} video chunks",
-                    progress_current=0,
-                    progress_total=len(video_chunks)
-                )
-
-                # Prepare metadata and texts for Pinecone
-                texts = []
-                metadatas = []
-                ids = []
-
-                for chunk in video_chunks:
-                    texts.append(chunk['blended_text'])
-
-                    # Build metadata, excluding keyframe_file_key if None (Pinecone rejects null values)
-                    metadata = {
-                        "document_id": document_id,
-                        "file_name": file.filename,
-                        "folder_name": folder_name,
-                        "file_key": file_key,
-                        "user_id": user_id,
-                        "video_id": chunk['video_id'],
-                        "video_name": chunk['video_name'],
-                        "clip_start": chunk['clip_start'],
-                        "clip_end": chunk['clip_end'],
-                        "duration": chunk['duration'],
-                        "key_frame_timestamp": chunk['key_frame_timestamp'],
-                        "scene_id": chunk.get('chunk_id'),
-                        **(additional_metadata or {})
-                    }
-
-                    # Only include keyframe_file_key if it's not None
-                    if chunk.get('keyframe_file_key') is not None:
-                        metadata["keyframe_file_key"] = chunk['keyframe_file_key']
-
-                    metadatas.append(metadata)
-                    ids.append(f"{document_id}_{chunk['chunk_id']}")
-
-                # Add to pgvector (blocking call, no threading)
-                logger.info(f"🔄 Starting pgvector storage for {len(texts)} video chunks...")
-                logger.info(f"   - Namespace: {organization_id}")
-
-                self.pgvector_client.add_documents(
-                    texts=texts,
-                    metadatas=metadatas,
-                    ids=ids,
-                    namespace=organization_id
-                )
-
-                total_chunks = len(video_chunks)
-                logger.info(f"✅ Stored {total_chunks} video scene chunks in pgvector for: {file.filename}")
-
-            else:
-                # Normal files: do semantic chunking
-                logger.info(f"📦 Preparing content for vectorization: {file.filename}")
-                base_metadata = {
-                    "document_id": document_id,
-                    "file_name": file.filename,
-                    "folder_name": folder_name,
-                    "file_key": file_key,
-                    "user_id": user_id,
-                    **(additional_metadata or {})
-                }
-
-                prepared_documents = prepare_content_for_vectorization(
-                    content=raw_content,
-                    metadata=base_metadata
-                )
-
-                logger.info(
-                    f"✂️ Semantic chunking and storing in pgvector: {file.filename} "
-                    f"({len(prepared_documents)} pre-chunk{'s' if len(prepared_documents) > 1 else ''})"
-                )
-
-                # Accumulate ALL chunks across pre-chunks for batched insert + graph
-                all_texts = []
-                all_metadatas = []
-                all_ids = []
-
-                for idx, pre_chunk_doc in enumerate(prepared_documents, 1):
-                    pre_chunk_content = pre_chunk_doc["content"]
-                    pre_chunk_metadata = pre_chunk_doc["metadata"]
-
-                    logger.info(
-                        f"📝 Processing pre-chunk {idx}/{len(prepared_documents)} "
-                        f"for {file.filename}..."
-                    )
-
-                    chunks = self.chunker_client.chunk_with_metadata(
-                        text=pre_chunk_content,
-                        base_metadata=pre_chunk_metadata,
-                        chunker_type="default"
-                    )
-
-                    for i, chunk in enumerate(chunks):
-                        all_texts.append(chunk["text"])
-                        all_metadatas.append(chunk["metadata"])
-                        pre_chunk_index = pre_chunk_metadata.get("pre_chunk_index", 0)
-                        all_ids.append(f"{document_id}_pre{pre_chunk_index}_chunk{i}")
-
-                    total_chunks += len(chunks)
-                    logger.info(
-                        f"✅ Completed pre-chunk {idx}/{len(prepared_documents)}: "
-                        f"{len(chunks)} chunks created"
-                    )
-
-                # Batched insert: single call for ALL chunks
-                self.pgvector_client.add_documents(
-                    texts=all_texts,
-                    metadatas=all_metadatas,
-                    ids=all_ids,
-                    namespace=organization_id
-                )
-                logger.info(f"✅ Stored {total_chunks} chunks in pgvector (batched) for: {file.filename}")
-
-                texts = all_texts
-                metadatas = all_metadatas
-
-            # Step 6: Extract entities/relationships — skip for video/tabular
-            is_tabular = file.filename.lower().endswith(('.xlsx', '.xls', '.csv', '.tsv'))
-            if is_video or is_tabular:
-                logger.info(f"⏭️ Skipping graph extraction for {'video' if is_video else 'tabular'} file: {file.filename}")
-            else:
-                logger.info(f"🔗 Extracting graph from {len(texts)} chunks: {file.filename}")
-                try:
-                    graph_stats = await self.age_graph_client.add_chunks_as_graph(
-                        document_id=document_id,
+            try:
+                if is_video:
+                    scene_texts = [c['blended_text'] for c in video_chunks if c.get('blended_text')]
+                    await self.graphrag_client.ingest_chunks(
+                        chunks=scene_texts,
                         organization_id=organization_id,
-                        user_id=user_id,
-                        filename=file.filename,
-                        chunks=texts,
-                        chunk_metadatas=metadatas
+                        document_id=document_id,
                     )
-                    logger.info(f"✅ Graph extraction: {graph_stats['total_nodes']} nodes, {graph_stats['total_relationships']} relationships")
-                except Exception as graph_error:
-                    logger.warning(f"⚠️ Graph extraction failed (continuing): {str(graph_error)}")
+                    total_chunks = len(scene_texts)
+                else:
+                    await self.graphrag_client.ingest_text(
+                        text=raw_content,
+                        organization_id=organization_id,
+                        document_id=document_id,
+                        filename=file.filename,
+                    )
+                    total_chunks = max(1, len(raw_content) // 1000)
+
+                logger.info(f"✅ GraphRAG ingest complete for {file.filename}")
+            except Exception as graphrag_error:
+                logger.error(f"❌ GraphRAG ingest failed: {graphrag_error}")
+                raise
 
             # Mark as completed
             await self._update_document_status(
                 document_id=document_id,
                 status="completed",
                 stage="completed",
-                stage_description=f"Successfully processed {total_chunks} chunks",
+                stage_description=f"Successfully processed ~{total_chunks} chunks",
                 completed_at=datetime.utcnow()
             )
             logger.info(f"✅ Document marked as completed: {document_id}")
@@ -1307,25 +967,15 @@ class IngestionService:
             except Exception as e:
                 logger.warning(f"Failed to delete from iDrive E2: {str(e)}")
 
-        # Delete chunks from pgvector (use organization_id for filtering)
+        # Delete from GraphRAG (removes graph nodes tagged with this doc)
         try:
-            self.pgvector_client.delete_by_document_id(
+            await self.graphrag_client.delete_document(
                 document_id=document_id,
-                organization_id=doc_org_id
+                organization_id=doc_org_id,
             )
-            logger.info(f"✅ Deleted chunks from pgvector for document: {document_id}")
+            logger.info(f"✅ Deleted GraphRAG data for document: {document_id}")
         except Exception as e:
-            logger.warning(f"Failed to delete from pgvector: {str(e)}")
-
-        # Delete from Apache AGE graph
-        try:
-            self.age_graph_client.delete_document(
-                document_id=document_id,
-                organization_id=doc_org_id
-            )
-            logger.info(f"✅ Deleted graph data for document: {document_id}")
-        except Exception as e:
-            logger.warning(f"Failed to delete from Apache AGE graph: {str(e)}")
+            logger.warning(f"Failed to delete from GraphRAG: {str(e)}")
 
         # Delete from PostgreSQL
         await self.postgres_client.delete_document(
@@ -1499,7 +1149,7 @@ class IngestionService:
         Returns:
             Dict with deletion results
         """
-        logger.info(f"🗑️ Deleting folder '{folder_name}' from ALL systems (PostgreSQL + pgvector + AGE + iDrive E2)")
+        logger.info(f"🗑️ Deleting folder '{folder_name}' from ALL systems (PostgreSQL + Cognee + iDrive E2)")
 
         # Build filter query
         filters = {"folder_name": folder_name}
@@ -1523,7 +1173,7 @@ class IngestionService:
         deleted_docs = []
         errors = []
 
-        # Delete each document (this handles PostgreSQL, pgvector, Apache AGE, and iDrive E2)
+        # Delete each document (this handles PostgreSQL, Cognee, and iDrive E2)
         for doc in documents:
             try:
                 # Convert UUID object to string if needed
@@ -1561,10 +1211,9 @@ class IngestionService:
     ) -> Dict[str, Any]:
         """
         Rename a folder across systems:
-        - PostgreSQL (document metadata)
-        - pgvector (chunk metadata - folder_name field)
-        - Apache AGE (no change needed - folder_name not stored in graph)
-        - iDrive E2 (no change needed - uses file_key, not folder_name)
+        - PostgreSQL (document metadata) — authoritative folder_name
+        - Cognee (no change needed — folder_name is not indexed inside Cognee)
+        - iDrive E2 (no change needed — uses file_key, not folder_name)
 
         Args:
             old_folder_name: Current folder name
@@ -1595,33 +1244,17 @@ class IngestionService:
                 "updated_count": 0
             }
 
-        # 1. Update PostgreSQL documents
+        # 1. Update PostgreSQL documents (authoritative folder_name)
         postgres_updated = await self.postgres_client.update_documents_bulk(
             filters=filters,
             updates={"folder_name": new_folder_name}
         )
         logger.info(f"  ✅ PostgreSQL: Updated {postgres_updated} documents")
 
-        # 2. Update pgvector chunks metadata
-        # Note: pgvector update requires iterating through documents and updating by document_id
-        # This is a limitation of the current pgvector implementation
-        pgvector_updated = 0
-        for doc in documents:
-            try:
-                # Delete old chunks and re-add with new folder_name would be inefficient
-                # Instead, we rely on the fact that pgvector stores document_id
-                # The folder_name in metadata is for filtering only
-                # We can update metadata if needed, but it's not critical
-                pgvector_updated += 1
-            except Exception as e:
-                logger.warning(f"  ⚠️ pgvector update skipped for document {doc.get('id')}: {str(e)}")
+        # 2. Cognee - No action needed (folder_name is not indexed inside Cognee)
+        logger.info(f"  ✅ Cognee: No action needed (folder_name not in semantic memory)")
 
-        logger.info(f"  ℹ️ pgvector: Folder name in vector metadata not updated (relies on document_id)")
-
-        # 3. Apache AGE - No action needed (folder_name not stored in graph)
-        logger.info(f"  ✅ Apache AGE: No action needed (folder_name not in graph)")
-
-        # 4. iDrive E2 - No action needed (uses file_key, not folder_name)
+        # 3. iDrive E2 - No action needed (uses file_key, not folder_name)
         logger.info(f"  ✅ iDrive E2: No action needed (uses file_key)")
 
         logger.info(f"✅ Folder renamed successfully in PostgreSQL")
@@ -1630,8 +1263,7 @@ class IngestionService:
             "old_folder_name": old_folder_name,
             "new_folder_name": new_folder_name,
             "postgres_updated": postgres_updated,
-            "pgvector_note": "Folder name not critical in vector metadata",
-            "age_updated": "N/A (folder_name not in graph)",
+            "graphrag_updated": "N/A (folder_name not in GraphRAG)",
             "idrive_updated": "N/A (uses file_key)"
         }
 
