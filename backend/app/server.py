@@ -16,19 +16,14 @@ def _prewarm_clients():
     def _warm():
         try:
             from services.ingestion_service import get_ingestion_service
-            logger.info("🔥 Pre-warming IngestionService (pgvector, chunker, unstructured)...")
-            svc = get_ingestion_service()
+            logger.info("🔥 Pre-warming IngestionService (GraphRAG, unstructured)...")
+            _ = get_ingestion_service()
             logger.info("✅ IngestionService pre-warmed")
 
-            logger.info("🔥 Pre-warming AGE graph client (LLM connections)...")
-            _ = svc.age_graph_client  # Triggers lazy init
-            logger.info("✅ AGE graph client pre-warmed")
-
-            logger.info("🔥 Pre-warming GraphCypherQAChain (schema refresh + query LLM)...")
-            from clients.age_graph_client import get_age_graph_client
-            client = get_age_graph_client()
-            _ = client.query_chain  # Triggers schema refresh + chain init
-            logger.info("✅ Query chain pre-warmed — first chat query will be fast")
+            from clients.graphrag_client import get_graphrag_client
+            logger.info("🔥 Pre-warming GraphRAG client...")
+            _ = get_graphrag_client()
+            logger.info("✅ GraphRAG client pre-warmed — first chat query will be fast")
         except Exception as e:
             logger.warning(f"⚠️ Pre-warm failed (non-fatal): {e}")
 

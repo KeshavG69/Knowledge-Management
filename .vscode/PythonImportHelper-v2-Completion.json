@@ -49,6 +49,14 @@
         "documentation": {}
     },
     {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
         "label": "os",
         "kind": 6,
         "isExtraImport": true,
@@ -240,38 +248,6 @@
         "documentation": {}
     },
     {
-        "label": "Dict",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "Any",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "Optional",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "List",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
         "label": "Literal",
         "importPath": "typing",
         "description": "typing",
@@ -297,6 +273,38 @@
     },
     {
         "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -1105,14 +1113,6 @@
     },
     {
         "label": "Optional",
-        "importPath": "typing",
-        "description": "typing",
-        "isExtraImport": true,
-        "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "Tuple",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -2469,14 +2469,6 @@
         "documentation": {}
     },
     {
-        "label": "settings",
-        "importPath": "app.settings",
-        "description": "app.settings",
-        "isExtraImport": true,
-        "detail": "app.settings",
-        "documentation": {}
-    },
-    {
         "label": "Settings",
         "importPath": "app.settings",
         "description": "app.settings",
@@ -3103,6 +3095,14 @@
         "documentation": {}
     },
     {
+        "label": "lru_cache",
+        "importPath": "functools",
+        "description": "functools",
+        "isExtraImport": true,
+        "detail": "functools",
+        "documentation": {}
+    },
+    {
         "label": "BaseModel",
         "importPath": "pydantic",
         "description": "pydantic",
@@ -3288,166 +3288,6 @@
         "documentation": {}
     },
     {
-        "label": "AGEGraph",
-        "importPath": "langchain_community.graphs.age_graph",
-        "description": "langchain_community.graphs.age_graph",
-        "isExtraImport": true,
-        "detail": "langchain_community.graphs.age_graph",
-        "documentation": {}
-    },
-    {
-        "label": "LLMGraphTransformer",
-        "importPath": "langchain_experimental.graph_transformers",
-        "description": "langchain_experimental.graph_transformers",
-        "isExtraImport": true,
-        "detail": "langchain_experimental.graph_transformers",
-        "documentation": {}
-    },
-    {
-        "label": "GraphCypherQAChain",
-        "importPath": "langchain_community.chains.graph_qa.cypher",
-        "description": "langchain_community.chains.graph_qa.cypher",
-        "isExtraImport": true,
-        "detail": "langchain_community.chains.graph_qa.cypher",
-        "documentation": {}
-    },
-    {
-        "label": "Document",
-        "importPath": "langchain_core.documents",
-        "description": "langchain_core.documents",
-        "isExtraImport": true,
-        "detail": "langchain_core.documents",
-        "documentation": {}
-    },
-    {
-        "label": "Document",
-        "importPath": "langchain_core.documents",
-        "description": "langchain_core.documents",
-        "isExtraImport": true,
-        "detail": "langchain_core.documents",
-        "documentation": {}
-    },
-    {
-        "label": "Document",
-        "importPath": "langchain_core.documents",
-        "description": "langchain_core.documents",
-        "isExtraImport": true,
-        "detail": "langchain_core.documents",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm_agno",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm_agno",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
-        "label": "get_llm_agno",
-        "importPath": "clients.ultimate_llm",
-        "description": "clients.ultimate_llm",
-        "isExtraImport": true,
-        "detail": "clients.ultimate_llm",
-        "documentation": {}
-    },
-    {
         "label": "MongoDb",
         "importPath": "agno.db.mongo",
         "description": "agno.db.mongo",
@@ -3502,6 +3342,103 @@
         "importPath": "tiktoken",
         "description": "tiktoken",
         "detail": "tiktoken",
+        "documentation": {}
+    },
+    {
+        "label": "asyncio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "asyncio",
+        "description": "asyncio",
+        "detail": "asyncio",
+        "documentation": {}
+    },
+    {
+        "label": "ConnectionConfig",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "Embedder",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "EntityType",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "FalkorDBConnection",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "GraphRAG",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "GraphSchema",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "LiteLLM",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "LiteLLMEmbedder",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "LLMInterface",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "RelationType",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
+        "documentation": {}
+    },
+    {
+        "label": "SemanticResolution",
+        "importPath": "graphrag_sdk",
+        "description": "graphrag_sdk",
+        "isExtraImport": true,
+        "detail": "graphrag_sdk",
         "documentation": {}
     },
     {
@@ -3677,6 +3614,110 @@
         "documentation": {}
     },
     {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm_agno",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm_agno",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
+        "label": "get_llm_agno",
+        "importPath": "clients.ultimate_llm",
+        "description": "clients.ultimate_llm",
+        "isExtraImport": true,
+        "detail": "clients.ultimate_llm",
+        "documentation": {}
+    },
+    {
         "label": "MarkItDown",
         "importPath": "markitdown",
         "description": "markitdown",
@@ -3774,6 +3815,22 @@
         "documentation": {}
     },
     {
+        "label": "Document",
+        "importPath": "langchain_core.documents",
+        "description": "langchain_core.documents",
+        "isExtraImport": true,
+        "detail": "langchain_core.documents",
+        "documentation": {}
+    },
+    {
+        "label": "Document",
+        "importPath": "langchain_core.documents",
+        "description": "langchain_core.documents",
+        "isExtraImport": true,
+        "detail": "langchain_core.documents",
+        "documentation": {}
+    },
+    {
         "label": "uuid",
         "kind": 6,
         "isExtraImport": true,
@@ -3813,15 +3870,6 @@
         "importPath": "asyncpg",
         "description": "asyncpg",
         "detail": "asyncpg",
-        "documentation": {}
-    },
-    {
-        "label": "asyncio",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "asyncio",
-        "description": "asyncio",
-        "detail": "asyncio",
         "documentation": {}
     },
     {
@@ -4672,51 +4720,19 @@
         "documentation": {}
     },
     {
-        "label": "get_pgvector_client",
-        "importPath": "clients.pgvector_client",
-        "description": "clients.pgvector_client",
+        "label": "get_graphrag_client",
+        "importPath": "clients.graphrag_client",
+        "description": "clients.graphrag_client",
         "isExtraImport": true,
-        "detail": "clients.pgvector_client",
+        "detail": "clients.graphrag_client",
         "documentation": {}
     },
     {
-        "label": "get_pgvector_client",
-        "importPath": "clients.pgvector_client",
-        "description": "clients.pgvector_client",
+        "label": "get_graphrag_client",
+        "importPath": "clients.graphrag_client",
+        "description": "clients.graphrag_client",
         "isExtraImport": true,
-        "detail": "clients.pgvector_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_age_graph_client",
-        "importPath": "clients.age_graph_client",
-        "description": "clients.age_graph_client",
-        "isExtraImport": true,
-        "detail": "clients.age_graph_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_age_graph_client",
-        "importPath": "clients.age_graph_client",
-        "description": "clients.age_graph_client",
-        "isExtraImport": true,
-        "detail": "clients.age_graph_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_chunker_client",
-        "importPath": "clients.chunker_client",
-        "description": "clients.chunker_client",
-        "isExtraImport": true,
-        "detail": "clients.chunker_client",
-        "documentation": {}
-    },
-    {
-        "label": "prepare_content_for_vectorization",
-        "importPath": "clients.chunker_client",
-        "description": "clients.chunker_client",
-        "isExtraImport": true,
-        "detail": "clients.chunker_client",
+        "detail": "clients.graphrag_client",
         "documentation": {}
     },
     {
@@ -4758,23 +4774,6 @@
         "description": "app.worker",
         "isExtraImport": true,
         "detail": "app.worker",
-        "documentation": {}
-    },
-    {
-        "label": "collections",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "collections",
-        "description": "collections",
-        "detail": "collections",
-        "documentation": {}
-    },
-    {
-        "label": "defaultdict",
-        "importPath": "collections",
-        "description": "collections",
-        "isExtraImport": true,
-        "detail": "collections",
         "documentation": {}
     },
     {
@@ -4879,6 +4878,15 @@
         "description": "fontTools.misc.timeTools",
         "isExtraImport": true,
         "detail": "fontTools.misc.timeTools",
+        "documentation": {}
+    },
+    {
+        "label": "collections",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "collections",
+        "description": "collections",
+        "detail": "collections",
         "documentation": {}
     },
     {
@@ -5662,33 +5670,6 @@
         "documentation": {}
     },
     {
-        "label": "LazySchemaAGEGraph",
-        "kind": 6,
-        "importPath": "backend.clients.age_graph_client",
-        "description": "backend.clients.age_graph_client",
-        "peekOfCode": "class LazySchemaAGEGraph(AGEGraph):\n    \"\"\"AGEGraph subclass that skips schema refresh at init time.\n    Schema is refreshed lazily on first query or explicit refresh_schema() call.\n    This saves 4+ remote DB round trips (~2 min on Railway) at startup.\"\"\"\n    def __init__(self, graph_name: str, conf: Dict[str, Any], create: bool = True) -> None:\n        import psycopg2\n        self.graph_name = graph_name\n        self.connection = psycopg2.connect(**conf)\n        with self._get_cursor() as curs:\n            graph_id_query = \"SELECT graphid FROM ag_catalog.ag_graph WHERE name = '{}'\".format(graph_name)",
-        "detail": "backend.clients.age_graph_client",
-        "documentation": {}
-    },
-    {
-        "label": "AGEGraphClient",
-        "kind": 6,
-        "importPath": "backend.clients.age_graph_client",
-        "description": "backend.clients.age_graph_client",
-        "peekOfCode": "class AGEGraphClient:\n    \"\"\"Client for Apache AGE graph operations using LangChain\"\"\"\n    def __init__(self):\n        \"\"\"Initialize Apache AGE graph client with LangChain\"\"\"\n        self.connection_string = settings.POSTGRES_GRAPH_URL\n        if not self.connection_string:\n            raise ValueError(\"POSTGRES_GRAPH_URL not configured\")\n        # Parse connection URL for AGEGraph parameters\n        # Format: postgresql://user:password@host:port/database\n        parts = self.connection_string.replace(\"postgresql://\", \"\").split(\"@\")",
-        "detail": "backend.clients.age_graph_client",
-        "documentation": {}
-    },
-    {
-        "label": "get_age_graph_client",
-        "kind": 2,
-        "importPath": "backend.clients.age_graph_client",
-        "description": "backend.clients.age_graph_client",
-        "peekOfCode": "def get_age_graph_client() -> AGEGraphClient:\n    \"\"\"\n    Get or create AGEGraphClient singleton instance\n    Returns:\n        AGEGraphClient: Singleton client instance\n    \"\"\"\n    global _age_graph_client\n    if _age_graph_client is None:\n        _age_graph_client = AGEGraphClient()\n    return _age_graph_client",
-        "detail": "backend.clients.age_graph_client",
-        "documentation": {}
-    },
-    {
         "label": "LimitedMemoryManager",
         "kind": 6,
         "importPath": "backend.clients.agent_memory",
@@ -5965,6 +5946,33 @@
         "description": "backend.clients.cot_builder",
         "peekOfCode": "class CoTBuilder:\n    \"\"\"Build CoT XML messages for TAK server\"\"\"\n    @staticmethod\n    def build_marker(\n        lat: float,\n        lon: float,\n        callsign: str,\n        message: Optional[str] = None,\n        uid: Optional[str] = None,\n        stale_minutes: int = 60",
         "detail": "backend.clients.cot_builder",
+        "documentation": {}
+    },
+    {
+        "label": "GraphRAGClient",
+        "kind": 6,
+        "importPath": "backend.clients.graphrag_client",
+        "description": "backend.clients.graphrag_client",
+        "peekOfCode": "class GraphRAGClient:\n    \"\"\"Thin wrapper around the FalkorDB GraphRAG-SDK.\n    Shares one ``FalkorDBConnection`` (and therefore one connection pool)\n    per organization graph. Auto-detects an ontology per organization on\n    first ingest and caches it for the lifetime of the process.\n    \"\"\"\n    def __init__(self) -> None:\n        self._host = os.getenv(\"GRAPH_DATABASE_URL\", \"localhost\")\n        self._port = _env_int(\"GRAPH_DATABASE_PORT\", 6379)\n        self._username = os.getenv(\"GRAPH_DATABASE_USERNAME\") or None",
+        "detail": "backend.clients.graphrag_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_graphrag_client",
+        "kind": 2,
+        "importPath": "backend.clients.graphrag_client",
+        "description": "backend.clients.graphrag_client",
+        "peekOfCode": "def get_graphrag_client() -> GraphRAGClient:\n    global _graphrag_client\n    if _graphrag_client is None:\n        _graphrag_client = GraphRAGClient()\n    return _graphrag_client",
+        "detail": "backend.clients.graphrag_client",
+        "documentation": {}
+    },
+    {
+        "label": "_ONTOLOGY_DETECT_PROMPT",
+        "kind": 5,
+        "importPath": "backend.clients.graphrag_client",
+        "description": "backend.clients.graphrag_client",
+        "peekOfCode": "_ONTOLOGY_DETECT_PROMPT = \"\"\"\\\nYou are designing a knowledge-graph ontology for a corpus.\nRead the SAMPLE TEXT below and propose a compact, faithful ontology that\ncaptures the *kinds of things* and *kinds of relationships* present in\nthis domain. Aim for breadth, not exhaustiveness — 8 to 14 entity types\nand 8 to 16 relationship types is the sweet spot. Prefer specific labels\nover generic ones (e.g. ``MoneyAmount`` over ``Number``,\n``LaborPosition`` over ``JobTitle``, ``Rate`` over ``Percentage``).\nStrict rules:\n- Entity labels: PascalCase, singular, no spaces.",
+        "detail": "backend.clients.graphrag_client",
         "documentation": {}
     },
     {
@@ -6953,7 +6961,7 @@
         "kind": 6,
         "importPath": "backend.services.ingestion_service",
         "description": "backend.services.ingestion_service",
-        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with required clients. AGE graph is lazy-loaded to avoid slow cold start.\"\"\"\n        from clients.unstructured_client import get_unstructured_client\n        self.idrivee2_client = get_idrivee2_client()\n        self.postgres_client = get_postgres_client()\n        self.pgvector_client = get_pgvector_client()\n        self._age_graph_client = None  # Lazy — takes 2+ min to init LLM connections\n        self.chunker_client = get_chunker_client()",
+        "peekOfCode": "class IngestionService:\n    \"\"\"Service for handling document ingestion pipeline\"\"\"\n    def __init__(self):\n        \"\"\"Initialize service with required clients.\"\"\"\n        from clients.unstructured_client import get_unstructured_client\n        self.idrivee2_client = get_idrivee2_client()\n        self.postgres_client = get_postgres_client()\n        self.graphrag_client = get_graphrag_client()\n        self.unstructured_client = get_unstructured_client()\n    def cleanup(self):",
         "detail": "backend.services.ingestion_service",
         "documentation": {}
     },
@@ -7084,20 +7092,11 @@
         "documentation": {}
     },
     {
-        "label": "reciprocal_rank_fusion",
-        "kind": 2,
-        "importPath": "backend.utils.agno_tools",
-        "description": "backend.utils.agno_tools",
-        "peekOfCode": "def reciprocal_rank_fusion(\n    rankings: List[List[Tuple[str, Dict[str, Any]]]],\n    k: int = 60\n) -> List[Tuple[str, float, Dict[str, Any]]]:\n    \"\"\"\n    Combine multiple ranked lists using Reciprocal Rank Fusion (RRF)\n    RRF Score = sum(1 / (k + rank)) for each ranking where item appears\n    Args:\n        rankings: List of ranked lists, where each list contains (id, metadata) tuples\n        k: Constant for RRF calculation (default: 60)",
-        "detail": "backend.utils.agno_tools",
-        "documentation": {}
-    },
-    {
         "label": "create_knowledge_retriever",
         "kind": 2,
         "importPath": "backend.utils.agno_tools",
         "description": "backend.utils.agno_tools",
-        "peekOfCode": "def create_knowledge_retriever(\n    organization_id: Optional[str] = None,\n    user_id: Optional[str] = None,\n    document_ids: Optional[list[str]] = None,\n    num_documents: int = 10\n) :\n    \"\"\"\n    Create a knowledge retriever tool for searching the knowledge base\n    Args:\n        organization_id: Optional organization ID for namespace filtering",
+        "peekOfCode": "def create_knowledge_retriever(\n    organization_id: Optional[str] = None,\n    user_id: Optional[str] = None,\n    document_ids: Optional[list[str]] = None,\n    num_documents: int = 10,\n):\n    \"\"\"\n    Create a knowledge retriever tool for the Agno agent.\n    Returns a callable that performs hybrid retrieval (vector + graph) via\n    Cognee over the organization's dataset. Optional document_ids filter",
         "detail": "backend.utils.agno_tools",
         "documentation": {}
     },
