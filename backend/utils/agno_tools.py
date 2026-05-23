@@ -1,27 +1,39 @@
 """
-Agno Tools for Knowledge Management
-Single GraphRAG-backed retriever — FalkorDB GraphRAG-SDK blends vector
-and graph search internally. The Agno agent synthesizes the final answer.
-"""
+Agno tool factory — document-scoped retriever for the per-org FalkorDB graph.
 
-from typing import List, Dict, Any, Optional
+Pattern: factory captures org_id + document_ids at creation time and returns
+a closure whose only LLM-visible argument is `query`. The agent cannot change
+which documents are searched.
+
+Returns a structured payload (chunks / anchors / triples) — not markdown blobs.
+"""
+from __future__ import annotations
+
+from typing import Any, List, Optional
+
 from agno.agent import Agent
-from clients.graphrag_client import get_graphrag_client
+
 from app.logger import logger
+from clients.graphrag_client import get_graphrag_client
 
 
 def create_knowledge_retriever(
     organization_id: Optional[str] = None,
-    user_id: Optional[str] = None,
-    document_ids: Optional[list[str]] = None,
+    user_id: Optional[str] = None,       # accepted for interface compat, unused
+    document_ids: Optional[List[str]] = None,
     num_documents: int = 10,
 ):
-    """
-    Create a knowledge retriever tool for the Agno agent.
+    """Return an async Agno tool that retrieves chunks + triples from the org graph.
 
-    Returns a callable that performs hybrid retrieval (vector + graph) via
-    Cognee over the organization's dataset. Optional document_ids filter
-    restricts retrieval to a subset of docs in that dataset.
+    `organization_id` and `document_ids` are captured at creation time — the
+    LLM cannot change which org or which documents are searched.
+
+    Args:
+        organization_id: Org whose FalkorDB graph to search.
+        user_id: Unused (kept for interface compatibility).
+        document_ids: If set, search is scoped to these docs. If None, searches
+            the entire org graph. If empty list, returns nothing immediately.
+        num_documents: Default top-K to return.
     """
     num_documents_default = num_documents
 
@@ -29,110 +41,55 @@ def create_knowledge_retriever(
         query: str,
         agent: Optional[Agent] = None,
         num_documents: Optional[int] = None,
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> Optional[List[dict[str, Any]]]:
+        """Search the knowledge graph for chunks relevant to `query`.
+
+        Args:
+            query: Natural-language search string.
+            agent: Agno agent reference (unused; kept for tool-protocol compat).
+            num_documents: Override default top-K.
+
+        Returns:
+            list with one dict containing chunks, anchors, triples, count.
+            Returns None if query is empty, no org is set, or no results found.
+        """
         if not query or not query.strip():
-            logger.warning("Empty or invalid query provided to search_knowledge_base")
+            logger.warning("search_knowledge_base: empty query")
             return None
 
-        if num_documents is None:
-            num_documents = num_documents_default
-
-        # Empty document_ids filter = explicit "search nothing" signal
+        # Empty list = caller explicitly said "no documents selected"
         if document_ids is not None and len(document_ids) == 0:
-            logger.info("No documents selected - returning empty results")
+            logger.info("search_knowledge_base: no documents selected, returning empty")
             return None
 
         if not organization_id:
-            logger.warning("No organization_id provided to search_knowledge_base")
+            logger.warning("search_knowledge_base: no organization_id")
             return None
+
+        k = num_documents if isinstance(num_documents, int) and num_documents > 0 else num_documents_default
+
+        logger.info(
+            f"search_knowledge_base: org={organization_id} "
+            f"docs={len(document_ids) if document_ids else 'all'} "
+            f"query={query[:80]!r} k={k}"
+        )
 
         try:
-            logger.info(
-                f"🔍 GraphRAG search: '{query[:80]}' "
-                f"(limit: {num_documents}, docs: {len(document_ids) if document_ids else 'all'})"
-            )
-
-            graphrag_client = get_graphrag_client()
-            raw_results = await graphrag_client.search(
-                query=query,
+            client = get_graphrag_client()
+            results = await client.search(
+                query=query.strip(),
                 organization_id=organization_id,
-                top_k=num_documents,
+                top_k=k,
                 document_ids=document_ids,
             )
-
-            if not raw_results:
-                logger.info("No results from GraphRAG")
-                return None
-
-            # Normalize GraphRAG results into the dict shape the agent expects.
-            documents: List[Dict[str, Any]] = []
-            for item in raw_results:
-                source = item.get("source", "graphrag")
-                payload = item.get("payload")
-
-                text_content = _extract_text(payload)
-                if not text_content:
-                    continue
-
-                documents.append({
-                    "text": text_content,
-                    "file_id": _extract_document_id(payload) or "",
-                    "datasource": "graph",
-                    "source": source,
-                    "metadata": {
-                        "file_name": _extract_filename(payload) or "Knowledge Graph",
-                        "folder_name": "N/A",
-                    },
-                })
-
-            logger.info(f"✅ GraphRAG search: {len(documents)} results normalized")
-            return documents
-
         except Exception as e:
-            logger.error(f"❌ GraphRAG search failed: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"search_knowledge_base: search failed: {e}")
             return None
 
+        if not results:
+            logger.info("search_knowledge_base: no results")
+            return None
+
+        return results
+
     return search_knowledge_base
-
-
-def _extract_text(payload: Any) -> str:
-    """Best-effort extraction of text content from a Cognee result payload."""
-    if payload is None:
-        return ""
-    if isinstance(payload, str):
-        return payload
-    if isinstance(payload, dict):
-        for key in ("text", "chunk", "content", "summary", "description"):
-            val = payload.get(key)
-            if isinstance(val, str) and val.strip():
-                return val
-        # Insights-style triplets: (subject, predicate, object)
-        if {"source", "target"}.issubset(payload.keys()):
-            rel = payload.get("relationship") or payload.get("predicate") or "related_to"
-            return f"{payload['source']} --{rel}--> {payload['target']}"
-        return str(payload)
-    if isinstance(payload, (list, tuple)):
-        return " ".join(str(x) for x in payload)
-    return str(payload)
-
-
-def _extract_document_id(payload: Any) -> Optional[str]:
-    if isinstance(payload, dict):
-        for key in ("document_id", "doc_id", "node_set", "source_document_id"):
-            val = payload.get(key)
-            if isinstance(val, str):
-                return val
-            if isinstance(val, list) and val:
-                return str(val[0])
-    return None
-
-
-def _extract_filename(payload: Any) -> Optional[str]:
-    if isinstance(payload, dict):
-        for key in ("file_name", "filename", "name", "title"):
-            val = payload.get(key)
-            if isinstance(val, str):
-                return val
-    return None
