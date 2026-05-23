@@ -16,10 +16,6 @@ class Settings(BaseSettings):
 
 
 
-    # Vector Database
-    PINECONE_API_KEY: str = ""
-    PINECONE_INDEX_NAME: str = ""
-
     # LLM APIs
     OPENAI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
@@ -67,10 +63,28 @@ class Settings(BaseSettings):
     KEYCLOAK_ADMIN_PASSWORD: str = "admin"
 
     POSTGRES_URL: str = ""
-    POSTGRES_VECTOR_URL: str = ""  # kept for legacy tools; Cognee reads VECTOR_DB_* env vars directly
+
+    # FalkorDB
+    GRAPH_DATABASE_URL: str = "localhost"
+    GRAPH_DATABASE_PORT: int = 6379
+    GRAPH_DATABASE_USERNAME: str = ""
+    GRAPH_DATABASE_PASSWORD: str = ""
+    GRAPH_DATABASE_SSL: bool = False
+
+    # Embeddings + extraction
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_DIM: int = 1536
+    EXTRACTION_MODEL: str = "google/gemini-2.5-flash"
+    ONTOLOGY_MODEL: str = "google/gemini-2.5-flash"
+
+    # Ingestion
+    CHUNK_SIZE: int = 3000
+    CHUNK_OVERLAP: int = 200
+    LLM_CONCURRENCY: int = 10
+    MIN_TRIPLE_CONFIDENCE: float = 0.7
+    ENTITY_RESOLUTION_THRESHOLD: float = 0.15  # cosine distance — lower = stricter merge
 
     # Observability
-
 
     class Config:
         env_file = ".env"
