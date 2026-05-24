@@ -198,16 +198,17 @@ def _cosine_distance(a: List[float], b: List[float]) -> float:
 async def _resolve_entities(
     names: List[str],
     threshold: float,
+    existing_canonicals: Optional[List[str]] = None,
 ) -> Dict[str, str]:
     """Return mapping raw_name → canonical_name.
 
     Steps:
       1. Normalize (lowercase + strip) — exact dupes merged immediately.
-      2. Embed unique normalized names in one batch call.
-      3. Greedy merge: for each name (alphabetical), if any already-chosen
-         canonical is within `threshold` cosine distance, map to that canonical;
-         otherwise this name becomes a new canonical.
-    Shorter name wins as canonical when merging.
+      2. Embed unique normalized names + any existing_canonicals in one batch call.
+      3. Greedy merge: seed with existing_canonicals first, then process new names.
+         If a new name is within `threshold` cosine distance of any canonical
+         (existing or newly added), it maps to that canonical; otherwise it
+         becomes a new canonical. Shorter name wins when merging.
     """
     if not names:
         return {}
@@ -215,22 +216,35 @@ async def _resolve_entities(
     norm_map: Dict[str, str] = {n: _norm(n) for n in names}
     unique_norms = list(dict.fromkeys(norm_map.values()))  # dedup, preserve order
 
-    if len(unique_norms) == 1:
-        canonical = unique_norms[0]
+    # Normalize existing canonicals and remove any that exactly match new names
+    # (they'll be handled by the greedy merge naturally)
+    seed_norms: List[str] = []
+    if existing_canonicals:
+        seen = set(unique_norms)
+        for ec in existing_canonicals:
+            n = _norm(ec)
+            if n and n not in seen:
+                seed_norms.append(n)
+                seen.add(n)
+
+    all_to_embed = seed_norms + unique_norms
+
+    if len(all_to_embed) == 1:
+        canonical = all_to_embed[0]
         return {n: canonical for n in names}
 
     try:
-        embeddings = await _embed_texts(unique_norms)
+        embeddings = await _embed_texts(all_to_embed)
     except Exception as e:
         logger.warning(f"Entity resolution embedding failed: {e}; using normalized names as-is")
         return {n: norm_map[n] for n in names}
 
-    vec_map: Dict[str, List[float]] = dict(zip(unique_norms, embeddings))
+    vec_map: Dict[str, List[float]] = dict(zip(all_to_embed, embeddings))
 
-    # Greedy merge
-    canonicals: List[str] = []
-    canon_vecs: List[List[float]] = []
-    norm_to_canon: Dict[str, str] = {}
+    # Greedy merge — seed with existing graph canonicals so new names resolve against them
+    canonicals: List[str] = list(seed_norms)
+    canon_vecs: List[List[float]] = [vec_map[s] for s in seed_norms]
+    norm_to_canon: Dict[str, str] = {s: s for s in seed_norms}
 
     for norm in unique_norms:
         vec = vec_map[norm]
@@ -247,7 +261,7 @@ async def _resolve_entities(
             winner = best_canon if len(best_canon) <= len(norm) else norm
             idx = canonicals.index(best_canon)
             canonicals[idx] = winner
-            canon_vecs[idx] = vec_map[winner] if winner == norm else cv
+            canon_vecs[idx] = vec_map[winner] if winner in vec_map else canon_vecs[idx]
             norm_to_canon[norm] = winner
             # Update any previously mapped to old canonical
             for k in list(norm_to_canon.keys()):
@@ -572,9 +586,22 @@ class GraphRAGClient:
                     if n:
                         all_entity_names.append(n)
 
+        # Fetch existing entity names from graph to seed cross-document resolution
+        existing_entity_names: List[str] = []
+        try:
+            g_pre = await asyncio.to_thread(_get_falkor_connection, graph_name)
+            rows = await asyncio.to_thread(
+                lambda: g_pre.query("MATCH (e:Entity) RETURN e.name").result_set
+            )
+            existing_entity_names = [row[0] for row in rows if row[0]]
+            logger.info(f"Loaded {len(existing_entity_names)} existing entities from graph for resolution seeding")
+        except Exception as e:
+            logger.warning(f"Could not load existing entities for resolution: {e}")
+
         entity_map = await _resolve_entities(
             list(dict.fromkeys(all_entity_names)),
             threshold=settings.ENTITY_RESOLUTION_THRESHOLD,
+            existing_canonicals=existing_entity_names,
         )
 
         # Step 5: build write payloads
