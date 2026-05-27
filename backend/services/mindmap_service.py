@@ -101,8 +101,8 @@ class MindMapService:
             workflow_doc = {
                 "type": "mindmap",
                 "document_ids": [ObjectId(doc_id) for doc_id in document_ids],
-                "user_id": user_id,  # Keep as string (Keycloak UUID)
-                "organization_id": ObjectId(organization_id) if organization_id else None,  # Convert to ObjectId
+                "user_id": user_id,
+                "organization_id": organization_id,
                 "status": "completed",
                 "data": {
                     "summary": doc_summary.summary,
@@ -228,13 +228,13 @@ class MindMapService:
             List of mind maps
         """
         try:
-            # user_id = string (Keycloak UUID), organization_id = ObjectId
+            # user_id and organization_id are both Keycloak UUID strings
             workflows = await self.mongodb_client.async_find_documents(
                 collection="workflows",
                 query={
                     "type": "mindmap",
-                    "user_id": user_id,  # String comparison
-                    "organization_id": ObjectId(organization_id)  # ObjectId comparison
+                    "user_id": user_id,
+                    "organization_id": organization_id
                 }
             )
 
