@@ -949,9 +949,7 @@ class IngestionService:
         Returns:
             Document ID (string)
         """
-        # user_id = Keycloak UUID (string), organization_id = MongoDB ObjectId (convert to ObjectId)
-        organization_object_id = ObjectId(organization_id) if organization_id else None
-
+        # user_id and organization_id are both Keycloak UUID strings — store as-is
         document = {
             "file_name": file_name,
             "folder_name": folder_name,
@@ -959,8 +957,8 @@ class IngestionService:
             "file_key": file_key,
             "file_size_mb": file_size_mb,
             "file_extension": get_file_extension(file_name),
-            "user_id": user_id,  # Keep as string (Keycloak UUID)
-            "organization_id": organization_object_id,  # Convert to ObjectId (MongoDB)
+            "user_id": user_id,
+            "organization_id": organization_id,
             "status": "processing",
             "processing_stage": "initializing",
             "processing_stage_description": "Starting ingestion",
@@ -1104,9 +1102,7 @@ class IngestionService:
         Returns:
             Document ID
         """
-        # user_id = Keycloak UUID (string), organization_id = MongoDB ObjectId (convert)
-        organization_object_id = ObjectId(organization_id) if organization_id else None
-
+        # user_id and organization_id are both Keycloak UUID strings — store as-is
         document = {
             "file_name": file_name,
             "folder_name": folder_name,
@@ -1114,8 +1110,8 @@ class IngestionService:
             "file_key": file_key,
             "file_size_mb": file_size_mb,
             "file_extension": get_file_extension(file_name),
-            "user_id": user_id,  # Keep as string (Keycloak UUID)
-            "organization_id": organization_object_id,  # Convert to ObjectId
+            "user_id": user_id,
+            "organization_id": organization_id,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             **(additional_metadata or {})
@@ -1275,7 +1271,7 @@ class IngestionService:
             filter_query["user_id"] = user_id
 
         if organization_id:
-            filter_query["organization_id"] = ObjectId(organization_id)
+            filter_query["organization_id"] = organization_id
 
         documents = await self.mongodb_client.async_find_documents(
             collection="documents",
@@ -1325,7 +1321,7 @@ class IngestionService:
             filter_query["user_id"] = user_id
 
         if organization_id:
-            filter_query["organization_id"] = ObjectId(organization_id)
+            filter_query["organization_id"] = organization_id
 
         # Get distinct folder names from MongoDB
         folders = await self.mongodb_client.async_distinct(
@@ -1372,7 +1368,7 @@ class IngestionService:
             filter_query["user_id"] = user_id
 
         if organization_id:
-            filter_query["organization_id"] = ObjectId(organization_id)
+            filter_query["organization_id"] = organization_id
 
         # Get all documents in folder
         documents = await self.mongodb_client.async_find_documents(
@@ -1449,7 +1445,7 @@ class IngestionService:
             filter_query["user_id"] = user_id
 
         if organization_id:
-            filter_query["organization_id"] = ObjectId(organization_id)
+            filter_query["organization_id"] = organization_id
 
         # Get document count to verify
         documents = await self.mongodb_client.async_find_documents(
