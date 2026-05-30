@@ -763,7 +763,8 @@ class GraphRAGClient:
         vector_chunk_ids = [c["chunk_id"] for c in chunks]
 
         # Phase 3: entity expansion via MENTIONS
-        anchors: List[str] = []
+        anchors: List[Dict[str, Any]] = []
+        anchor_names: List[str] = []
         if graph_expand and vector_chunk_ids:
             try:
                 anchor_rows = await asyncio.to_thread(
@@ -773,19 +774,27 @@ class GraphRAGClient:
                         WHERE c.id IN $cids
                         WITH e, count(DISTINCT c) AS chunk_count
                         ORDER BY chunk_count DESC LIMIT $top_n
-                        RETURN e.name
+                        RETURN e.name, e.type, chunk_count
                         """,
                         {"cids": vector_chunk_ids, "top_n": top_entities},
                     ).result_set
                 )
-                anchors = [row[0] for row in anchor_rows]
+                anchors = [
+                    {
+                        "name": row[0],
+                        "type": row[1],
+                        "chunk_count": int(row[2]) if row[2] is not None else 0,
+                    }
+                    for row in anchor_rows
+                ]
+                anchor_names = [a["name"] for a in anchors]
             except Exception as e:
                 logger.warning(f"Anchor lookup failed: {e}")
 
-            if anchors:
+            if anchor_names:
                 try:
                     expand_params: Dict[str, Any] = {
-                        "names": anchors,
+                        "names": anchor_names,
                         "original_cids": vector_chunk_ids,
                         "extra_k": expand_k,
                     }
@@ -818,7 +827,7 @@ class GraphRAGClient:
                     logger.warning(f"Graph expand failed: {e}")
 
         # Phase 4: triples from chunk set
-        triples: List[Tuple[str, str, str]] = []
+        triples: List[Dict[str, Any]] = []
         all_chunk_ids = [c["chunk_id"] for c in chunks]
         if all_chunk_ids:
             try:
@@ -828,14 +837,26 @@ class GraphRAGClient:
                         MATCH (a:Entity)-[r:RELATES]->(b:Entity)
                         WHERE r.source_chunk IN $cids
                           AND coalesce(r.confidence, 0.0) >= $min_conf
-                        RETURN a.name, r.predicate, b.name, r.confidence
+                        RETURN a.name, a.type, r.predicate, b.name, b.type,
+                               r.confidence, r.source_chunk
                         ORDER BY r.confidence DESC
                         LIMIT 100
                         """,
                         {"cids": all_chunk_ids, "min_conf": settings.MIN_TRIPLE_CONFIDENCE},
                     ).result_set
                 )
-                triples = [(row[0], row[1], row[2]) for row in triple_rows]
+                triples = [
+                    {
+                        "subject": row[0],
+                        "subject_type": row[1],
+                        "predicate": row[2],
+                        "object": row[3],
+                        "object_type": row[4],
+                        "confidence": float(row[5]) if row[5] is not None else None,
+                        "source_chunk": row[6],
+                    }
+                    for row in triple_rows
+                ]
             except Exception as e:
                 logger.warning(f"Triple fetch failed: {e}")
 

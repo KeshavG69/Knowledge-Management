@@ -18,6 +18,7 @@ interface MessageBubbleProps {
   ) => void;
   onCitationLeave: () => void;
   onCitationClick: (source: DocumentSource, url: string | undefined) => void;
+  onOpenGraph?: (message: ChatMessage) => void;
 }
 
 const PROSE_CLASSES = `prose dark:prose-invert max-w-none font-sans
@@ -78,7 +79,12 @@ const MessageBubble = React.memo(function MessageBubble({
   onCitationHover,
   onCitationLeave,
   onCitationClick,
+  onOpenGraph,
 }: MessageBubbleProps) {
+  const hasGraph =
+    !!message.graph &&
+    ((message.graph.triples?.length ?? 0) > 0 ||
+      (message.graph.anchors?.length ?? 0) > 0);
   const isUser = message.role === "user";
 
   const timeStr = new Date(message.timestamp).toLocaleTimeString("en-US", {
@@ -196,6 +202,36 @@ const MessageBubble = React.memo(function MessageBubble({
               <div className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin" />
               Thinking…
             </div>
+          )}
+
+          {hasGraph && message.isStreaming !== true && onOpenGraph && (
+            <button
+              onClick={() => onOpenGraph(message)}
+              className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="See how the retrieved entities and relations connect"
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="6" cy="6" r="2.5" />
+                <circle cx="18" cy="6" r="2.5" />
+                <circle cx="12" cy="18" r="2.5" />
+                <line x1="8" y1="7" x2="16" y2="7" />
+                <line x1="7" y1="8" x2="11" y2="16" />
+                <line x1="17" y1="8" x2="13" y2="16" />
+              </svg>
+              View knowledge graph
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-500">
+                {message.graph!.anchors?.length ?? 0} entities ·{" "}
+                {message.graph!.triples?.length ?? 0} relations
+              </span>
+            </button>
           )}
         </div>
       </div>
