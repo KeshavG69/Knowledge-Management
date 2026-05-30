@@ -83,7 +83,7 @@ export default function MindMapViewer({ mindMapData, onClose }: MindMapViewerPro
           initialExpandLevel: 3, // Show first 3 levels expanded
         };
 
-        markmapRef.current = Markmap.create(svgRef.current, options, root);
+        markmapRef.current = Markmap.create(svgRef.current!, options, root);
 
         // Fit the view after a short delay to ensure rendering
         setTimeout(() => {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ChatMessage, SourceReference } from '@/types';
+import { ChatMessage, SourceReference, KnowledgeGraph } from '@/types';
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -41,7 +41,11 @@ interface ChatState {
   setInputMessage: (message: string) => void;
   setSelectedModel: (model: string) => void;
   addMessage: (message: ChatMessage) => void;
-  updateLastMessage: (content: string, sources?: DocumentSource[]) => void;
+  updateLastMessage: (
+    content: string,
+    sources?: DocumentSource[],
+    graph?: KnowledgeGraph
+  ) => void;
   setLoading: (loading: boolean) => void;
   setLoadingSession: (loading: boolean) => void;
   clearChat: () => void;
@@ -68,7 +72,7 @@ export const useChatStore = create<ChatState>((set) => ({
   addMessage: (message) =>
     set((state) => ({ messages: [...state.messages, message] })),
 
-  updateLastMessage: (content, sources) =>
+  updateLastMessage: (content, sources, graph) =>
     set((state) => {
       const messages = [...state.messages];
       if (messages.length > 0) {
@@ -76,6 +80,7 @@ export const useChatStore = create<ChatState>((set) => ({
           ...messages[messages.length - 1],
           content,
           ...(sources && { sources }),
+          ...(graph && { graph }),
         };
       }
       return { messages };

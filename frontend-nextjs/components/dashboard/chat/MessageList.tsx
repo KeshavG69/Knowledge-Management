@@ -17,6 +17,7 @@ interface MessageListProps {
   ) => void;
   onCitationLeave: () => void;
   onCitationClick: (source: DocumentSource, url: string | undefined) => void;
+  onOpenGraph?: (message: ChatMessage) => void;
 }
 
 const MessageList = React.memo(function MessageList({
@@ -25,6 +26,7 @@ const MessageList = React.memo(function MessageList({
   onCitationHover,
   onCitationLeave,
   onCitationClick,
+  onOpenGraph,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -50,6 +52,7 @@ const MessageList = React.memo(function MessageList({
               onCitationHover={onCitationHover}
               onCitationLeave={onCitationLeave}
               onCitationClick={onCitationClick}
+              onOpenGraph={onOpenGraph}
             />
           </motion.div>
         ))}
