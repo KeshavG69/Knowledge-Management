@@ -47,6 +47,40 @@ export interface ChatMessage {
   timestamp: string;
   isStreaming?: boolean;
   sources?: any[]; // Sources specific to this message
+  graph?: KnowledgeGraph; // GraphRAG retrieval graph (entities + triples + chunks)
+}
+
+// Knowledge-graph payload returned by the GraphRAG search tool
+export interface KnowledgeGraphAnchor {
+  name: string;
+  type?: string | null;
+  chunk_count: number;
+}
+
+export interface KnowledgeGraphTriple {
+  subject: string;
+  subject_type?: string | null;
+  predicate: string;
+  object: string;
+  object_type?: string | null;
+  confidence?: number | null;
+  source_chunk?: string | null;
+}
+
+export interface KnowledgeGraphChunk {
+  chunk_id: string;
+  document_id: string;
+  text: string;
+  score: number | null;
+  shared_entities: number | null;
+  via: 'vector' | 'graph';
+}
+
+export interface KnowledgeGraph {
+  anchors: KnowledgeGraphAnchor[];
+  triples: KnowledgeGraphTriple[];
+  chunks: KnowledgeGraphChunk[];
+  query?: string;
 }
 
 export interface SourceReference {

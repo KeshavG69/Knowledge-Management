@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useChatStore, DocumentSource } from "@/lib/stores/chatStore";
+import type { ChatMessage, KnowledgeGraph } from "@/types";
 import { useDocumentStore } from "@/lib/stores/documentStore";
 import { chatApi, documentsApi, TAKCredentials } from "@/lib/api/documents";
 import { getTAKConfig } from "@/lib/api/tak";
 import { usePresignedUrls } from "@/lib/hooks/usePresignedUrls";
 import VideoClipViewer from "./VideoClipViewer";
+import KnowledgeGraphView from "./KnowledgeGraphView";
 import EmptyState from "./chat/EmptyState";
 import MessageList from "./chat/MessageList";
 import ChatInput from "./chat/ChatInput";
@@ -58,6 +60,13 @@ export default function ChatArea() {
     clipStart?: number;
     clipEnd?: number;
   }>({ isOpen: false, url: "", filename: "" });
+
+  // Knowledge-graph modal state
+  const [graphView, setGraphView] = useState<KnowledgeGraph | null>(null);
+
+  const handleOpenGraph = useCallback((message: ChatMessage) => {
+    if (message.graph) setGraphView(message.graph);
+  }, []);
 
   // Citation hover state
   const [hoveredCitation, setHoveredCitation] = useState<{
@@ -266,6 +275,7 @@ export default function ChatArea() {
         const decoder = new TextDecoder();
         let accumulatedContent = "";
         let accumulatedSources: DocumentSource[] = [];
+        let accumulatedGraph: KnowledgeGraph | undefined = undefined;
         let buffer = "";
 
         while (true) {
@@ -310,7 +320,8 @@ export default function ChatArea() {
                       accumulatedContent,
                       accumulatedSources.length > 0
                         ? accumulatedSources
-                        : undefined
+                        : undefined,
+                      accumulatedGraph
                     );
                   }
                   break;
@@ -325,7 +336,45 @@ export default function ChatArea() {
                   ) {
                     try {
                       const results = JSON.parse(parsed.data.result);
-                      if (Array.isArray(results)) {
+                      // GraphRAG returns a single-element list:
+                      // [{ chunks, anchors, triples, count, query }]
+                      const payload = Array.isArray(results)
+                        ? results[0]
+                        : results;
+
+                      if (payload && Array.isArray(payload.chunks)) {
+                        // Build the graph payload
+                        accumulatedGraph = {
+                          anchors: payload.anchors || [],
+                          triples: payload.triples || [],
+                          chunks: payload.chunks || [],
+                          query: payload.query,
+                        };
+
+                        // Map chunks → sources (look up filename from doc store)
+                        accumulatedSources = payload.chunks.map(
+                          (c: any): DocumentSource => {
+                            const doc = documents.find(
+                              (d) => d.id === c.document_id
+                            );
+                            return {
+                              document_id: c.document_id,
+                              filename: doc?.file_name || "",
+                              folder_name: doc?.folder_name || "",
+                              text: c.text || "",
+                              score:
+                                typeof c.score === "number" ? c.score : 0,
+                              file_key: (doc as any)?.file_key || "",
+                            };
+                          }
+                        );
+                        updateLastMessage(
+                          accumulatedContent,
+                          accumulatedSources,
+                          accumulatedGraph
+                        );
+                      } else if (Array.isArray(results)) {
+                        // Legacy shape fallback (flat list of {text, file_id, metadata})
                         accumulatedSources = results.map((result: any) => ({
                           document_id: result.file_id,
                           filename: result.metadata?.file_name || "",
@@ -345,7 +394,8 @@ export default function ChatArea() {
                         }));
                         updateLastMessage(
                           accumulatedContent,
-                          accumulatedSources
+                          accumulatedSources,
+                          accumulatedGraph
                         );
                       }
                     } catch {
@@ -361,7 +411,8 @@ export default function ChatArea() {
                       accumulatedContent,
                       accumulatedSources.length > 0
                         ? accumulatedSources
-                        : undefined
+                        : undefined,
+                      accumulatedGraph
                     );
                   }
                   break;
@@ -446,6 +497,7 @@ export default function ChatArea() {
               onCitationHover={handleCitationHover}
               onCitationLeave={handleCitationLeave}
               onCitationClick={handleCitationClick}
+              onOpenGraph={handleOpenGraph}
             />
           )}
         </div>
@@ -527,6 +579,14 @@ export default function ChatArea() {
           onClose={() =>
             setVideoViewer({ isOpen: false, url: "", filename: "" })
           }
+        />
+      )}
+
+      {/* Knowledge Graph Viewer Modal */}
+      {graphView && (
+        <KnowledgeGraphView
+          graph={graphView}
+          onClose={() => setGraphView(null)}
         />
       )}
 
