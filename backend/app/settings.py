@@ -78,11 +78,18 @@ class Settings(BaseSettings):
     ONTOLOGY_MODEL: str = "google/gemini-2.5-flash"
 
     # Ingestion
-    CHUNK_SIZE: int = 3000
+    # Larger chunks → fewer LLM calls per document (cuts wall time roughly
+    # linearly). 5000 keeps enough context for accurate entity extraction
+    # without overwhelming the model.
+    CHUNK_SIZE: int = 5000
     CHUNK_OVERLAP: int = 200
-    LLM_CONCURRENCY: int = 10
+    # Higher concurrency = more parallel LLM calls in flight. OpenRouter
+    # comfortably handles 30–50 concurrent requests per key for Gemini Flash.
+    # If you start seeing 429s, dial back to 20.
+    LLM_CONCURRENCY: int = 30
     MIN_TRIPLE_CONFIDENCE: float = 0.7
-    ENTITY_RESOLUTION_THRESHOLD: float = 0.15  # cosine distance — lower = stricter merge
+    ENTITY_RESOLUTION_THRESHOLD: float = 0.10  # cosine distance — lower = stricter merge
+    ENTITY_CACHE_DIR: str = "./data/entity_cache"  # per-org FAISS indices live here
 
     # Observability
 
