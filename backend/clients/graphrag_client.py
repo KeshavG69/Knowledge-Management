@@ -26,7 +26,14 @@ import hashlib
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+
+# Optional async progress reporter passed by callers (e.g. ingestion_service)
+# Signature: stage_key, human-readable description, current, total
+#   current/total may be None for stages without a count.
+ProgressCallback = Callable[
+    [str, str, Optional[int], Optional[int]], Awaitable[None]
+]
 
 import numpy as np
 from openai import AsyncOpenAI
@@ -35,6 +42,7 @@ import pydantic
 from app.logger import logger
 from app.settings import settings
 from clients.chunker_client import get_chunker_client
+from clients.entity_vector_cache import get_entity_vector_cache
 
 try:
     import falkordb
@@ -69,6 +77,34 @@ def _strip_fences(text: str) -> str:
         if text.endswith("```"):
             text = text[:-3].strip()
     return text
+
+
+_JSON_DECODER = json.JSONDecoder()
+
+
+def _parse_first_json(text: str) -> Any:
+    """Parse the first valid JSON object/array in `text`, ignoring trailing junk.
+
+    The LLM sometimes returns a valid JSON object followed by extra text
+    (a comment, a second object, markdown commentary). `json.loads` rejects
+    the whole response → we lose that chunk's entities. raw_decode reads
+    only the first JSON value and returns the byte offset where it ended,
+    so any trailing garbage is harmless.
+
+    Also strips ``` fences first and skips any leading whitespace/text
+    up to the first `{` or `[`.
+    """
+    cleaned = _strip_fences(text)
+    # Find the first opening brace/bracket — handles "Here's the JSON:\n{...}"
+    start = -1
+    for i, ch in enumerate(cleaned):
+        if ch in "{[":
+            start = i
+            break
+    if start == -1:
+        raise json.JSONDecodeError("no JSON object found", cleaned, 0)
+    obj, _ = _JSON_DECODER.raw_decode(cleaned[start:])
+    return obj
 
 
 # ---------------------------------------------------------------------------
@@ -163,13 +199,46 @@ def _openrouter_client() -> AsyncOpenAI:
     )
 
 
+# OpenAI embeddings cap input arrays at 2048 items per request — batch defensively
+# so big entity-resolution lists don't fall back to "use normalized names as-is".
+_EMBED_BATCH = 1024
+
+
 async def _embed_texts(texts: List[str]) -> List[List[float]]:
+    if not texts:
+        return []
     client = _openai_client()
-    resp = await client.embeddings.create(
-        model=settings.EMBEDDING_MODEL,
-        input=texts,
+
+    # Fast path — single call for small lists
+    if len(texts) <= _EMBED_BATCH:
+        resp = await client.embeddings.create(
+            model=settings.EMBEDDING_MODEL,
+            input=texts,
+        )
+        return [item.embedding for item in resp.data]
+
+    # Batched path — fan out, preserve original order
+    batches = [
+        texts[i : i + _EMBED_BATCH]
+        for i in range(0, len(texts), _EMBED_BATCH)
+    ]
+    logger.info(
+        f"Embedding {len(texts)} inputs in {len(batches)} batches "
+        f"of up to {_EMBED_BATCH}"
     )
-    return [item.embedding for item in resp.data]
+    responses = await asyncio.gather(
+        *[
+            client.embeddings.create(
+                model=settings.EMBEDDING_MODEL,
+                input=batch,
+            )
+            for batch in batches
+        ]
+    )
+    out: List[List[float]] = []
+    for resp in responses:
+        out.extend(item.embedding for item in resp.data)
+    return out
 
 
 async def _llm_json(prompt: str, model: str) -> str:
@@ -199,16 +268,33 @@ async def _resolve_entities(
     names: List[str],
     threshold: float,
     existing_canonicals: Optional[List[str]] = None,
+    organization_id: Optional[str] = None,
 ) -> Dict[str, str]:
     """Return mapping raw_name → canonical_name.
 
-    Steps:
+    Pipeline:
       1. Normalize (lowercase + strip) — exact dupes merged immediately.
-      2. Embed unique normalized names + any existing_canonicals in one batch call.
-      3. Greedy merge: seed with existing_canonicals first, then process new names.
-         If a new name is within `threshold` cosine distance of any canonical
-         (existing or newly added), it maps to that canonical; otherwise it
-         becomes a new canonical. Shorter name wins when merging.
+      2. Use the per-org FAISS cache to fetch any already-embedded vectors for
+         the new names; only call OpenAI for names never seen before.
+      3. Persist freshly-embedded vectors to the cache for future ingests.
+      4. Greedy merge:
+           a. ONE batched FAISS call: for every new name, find its nearest
+              existing canonical (FAISS SIMD scan over the on-disk index).
+           b. For each new name, also check the small in-memory list of
+              new-canonicals-added-during-this-call (rare, tiny — pure numpy).
+           c. Whichever match is closest within `threshold` wins; else the
+              name becomes a new canonical.
+
+    Why FAISS over the old Python loop: comparing N new names against M
+    existing canonicals used to be O(N·M) in Python (~265k cosine ops for
+    50 × 5300). FAISS does the same scan in optimized SIMD C in milliseconds.
+
+    Tradeoff vs the previous implementation:
+      The "shorter name wins" tiebreaker now only applies WITHIN this call's
+      new canonicals — we no longer rename existing FAISS-cached canonicals
+      mid-merge (would require removing+reindexing). In practice the original
+      canonical name is whatever the LLM first chose for that entity, and
+      subsequent merges flow into it.
     """
     if not names:
         return {}
@@ -216,63 +302,187 @@ async def _resolve_entities(
     norm_map: Dict[str, str] = {n: _norm(n) for n in names}
     unique_norms = list(dict.fromkeys(norm_map.values()))  # dedup, preserve order
 
-    # Normalize existing canonicals and remove any that exactly match new names
-    # (they'll be handled by the greedy merge naturally)
-    seed_norms: List[str] = []
+    # Track which existing canonicals were seen in the new doc — those don't
+    # need a separate FAISS round-trip since they self-match (distance 0).
+    seed_set: set = set()
     if existing_canonicals:
-        seen = set(unique_norms)
         for ec in existing_canonicals:
             n = _norm(ec)
-            if n and n not in seen:
-                seed_norms.append(n)
-                seen.add(n)
+            if n:
+                seed_set.add(n)
 
-    all_to_embed = seed_norms + unique_norms
+    if not unique_norms:
+        return {}
 
-    if len(all_to_embed) == 1:
-        canonical = all_to_embed[0]
-        return {n: canonical for n in names}
+    # ---- 1. Cache lookup + (selective) OpenAI embed ---------------------
+    cache = get_entity_vector_cache() if organization_id else None
+    vec_map: Dict[str, List[float]] = {}
 
-    try:
-        embeddings = await _embed_texts(all_to_embed)
-    except Exception as e:
-        logger.warning(f"Entity resolution embedding failed: {e}; using normalized names as-is")
-        return {n: norm_map[n] for n in names}
+    if cache is not None:
+        try:
+            cached = await cache.get_cached_vectors(organization_id, unique_norms)
+            for nm, vec in cached.items():
+                vec_map[nm] = vec.tolist() if hasattr(vec, "tolist") else list(vec)
+        except Exception as e:
+            logger.warning(f"Entity cache read failed: {e}; will re-embed")
 
-    vec_map: Dict[str, List[float]] = dict(zip(all_to_embed, embeddings))
+    missing = [n for n in unique_norms if n not in vec_map]
+    logger.info(
+        f"Entity resolution: {len(unique_norms)} new names "
+        f"({len(vec_map)} cached, {len(missing)} to embed) "
+        f"vs {len(seed_set)} existing canonicals"
+    )
 
-    # Greedy merge — seed with existing graph canonicals so new names resolve against them
-    canonicals: List[str] = list(seed_norms)
-    canon_vecs: List[List[float]] = [vec_map[s] for s in seed_norms]
-    norm_to_canon: Dict[str, str] = {s: s for s in seed_norms}
+    if missing:
+        try:
+            new_embeddings = await _embed_texts(missing)
+        except Exception as e:
+            logger.warning(
+                f"Entity resolution embedding failed: {e}; "
+                f"using normalized names as-is"
+            )
+            return {n: norm_map[n] for n in names}
+
+        for nm, vec in zip(missing, new_embeddings):
+            vec_map[nm] = vec
+
+        # Persist new vectors so the NEXT ingest skips OpenAI for these names
+        if cache is not None:
+            try:
+                added = await cache.add_vectors(
+                    organization_id, missing, new_embeddings
+                )
+                logger.info(f"Entity cache: added {added} new vectors")
+            except Exception as e:
+                logger.warning(f"Entity cache write failed: {e}")
+
+    # ---- 1b. Warm-up: make sure FAISS knows about ALL existing graph
+    # canonicals. Without this, the very first ingest after a clean deploy
+    # has an empty FAISS index, so the batch search below can't actually
+    # find the 5k+ entities that already live in FalkorDB → new entities
+    # silently fail to merge with their already-existing counterparts.
+    # Subsequent ingests find these vectors cached and skip OpenAI.
+    if cache is not None and seed_set:
+        try:
+            known = await cache.known_names(organization_id)
+            uncached_existing = [n for n in seed_set if n not in known]
+            if uncached_existing:
+                logger.info(
+                    f"Cache warm-up: embedding {len(uncached_existing)} "
+                    f"existing canonicals not yet in FAISS"
+                )
+                warmup_embeddings = await _embed_texts(uncached_existing)
+                added_warm = await cache.add_vectors(
+                    organization_id, uncached_existing, warmup_embeddings
+                )
+                logger.info(
+                    f"Cache warm-up: added {added_warm} existing canonicals "
+                    f"to FAISS index"
+                )
+        except Exception as e:
+            logger.warning(
+                f"Cache warm-up failed: {e}; merge quality will be degraded "
+                f"this ingest but will self-heal on the next one"
+            )
+
+    # ---- 2. Batched FAISS search: each new norm → nearest existing canon
+    # The cache now contains both old canonicals AND the names we just added,
+    # so a self-match (distance ~0) is expected and harmless — we filter it
+    # so a new name doesn't "merge with itself" before we've decided it's new.
+    nearest_existing: Dict[str, Optional[Tuple[str, float]]] = {}
+    if cache is not None and unique_norms:
+        try:
+            query_arr = np.asarray(
+                [vec_map[n] for n in unique_norms], dtype=np.float32
+            )
+            # top_k=2 so when the top hit IS the query itself (self-match)
+            # we can fall back to the second-nearest distinct neighbor.
+            results = await cache.batch_nearest(organization_id, query_arr, top_k=2)
+            for norm, hits in zip(unique_norms, results):
+                pick: Optional[Tuple[str, float]] = None
+                for hit_name, dist in hits:
+                    if hit_name == norm:
+                        continue  # skip self-match
+                    pick = (hit_name, dist)
+                    break
+                nearest_existing[norm] = pick
+        except Exception as e:
+            logger.warning(f"FAISS batch search failed: {e}; falling back to no merges")
+
+    # ---- 3. Greedy merge ------------------------------------------------
+    # Walk new norms in order. For each:
+    #   - candidate A: best match against existing canonicals (from FAISS)
+    #   - candidate B: best match against new canonicals added so far this call
+    # Pick whichever is closer; merge if within threshold; else become a new canonical.
+    new_canon_names: List[str] = []
+    new_canon_vecs: List[np.ndarray] = []
+    norm_to_canon: Dict[str, str] = {}
 
     for norm in unique_norms:
-        vec = vec_map[norm]
-        best_dist = threshold + 1.0
-        best_canon = None
-        for c, cv in zip(canonicals, canon_vecs):
-            d = _cosine_distance(vec, cv)
+        if norm not in vec_map:
+            norm_to_canon[norm] = norm
+            continue
+        vec_np = np.asarray(vec_map[norm], dtype=np.float32)
+
+        best_canon: Optional[str] = None
+        best_dist: float = threshold + 1.0
+
+        # Candidate A: nearest existing canonical (FAISS)
+        a = nearest_existing.get(norm)
+        if a is not None:
+            cand_name, cand_dist = a
+            # Only consider it if this name is actually an existing canonical
+            # in FalkorDB. (Cache may contain new-from-this-doc names that
+            # haven't been written to the graph yet.)
+            if cand_name in seed_set and cand_dist < best_dist:
+                best_dist = cand_dist
+                best_canon = cand_name
+
+        # Candidate B: nearest in-flight new canonical (small linear scan)
+        if new_canon_vecs:
+            arr = np.asarray(new_canon_vecs, dtype=np.float32)
+            # Cosine distance via normalized dot product
+            v_norm = vec_np / (np.linalg.norm(vec_np) + 1e-12)
+            a_norms = arr / (np.linalg.norm(arr, axis=1, keepdims=True) + 1e-12)
+            sims = a_norms @ v_norm
+            dists = 1.0 - sims
+            i = int(np.argmin(dists))
+            d = float(dists[i])
             if d < best_dist:
                 best_dist = d
-                best_canon = c
+                best_canon = new_canon_names[i]
 
         if best_canon is not None and best_dist <= threshold:
-            # Merge: shorter name wins
-            winner = best_canon if len(best_canon) <= len(norm) else norm
-            idx = canonicals.index(best_canon)
-            canonicals[idx] = winner
-            canon_vecs[idx] = vec_map[winner] if winner in vec_map else canon_vecs[idx]
-            norm_to_canon[norm] = winner
-            # Update any previously mapped to old canonical
-            for k in list(norm_to_canon.keys()):
-                if norm_to_canon[k] == best_canon:
-                    norm_to_canon[k] = winner
+            # In-call "shorter wins" tiebreaker only matters when both names
+            # are from THIS call. For existing FAISS canonicals, keep the
+            # name as-is (renaming a cached canonical would require index
+            # surgery — out of scope here).
+            in_flight_idx: Optional[int] = None
+            try:
+                in_flight_idx = new_canon_names.index(best_canon)
+            except ValueError:
+                pass
+
+            if in_flight_idx is not None and len(norm) < len(best_canon):
+                # The new norm is shorter than the in-call canonical it
+                # matched → promote the new norm as the winner.
+                winner = norm
+                new_canon_names[in_flight_idx] = winner
+                new_canon_vecs[in_flight_idx] = vec_np
+                # Update any earlier-resolved norms that pointed at the loser
+                for k in list(norm_to_canon.keys()):
+                    if norm_to_canon[k] == best_canon:
+                        norm_to_canon[k] = winner
+                norm_to_canon[norm] = winner
+            else:
+                norm_to_canon[norm] = best_canon
         else:
-            canonicals.append(norm)
-            canon_vecs.append(vec)
+            # Truly new entity for this call
+            new_canon_names.append(norm)
+            new_canon_vecs.append(vec_np)
             norm_to_canon[norm] = norm
 
-    return {n: norm_to_canon[norm_map[n]] for n in names}
+    return {n: norm_to_canon.get(norm_map[n], norm_map[n]) for n in names}
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +568,7 @@ async def _detect_schema(sample_text: str, graph_name: str) -> _OntologySchema:
     prompt = _ONTOLOGY_PROMPT.format(sample=sample)
     try:
         raw = await _llm_json(prompt, settings.ONTOLOGY_MODEL)
-        data = json.loads(_strip_fences(raw))
+        data = _parse_first_json(raw)
     except Exception as e:
         logger.warning(f"Ontology detection failed for {graph_name}: {e}")
         return _OntologySchema()
@@ -432,7 +642,7 @@ async def _extract_chunk(
     async with sem:
         try:
             raw = await _llm_json(full_prompt, settings.EXTRACTION_MODEL)
-            data = json.loads(_strip_fences(raw))
+            data = _parse_first_json(raw)
             return Extraction.model_validate(data)
         except Exception as e:
             logger.warning(f"Chunk extraction failed: {e}")
@@ -537,18 +747,32 @@ class GraphRAGClient:
         organization_id: str,
         document_id: str,
         filename: Optional[str] = None,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> Dict[str, Any]:
         if not text or not text.strip():
             logger.warning(f"Empty text for document {document_id}, skipping ingest")
             return {"ingested": False, "reason": "empty_text"}
 
+        # Helper that swallows errors so a flaky callback never breaks ingest
+        async def _emit(stage: str, desc: str,
+                        current: Optional[int] = None,
+                        total: Optional[int] = None) -> None:
+            if progress_callback is None:
+                return
+            try:
+                await progress_callback(stage, desc, current, total)
+            except Exception as e:  # pragma: no cover - defensive
+                logger.warning(f"progress_callback failed at {stage}: {e}")
+
         graph_name = _graph_name(organization_id)
         logger.info(f"Ingest start: doc={document_id} graph={graph_name} len={len(text)}")
 
         # Step 1: detect + merge ontology for this doc
+        await _emit("schema_detect", "Detecting entity ontology")
         schema = await _ensure_schema(organization_id, text)
 
         # Step 2: chunk
+        await _emit("chunking", "Splitting document into semantic chunks")
         chunker = get_chunker_client()
         try:
             raw_chunks = chunker.chunk_text(text, chunker_type="large_chunk")
@@ -562,8 +786,20 @@ class GraphRAGClient:
 
         logger.info(f"Chunked doc={document_id} into {len(chunk_texts)} chunks")
 
-        # Step 3: embed + extract in parallel
+        # Step 3: embed + extract in parallel, reporting progress as each finishes
+        total = len(chunk_texts)
+        await _emit(
+            "extracting",
+            f"Embedding & extracting entities (0/{total} chunks)",
+            0,
+            total,
+        )
+
         sem = asyncio.Semaphore(settings.LLM_CONCURRENCY)
+        completed = {"n": 0}
+        # Throttle UI updates: emit at most ~20 times across the whole batch
+        # for big docs, but always emit for small docs.
+        emit_every = max(1, total // 20)
 
         async def _process(idx: int, chunk_text: str):
             cid = _chunk_id(document_id, idx)
@@ -571,6 +807,15 @@ class GraphRAGClient:
                 _embed_texts([chunk_text]),
                 _extract_chunk(chunk_text, schema, sem),
             )
+            completed["n"] += 1
+            n = completed["n"]
+            if n == total or n % emit_every == 0:
+                await _emit(
+                    "extracting",
+                    f"Embedding & extracting entities ({n}/{total} chunks)",
+                    n,
+                    total,
+                )
             return cid, chunk_text, embedding[0], extraction
 
         results = await asyncio.gather(*[_process(i, t) for i, t in enumerate(chunk_texts)])
@@ -598,10 +843,15 @@ class GraphRAGClient:
         except Exception as e:
             logger.warning(f"Could not load existing entities for resolution: {e}")
 
+        await _emit(
+            "resolving",
+            f"Resolving {len(set(all_entity_names))} entity names",
+        )
         entity_map = await _resolve_entities(
             list(dict.fromkeys(all_entity_names)),
             threshold=settings.ENTITY_RESOLUTION_THRESHOLD,
             existing_canonicals=existing_entity_names,
+            organization_id=organization_id,
         )
 
         # Step 5: build write payloads
@@ -657,6 +907,11 @@ class GraphRAGClient:
         mention_rows = list(set(mention_rows))
 
         # Step 6: write to FalkorDB (sync client, run in thread)
+        await _emit(
+            "writing",
+            f"Writing {len(chunk_rows)} chunks · {len(entity_map)} entities · "
+            f"{len(triple_rows)} relations to graph",
+        )
         g = await asyncio.to_thread(_get_falkor_connection, graph_name)
         await asyncio.to_thread(_ensure_indexes, g)
         counts = await asyncio.to_thread(
@@ -681,6 +936,7 @@ class GraphRAGClient:
         chunks: List[str],
         organization_id: str,
         document_id: str,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> Dict[str, Any]:
         non_empty = [c for c in chunks if c and c.strip()]
         if not non_empty:
@@ -690,6 +946,7 @@ class GraphRAGClient:
             text=joined,
             organization_id=organization_id,
             document_id=document_id,
+            progress_callback=progress_callback,
         )
 
     # ---- search ---------------------------------------------------------------

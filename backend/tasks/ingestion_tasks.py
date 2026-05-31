@@ -194,8 +194,8 @@ def process_youtube_document_task(
     """
     from clients.youtube_downloader import YouTubeDownloader
     from clients.postgres_client import get_postgres_client
+    from services.ingestion_service import _run_in_worker_loop
     from datetime import datetime
-    import asyncio
 
     ingestion_service = None
     temp_file_path = None
@@ -224,8 +224,10 @@ def process_youtube_document_task(
         # Update document with actual filename, file_key, and metadata
         postgres = get_postgres_client()
 
-        # Run async update in sync context
-        asyncio.run(postgres.update_document(
+        # Submit async update to the worker's persistent background-thread
+        # loop (NOT asyncio.run, which would create a fresh loop and orphan
+        # any module-level asyncio.Locks).
+        _run_in_worker_loop(postgres.update_document(
             organization_id=organization_id,
             user_id=user_id,
             document_id=document_id,

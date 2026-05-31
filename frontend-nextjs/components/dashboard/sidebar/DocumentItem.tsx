@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Document } from "@/types";
+import IngestionPipeline from "./IngestionPipeline";
 
 interface DocumentItemProps {
   document: Document;
@@ -63,13 +64,9 @@ const DocumentItem = React.memo(function DocumentItem({
               Deleting…
             </div>
           )}
-          {!isDeleting &&
-            doc.status === "processing" &&
-            doc.processing_stage_description && (
-              <div className="text-[10px] text-zinc-500 mt-0.5 truncate">
-                {doc.processing_stage_description}
-              </div>
-            )}
+          {!isDeleting && doc.status === "processing" && (
+            <IngestionPipeline document={doc} />
+          )}
           {!isDeleting && doc.status === "failed" && doc.error && (
             <div className="text-[10px] text-red-500 dark:text-red-400 mt-0.5 truncate">
               {doc.error}
